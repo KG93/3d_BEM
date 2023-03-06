@@ -1,0 +1,55 @@
+//*****************************************************************************
+//
+// 3D_BEM Solving File
+// Project: Sphere
+//
+//*****************************************************************************
+
+Control_Solver
+    f1=100Hz; f2=100Hz;
+    NumFrequencies=1;  
+    Abscissa=log;
+    c=344m/s
+    MeshFrequency=100Hz
+
+Elements Spere
+    scale=1m
+    shift=6.1 1.5 1.5
+    //MeshFrequency=4400
+    //1 Mesh MeshFileAlias = oneSphere Include  all exclude            //sphere
+    1 Mesh MeshFileAlias = oneSphereAccurate Include  all exclude      //accurate sphere
+
+off Elements "twoSpheres"
+    //EdgeLength=2.3m
+    //MeshFrequency=8000Hz
+    shift=7,0,0
+    scale=100mm
+    swapnormals =0
+    //1 Mesh MeshFileAlias='Alias1" Include 1    exclude          //Sphere
+    1 Mesh MeshFileAlias='Alias2" Include all   exclude           //two spheres
+
+Pressure_Points pointSource
+    DrvWeight=5000
+    100    1   Weight=1   Delay=0   RefNodes=pointSourcePosition
+
+off Wallimpedance admittance
+    refelements="cube"
+    //normalized=false
+    ImpType=admittance
+    value=0.3
+    //103 1 value=0.0 0.000
+    //104 2 value=0.0 0.0
+
+off Driving
+    refelements=twoSpheres
+    DrvWeight=1
+    //1 1 refelements=spere Weight=1
+    //2 2 refelements=twoSpheres Weight=100
+
+Nodes   pointSourcePosition
+    scale=1m
+    1  20 0 0
+
+Infinite_Baffle  "Wall"
+    Position = 0,0,-10
+    Normal = 0,0,1

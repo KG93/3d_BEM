@@ -1,0 +1,22 @@
+//*****************************************************************************
+//
+// 3d_BEM Observation
+// Project: Sphere
+//
+//*****************************************************************************
+
+Nodes "FieldContourNodes"
+    shift = -1 0 -8
+    Scale=70mm 70mm 70mm   /// Input as mm
+    //NodeIndex    x     y       z
+    1 	  0 	-500	 700
+    2 	  -0 	 600	 700
+    3 	  -0 	 600	-500
+    4 	  -0 	-500	-500
+
+Field "FieldVertical"
+    RefNodes="FieldContourNodes" 
+    MeshFrequency=200Hz
+    //EdgeLength=140mm
+    //FieldIndex  NodeIndex  NodeIndex  NodeIndex  NodeIndex
+    101   1  2  3  4

@@ -1,0 +1,24 @@
+//*****************************************************************************
+//
+// 3D_BEM Observation
+// Project: Loudspeaker
+//
+//*****************************************************************************
+
+Nodes FieldContourNodes
+    Scale=1.3mm    // Input as mm
+    //Name    x     y       z
+    // Horizontal
+    1  -800  00  750
+    2  800  00  750
+    3 800  00  -750
+    4 -800  00  -750
+
+Field "FieldHorizontal"
+    RefNodes=FieldContourNodes
+    MeshFrequency=10kHz
+    //EdgeLength=30mm
+    //Name  Node  Node  Node  Node
+    101   1  2  3  4  //RefNodes = FieldContourNodes
+
+

@@ -1,0 +1,13 @@
+; 3d_BEM Project File
+[Project]
+Scriptname_InfoFile=
+[Solving]
+Scriptname_Solving=Solving.txt
+[LEScript]
+Scriptname_LEScript=LEScript.txt
+[Export]
+Filename=..\meshexport.stl
+[Observation]
+C0=Observation-Fields.txt
+[MeshFiles]
+C0=loudspeaker.msh,loudspeakerMeshFile

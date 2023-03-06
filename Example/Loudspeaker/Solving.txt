@@ -1,0 +1,58 @@
+//*****************************************************************************
+//
+// 3D_BEM Solving File
+// Project: Loudspeaker
+//
+//*****************************************************************************
+
+
+Control_Solver // Controlling parameters of the solver
+    f1=400;   f2=30000
+    NumFrequencies=1;  
+    Abscissa=log;
+    //MeshFrequency= 400  
+
+Elements Enclosure-Exterior
+    scale=mm
+    SubDomain=1
+    MeshFileAlias=loudspeakerMeshFile
+    104 Mesh Include aussen
+
+Elements Enclosure-Driver
+    scale=mm
+    SubDomain=1
+    MeshFileAlias=loudspeakerMeshFile
+    101 Mesh Include treiberFront	
+
+Elements Enclosure-Driver-rear
+    scale=mm
+    SubDomain=1
+    MeshFileAlias=loudspeakerMeshFile
+    101 Mesh Include treiberRear	 
+
+Driving Front
+    RefElements = Enclosure-Driver
+    1 101 Weight=1
+
+Driving Rear
+	RefElements = Enclosure-Driver-rear
+    1 101 Weight=-1
+
+off Infinite_Baffle "Wall"
+    Subdomain = 1
+    Position = 0,1,-1    
+    Normal = 0,0,1
+    distanceToParallelPlane = 2
+
+off Infinite_Baffle  "Wall2"
+    Subdomain = 1
+    Position = 0,1,3    
+    Normal = 0,0,-1.0
+
+off Wallimpedance admittance
+    refelements = Enclosure-Exterior
+    normalized=true
+    ImpType = admittance
+    value = 0.999
+
+

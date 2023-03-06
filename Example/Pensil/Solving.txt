@@ -1,0 +1,52 @@
+//*****************************************************************************
+//
+// 3D_BEM Solving File
+// Project: Pensils Loudspeaker
+//
+//*****************************************************************************
+
+// Controlling parameters of the solver
+Control_Solver
+    f1=100; f2=2000;
+    NumFrequencies=12;  
+    Abscissa=log;
+    MeshFrequency= 4000
+
+Elements enclosure-Exterior
+    scale=mm
+    MeshFileAlias=Alias1
+    Rotate=270
+    // swapNormals
+    104 Mesh include  enclosure
+
+off Wallimpedance admittance
+    refelements=enclosure-Exterior
+    //normalized=false
+    ImpType=admittance
+    value=0.1
+
+Elements loudspeaker-Driver-front
+    scale=mm
+    Rotate=270
+    MeshFileAlias=Alias1
+    1 Mesh Include driverFront
+
+Elements loudspeaker-Driver-rear
+    scale=mm
+    Rotate=270
+    MeshFileAlias=Alias1
+    1 Mesh Include driverRear	
+
+MeshFile_Properties
+    MeshFileAlias=Alias2
+    Scale=1mm
+
+Driving Front
+    RefElements = loudspeaker-Driver-front
+    1 1 Weight=1
+
+Driving Rear
+    RefElements = loudspeaker-Driver-rear
+    1 1 Weight=-1
+
+

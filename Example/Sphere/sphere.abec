@@ -1,0 +1,18 @@
+; ABEC Project File
+[Project]
+Scriptname_InfoFile=
+[Solving]
+Scriptname_Solving=SolvingSphere.txt
+[DirectSound]
+Scriptname_DirectSound=
+[LEScript]
+Scriptname_LEScript=
+[DirectSound]
+Scriptname_DirectSound=
+[Observation]
+C0=ObservationSphere.txt
+[MeshFiles]
+C0=testSphereForMesh.msh,Alias1
+C1=twoSpheres.msh,Alias2
+C2=OneSphere.msh,oneSphere
+C3=SphereAccurate.msh,oneSphereAccurate

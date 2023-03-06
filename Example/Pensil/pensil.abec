@@ -1,0 +1,15 @@
+; ABEC Project File
+[Project]
+Scriptname_InfoFile=
+[Solving]
+Scriptname_Solving=Solving.txt
+[DirectSound]
+Scriptname_DirectSound=
+[LEScript]
+Scriptname_LEScript=
+[DirectSound]
+Scriptname_DirectSound=
+[Observation]
+C0=Observation-Fields.txt
+[MeshFiles]
+C0=Pensil R70.msh,Alias1
