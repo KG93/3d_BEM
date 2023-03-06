@@ -39,7 +39,8 @@
  * Alternatively just open the .pro file with the QtCreator and compile from there.
  *
  * @section How_to How to use 3d_BEM
- * Some sample 3d_BEM projects are provided with the source code in the \a Examples folder.
+ * 
+ * Some example 3d_BEM projects are provided with the source code in the \a Examples folder.
  * To be continued...
  * 
  * @section Literature
