@@ -11,7 +11,7 @@ Before you can compile 3d_BEM, you need to have the following software installed
  - The Qt library, version 6.0 or higher .
  - Eigen 3.3.9 or higher, for linear algebra operations (https://eigen.tuxfamily.org). Can be installed under Ubuntu with the following command:
 ```
- sudo apt install libeigen3-dev
+ sudo apt-get install libeigen3-dev
 ```
  - OpenGL libraries -lGL -lGLU; can be installed under Ubuntu with the following command:
 
