@@ -8,8 +8,8 @@ Some instructions on how to compile 3d_BEM from source code.
 Before you can compile 3d_BEM, you need to have the following software installed on your computer:
 
  - A C++20-compliant compiler, such as GCC 8 or higher.
- - The Qt library, version 6.0 or higher .
- - Eigen 3.3.9 or higher, for linear algebra operations (https://eigen.tuxfamily.org). Can be installed under Ubuntu with the following command:
+ - The [Qt] library, version 6.0 or higher .
+ - [Eigen] 3.3.9 or higher, for linear algebra operations. Can be installed under Ubuntu with the following command:
 ```
  sudo apt-get install libeigen3-dev
 ```
@@ -41,3 +41,6 @@ To be continued...
 
 ## Literature
 Exhaustive background information on the Boundary Element Method and its acceleration via H-matrices can be found in the *Literature* folder.
+
+[Qt]:https://www.qt.io/
+[Eigen]:https://eigen.tuxfamily.org/
