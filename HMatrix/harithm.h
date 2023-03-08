@@ -282,9 +282,7 @@ public:
     static void MVMLeastSignificant(Eigen::VectorXcd &y, HMatrix &hmatrix, const Eigen::VectorXcd &x);
     static void VMMLeastSignificant(Eigen::RowVectorXcd &y, const Eigen::RowVectorXcd &x, HMatrix &hmatrix);
 
-    static double frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long maxIterations = 20, double minRelChange = 0); /*!< \brief Approximates the frobenius norm of the inverse of a matrix via the LU-decomposition of the matrix. */
-
-//    static double spectralNorm2(BlockClusterTree &A, const double relError, const unsigned long maxIterations = 20); /*!< Approximates the spectral norm an matrix via power iteration. */
+    static double frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long maxIterations = 20); /*!< \brief Approximates the frobenius norm of the inverse of a matrix via the LU-decomposition of the matrix. Low accuracy.*/
 };
 
 #endif // HARITHM_H

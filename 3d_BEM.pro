@@ -14,8 +14,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-QMAKE_CXXFLAGS += -fopenmp -march=native -O3 -fno-fast-math -frounding-math #-foffload=nvptx-none #-lomptarget #-fopenacc #-qsmp -qoffload
-QMAKE_LFLAGS +=  -fopenmp  -fno-stack-protector #-foffload=nvidia-ptx #-lomptarget #-fopenacc
+QMAKE_CXXFLAGS += -fno-fast-math #-foffload=nvptx-none #-lomptarget #-fopenacc
+QMAKE_CXXFLAGS_RELEASE += -fopenmp -march=native -O3 -fno-fast-math -frounding-math
+QMAKE_LFLAGS += -fopenmp -fno-stack-protector #-foffload=nvidia-ptx #-lomptarget #-fopenacc
 #QMAKE_LFLAGS +=  -fopenmp -static
 
 SOURCES += main.cpp\
@@ -138,7 +139,7 @@ HEADERS  += GUI/colorgradient.h \
     SolvingScript/drivingsection.h \
     SolvingScript/drivingelement.h
 
-FORMS    += mainwindow.ui \
+FORMS += mainwindow.ui \
 
-CONFIG +=c++20  -static-runtime #staticlib
-LIBS +=  -lGL -lGLU -lgomp -fopenmp -foffload=nvptx-none #-lcuda#-lOpenCL
+CONFIG += c++20 release warn_on
+LIBS += -lGL -lGLU -lgomp -fopenmp -foffload=nvptx-none #-lcuda #-lOpenCL

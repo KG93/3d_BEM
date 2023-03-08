@@ -2553,18 +2553,13 @@ void HArithm::VMMLeastSignificant(Eigen::RowVectorXcd &y, const Eigen::RowVector
     }
 }
 
-double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long maxIterations, double minRelChange) // Approximates the frobenius norm of the inverse of a matrix via the LU-decomposition of the matrix.
+double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long maxIterations) // Approximates the frobenius norm of the inverse of a matrix via the LU-decomposition of the matrix. Low accuracy.
 {
     if(L.rows() != L.cols() || L.rows() != U.rows() || L.rows() != U.cols())
     {
         std::cerr << "Incompatible matrix dimensions in frobeniusNormFromLU() call! " << std::endl;
         return 0;
     }
-    if(maxIterations == 0 && minRelChange <= 0)
-    {
-        minRelChange = 0.05;
-    }
-    double minRelChangeSquared = std::pow(minRelChange, 2);
     long dim = L.cols();
 
     // We approximate (LU)^-1;
@@ -2574,7 +2569,7 @@ double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long 
     Eigen::MatrixXcd UMat;
     Eigen::VectorXcd singularValues;
 
-    std::complex<double> normEstimate = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
+    std::complex<double> lowRankNormSquared = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
     long maxRank;
 
     if(maxIterations > 0)
@@ -2586,6 +2581,7 @@ double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long 
     }
     else
     {
+        std::cout << "frobeniusNormFromLU called without explicit iteration limit." << std::endl;
         maxRank = dim;
         long reservationRank = std::min((long)5, maxRank);
         UMat.resize(dim, reservationRank);
@@ -2611,6 +2607,7 @@ double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long 
     columnVector = Eigen::VectorXcd::Zero(dim);
     HArithm::backwardSubstitution(U.getRootBlock(), columnVector, tmpCol); // Solve U * columnVector = tmpCol for columnVector, U is upper triangular H-matrix
 
+    std::complex<double> lastGain = 0;
     while(tmpRank < maxRank)
     {
         if(tmpRank >= 1)
@@ -2680,80 +2677,22 @@ double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long 
         singularValues(tmpRank) = alpha;
         tmpRank++; // increment rank counter to actual current rank of the low rank matrix
 
-        double oldNormSquared = std::abs(std::real(normEstimate));
-        normEstimate += std::abs(std::pow(alpha, 2)) *  rowVector.squaredNorm() * columnVector.squaredNorm();
+        std::complex<double> oldNormSquared2 = lowRankNormSquared;
+        lowRankNormSquared += std::pow(std::abs(alpha), 2) *  rowVector.squaredNorm() * columnVector.squaredNorm();
         for(long i = 0; i < tmpRank - 1; i++)
         {
-            normEstimate += 2.0 * std::conj(alpha) * singularValues(i) * (columnVector.adjoint() * UMat.col(i))(0,0) * (( VAdjMat.row(i)) * (rowVector).adjoint())(0,0);
+            lowRankNormSquared += 2.0 * std::conj(alpha) * singularValues(i) * (columnVector.adjoint() * UMat.col(i))(0,0) * (( VAdjMat.row(i)) * (rowVector).adjoint())(0,0);
         }
-
-        double newNormSquared = std::abs(std::real(normEstimate));
-//        std::cout << "relative change of norm estimate: " << std::sqrt(std::abs((newNormSquared - oldNormSquared) / newNormSquared)) << std::endl;
-//        std::cout << "frobenius norm estimate of the inverse: " << std::sqrt(std::abs(std::real(normEstimate))) << std::endl;
-        if(minRelChange > 0 && std::abs((newNormSquared - oldNormSquared) / newNormSquared) < minRelChangeSquared)
-        {
-            break;
-        }
+        lastGain = lowRankNormSquared - oldNormSquared2;
     }
+
+    double finalNormEstimate = std::sqrt(std::abs(std::real(lowRankNormSquared + (double)(dim - tmpRank) * lastGain)));
+
+    std::cout << "frobenius norm estimate of the inverse: " << finalNormEstimate << std::endl;
+
+    // test
 //    Eigen::MatrixXcd fullMat = HArithm::hMatToFullMat(L) * HArithm::hMatToFullMat(U);
 //    std::cout << "frobenius norm estimate of the inverse (accurate): " << fullMat.inverse().norm() << std::endl;
 
-//    std::cout << "frobenius norm estimate of the inverse: " << std::sqrt(std::abs(std::real(normEstimate))) << std::endl;
-    return std::sqrt(std::abs(std::real(normEstimate))); // return frobenius norm of low rank approximation of (L*U)^-1
+    return finalNormEstimate; // return frobenius norm of low rank approximation of (L*U)^-1
 }
-
-//double HArithm::spectralNorm2(BlockClusterTree &A, const double relError, const unsigned long maxIterations) // Approximates the spectral norm an matrix via power iteration.
-//{
-//    unsigned long minIterations  = 3;
-//    std::complex<double> normEstimate;
-
-//    if(A.cols() != A.rows())
-//    {
-//        std::cerr << "Non-square matrix in spectralNorm2 routine." << std::endl;
-//        return 0;
-//    }
-//    long dim = A.cols();
-//    Eigen::RowVectorXcd u = Eigen::RowVectorXcd::Ones(dim)/dim;
-//    Eigen::VectorXcd v = Eigen::VectorXcd::Ones(dim)/dim;
-
-//    double relativeChange = 1;
-//    unsigned long iterCounter = 0;
-//    while(iterCounter < maxIterations || iterCounter < minIterations)
-//    {
-//        Eigen::RowVectorXcd u_next = Eigen::VectorXcd::Zero(dim);
-//        VMM(u_next, u.conjugate(), A);
-//        u_next = u_next.conjugate();
-//        u_next.normalize();
-//        u = u_next;
-
-//        Eigen::VectorXcd v_next = Eigen::VectorXcd::Zero(dim)/dim;
-//        MVM(v_next, A, v);
-//        v_next.normalize();
-//        v = v_next;
-
-//        Eigen::VectorXcd Av_next = Eigen::VectorXcd::Zero(dim)/dim;
-//        MVM(Av_next, A, v_next);
-
-//        normEstimate = u_next * Av_next;
-
-//        iterCounter++;
-//        std::cout << "normEstimate: " << normEstimate << std::endl;
-//        std::cout << "iterCounter: " << iterCounter << std::endl;
-
-//        std::complex<double> raleighQuotient = v_next.adjoint().dot(Av_next)/v_next.adjoint().dot(v_next);
-//        Eigen::VectorXcd residual = Av_next - raleighQuotient * v_next;
-//        //        std::cout << "residual: " << residual << std::endl;
-//        std::cout << "residual.norm(): " << residual.norm() << std::endl;
-//        if(residual.norm() < std::abs(normEstimate * relError))
-//        {
-//            break;
-//        }
-//    }
-//    std::cerr << "Before  HArithm::hMatToFullMat(A)." << std::endl;
-//    Eigen::MatrixXcd full = hMatToFullMat(A);
-//    std::cerr << "After  HArithm::hMatToFullMat(A)." << std::endl;
-//    std::cout << "real spectral norm: " << full.operatorNorm() << std::endl;
-//    std::cout << "spectral norm estimate: " << std::abs(normEstimate) << std::endl;
-
-//    return std::abs(normEstimate);
-//}

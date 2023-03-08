@@ -247,10 +247,7 @@ public:
 
     /**
     * \brief Start the bem solver with H-matrix acceleration.
-    * \param preconditionerRank The rank of the H-matrix preconditioner.
-    * \param error The relative error of the H-matrix solver.
     */
-//    void hMatrixSolve();
     void hMatrixSolve();
 
     /**

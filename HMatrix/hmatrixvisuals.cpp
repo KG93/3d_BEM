@@ -176,7 +176,7 @@ void hMatrixVisuals::matrixToHeatMapImage(const Eigen::MatrixXcd &matrix)
 
     absMatrix /= absMatrix.maxCoeff();
 
-    float r,g,b;
+    float r=0, g=0, b=0;
     QColor color;
 
     QImage matrixImage(cols, rows, QImage::Format_RGB32);
@@ -215,7 +215,7 @@ void hMatrixVisuals::matrixPhaseImage(const Eigen::MatrixXcd &matrix)
     }
     ColorGradient phaseGradient;
     phaseGradient.phaseGradient();
-    float r,g,b;
+    float r=0, g=0, b=0;
     QColor color;
 
     QImage matrixImage(cols, rows, QImage::Format_RGB32);

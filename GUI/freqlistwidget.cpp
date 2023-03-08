@@ -4,9 +4,8 @@ FreqListWidget::FreqListWidget(QWidget *parent) : QListWidget(parent)
 {
     setWindowTitle(tr("Frequencies in Hz"));
     setContextMenuPolicy(Qt::CustomContextMenu);
-     QObject::connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showCustomContextMenu(const QPoint&)));
+//     QObject::connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showCustomContextMenu(const QPoint&)));
      QObject::connect(this, SIGNAL(currentRowChanged(int)), this, SLOT(emitNewSelectionSignal(int)));
-//     QObject::connect(this, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), this, SLOT(emitNewSelectionSignal()));
      setAttribute( Qt::WA_QuitOnClose, false);
 }
 

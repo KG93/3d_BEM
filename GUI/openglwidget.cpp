@@ -443,9 +443,9 @@ void openglWidget::setUpCamera()
 
     if((cameraAngle2 < 0) | (cameraAngle2 > global::PI))
     {
-        float eyeX ;
-        float eyeZ ;
-        float eyeY ;
+        float eyeX;
+        float eyeZ;
+        float eyeY;
         if(cameraAngle2<0)
         {
             cameraAngle2=-cameraAngle2;
@@ -460,14 +460,14 @@ void openglWidget::setUpCamera()
              eyeZ = centerOfMassZ + cameraDistance*std::sin(cameraAngle1+global::PI)*std::sin(cameraAngle2);
              eyeY = centerOfMassY + cameraDistance*std::cos(cameraAngle2);
         }
-        gluLookAt(eyeX, eyeY, eyeZ, centerOfMassX, centerOfMassY, centerOfMassZ, 0,-1,0);
+        gluLookAt(eyeX, eyeY, eyeZ, centerOfMassX, centerOfMassY, centerOfMassZ, 0, -1, 0);
     }
     else
     {
         float eyeX = centerOfMassX + cameraDistance*std::cos(cameraAngle1)*std::sin(cameraAngle2);
         float eyeZ = centerOfMassZ + cameraDistance*std::sin(cameraAngle1)*std::sin(cameraAngle2);
         float eyeY = centerOfMassY + cameraDistance*std::cos(cameraAngle2);
-        gluLookAt(eyeX, eyeY, eyeZ, centerOfMassX, centerOfMassY, centerOfMassZ, 0,1,0);
+        gluLookAt(eyeX, eyeY, eyeZ, centerOfMassX, centerOfMassY, centerOfMassZ, 0, 1, 0);
     }
 }
 
@@ -477,7 +477,7 @@ void openglWidget::solutionColoring()
     {
         ColorGradient phaseGradient;
         phaseGradient.phaseGradient();
-        float r,g,b;
+        float r=0, g=0, b=0;
         double animationPhaseShift = /*animate **/ framecounter / (durationOfAnimationPeriod * phaseAnimationFramerate) * 2.0 * global::PI;
 //        std::cout<<"animationPhaseShift " << animationPhaseShift <<std::endl;
 
@@ -561,7 +561,7 @@ void openglWidget::solutionColoring()
         }
         ColorGradient heatMapGradient;
         heatMapGradient.defaultGradient();
-        float r,g,b;
+        float r=0, g=0, b=0;
         if(showBoundariesColouredBySolution)
         {
             boundaryElements.triangleColors.resize(boundaryElements.triangles.size());
@@ -763,7 +763,7 @@ void openglWidget::drawLegend()
 {
     ColorGradient heatMapGradient;    // Used to create an array of different colors.
     heatMapGradient.defaultGradient();
-    float r,g,b;
+    float r=0, g=0, b=0;
     QVector<double> dbValues;
     QVector<QRectF> legendFieldBoundaries;
     for(int i = 0; i < heatMapGradient.getColor().size(); i++)

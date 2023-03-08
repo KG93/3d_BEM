@@ -959,7 +959,8 @@ void BoundaryElementSolver::hMatrixSolve()
 
         timer.start();
         std::cout << "Calculating the HLU preconditioner." << std::endl;
-        LUPair = HArithm::LUDecomposition(dPhiHMatCopy, preconditionerRank, preconditionerRelError, true); // calculate the LU decomposition of dPhiHMatCopy
+        bool zeroBlocksUninitalized = true; // keep the zero blocks in the triangular block matrices (L and U) uninitialized
+        LUPair = HArithm::LUDecomposition(dPhiHMatCopy, preconditionerRank, preconditionerRelError, zeroBlocksUninitalized); // calculate the LU decomposition of dPhiHMatCopy
         dPhiHMatCopy.clear(true); // delete low rank copy
         timer.stop();
         std::cout << "Runtime of LUDecomposition: " << timer.secs() << std::endl;
@@ -1029,7 +1030,7 @@ void BoundaryElementSolver::hMatrixSolve()
 //            timer.reset();
 //            timer.start();
 //            normPhi = dPhiHMat.norm();
-//            normPhiInverse = HArithm::frobeniusNormFromLU(LUPair.first, LUPair.second, 600); // Approximates the frobenius norm of the inverse of of dPhiHMat.
+//            normPhiInverse = HArithm::frobeniusNormFromLU(LUPair.first, LUPair.second, 5); // Approximates the frobenius norm of the inverse of of dPhiHMat.
 //            timer.stop();
 //            std::cout << "Frobenius norm of the dphi matrix: " << normPhi << std::endl;
 ////            std::cout << "Relative spectral approximation error of the dphi matrix: " << normPhiResiduum/normPhi << std::endl;

@@ -29,9 +29,9 @@ To compile 3d_BEM, follow these steps:
  3. Call make.
 
 ```
- * cd <build directory> 
- * qmake <source directory>
- * make
+ cd <build directory> 
+ qmake <source directory>
+ make
 ```
 Alternatively just open the .pro file with the QtCreator and compile from there.
 
