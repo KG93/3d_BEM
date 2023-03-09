@@ -1,4 +1,4 @@
-#include "ObservationScript/observationscriptreader.h"
+#include "observationscriptreader.h"
 
 ObservationScriptReader::ObservationScriptReader(QObject* parent): QObject(parent)
 {

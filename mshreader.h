@@ -5,7 +5,7 @@
 #include "node.h"
 #include "vectortriangle.h"
 #include "vectorquadrilateral.h"
-#include"global.h"
+#include "global.h"
 
 #include <limits>
 #include <QHash>

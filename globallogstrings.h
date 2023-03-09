@@ -1,8 +1,8 @@
 #ifndef GLOBALLOGSTRINGS_H
 #define GLOBALLOGSTRINGS_H
 
-#include<QtGlobal>
-#include<QString>
+#include <QtGlobal>
+#include <QString>
 
 QT_BEGIN_NAMESPACE
 class QString;

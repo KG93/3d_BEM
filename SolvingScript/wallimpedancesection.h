@@ -1,5 +1,6 @@
 #ifndef WALLIMPEDANCESECTION_H
 #define WALLIMPEDANCESECTION_H
+
 #include "global.h"
 #include "SolvingScript/wallimpedanceelement.h"
 #include "globallogstrings.h"

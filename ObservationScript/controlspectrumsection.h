@@ -1,9 +1,9 @@
 #ifndef CONTROLSPECTRUMSECTION_H
 #define CONTROLSPECTRUMSECTION_H
-#include <QString>
-#include "global.h"
-//#include "globallogstrings.h"
 
+#include "global.h"
+
+#include <QString>
 
 class ControlSpectrumSection
 {

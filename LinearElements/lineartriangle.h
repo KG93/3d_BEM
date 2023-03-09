@@ -1,7 +1,8 @@
 #ifndef LINEARTRIANGLE_H
 #define LINEARTRIANGLE_H
+
 #include <eigen3/Eigen/Geometry>
-#include "../robinboundarycondition.h"
+#include "robinboundarycondition.h"
 
 /*!
  * \brief The LinearTriangle class represents a simple triangle in 3D space with linear shape functions.

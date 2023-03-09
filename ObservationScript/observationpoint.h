@@ -1,6 +1,7 @@
 #ifndef OBSERVATIONPOINT_H
 #define OBSERVATIONPOINT_H
-#include"global.h"
+
+#include "global.h"
 
 class ObservationPoint
 {

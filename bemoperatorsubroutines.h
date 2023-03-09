@@ -1,5 +1,6 @@
 #ifndef BEMOPERATORSUBROUTINES_H
 #define BEMOPERATORSUBROUTINES_H
+
 #include <cmath>
 #include <complex>
 

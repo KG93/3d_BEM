@@ -1,5 +1,6 @@
 #ifndef MESHFIELD_H
 #define MESHFIELD_H
+
 #include "global.h"
 
 /**

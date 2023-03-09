@@ -3,8 +3,8 @@
 
 #include "lineartrianglenode.h"
 #include "lineartriangle.h"
-#include "../impedanceplane.h"
-#include "../global.h"
+#include "impedanceplane.h"
+#include "global.h"
 
 #include <QVector>
 

@@ -1,13 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "mshreader.h"
-#include "projectfilehandler.h"
+#include "../mshreader.h"
+#include "../projectfilehandler.h"
 #include "openglwidget.h"
-#include "SolvingScript/solvingscriptreader.h"
-#include "ObservationScript/observationscriptreader.h"
-#include "boundaryelements.h"
-#include "boundaryelementsolver.h"
+#include "../SolvingScript/solvingscriptreader.h"
+#include "../ObservationScript/observationscriptreader.h"
+#include "../boundaryelements.h"
+#include "../boundaryelementsolver.h"
 #include "registerscriptstab.h"
 #include "logwidget.h"
 #include "parameterdialog.h"

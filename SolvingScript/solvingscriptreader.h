@@ -1,6 +1,6 @@
 #ifndef SOLVINGSCRIPTREADER_H
-
 #define SOLVINGSCRIPTREADER_H
+
 #include "boundaryelements.h"
 #include "LinearElements/linearboundaryelements.h"
 #include "nodesSection.h"
@@ -27,7 +27,6 @@
 #include <QRegularExpressionMatch>
 #include <QRegularExpression>
 #include <QtMath>
-//#include <QWidget>
 
 /**
 * \class SolvingScriptReader

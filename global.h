@@ -27,7 +27,6 @@
 class global
 {
 public:
-
 /**
 * \brief Set to true for debugging.
 */

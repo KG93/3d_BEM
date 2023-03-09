@@ -1,5 +1,6 @@
 #ifndef BOUNDARYFIELD_H
 #define BOUNDARYFIELD_H
+
 #include "global.h"
 
 class BoundaryField

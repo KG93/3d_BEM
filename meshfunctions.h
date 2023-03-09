@@ -1,5 +1,6 @@
 #ifndef MESHFUNCTIONS_H
 #define MESHFUNCTIONS_H
+
 #include "global.h"
 #include <QVector4D>
 #include <QMatrix4x4>

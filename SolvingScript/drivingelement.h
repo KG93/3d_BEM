@@ -1,12 +1,13 @@
 #ifndef DRIVINGELEMENT_H
 #define DRIVINGELEMENT_H
+
 #include <QString>
 #include <complex>
+
 class DrivingElement
 {
 public:
     DrivingElement(){}
-//    ~WallImpecanceElement();
     DrivingElement(quint64 index, qint64 elementIndex, QString RefElements, int DrvGroup, std::complex<double> Weight, double Delay){
         this->index=index;
         this->elementIndex=elementIndex;

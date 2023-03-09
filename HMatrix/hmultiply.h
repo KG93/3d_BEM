@@ -111,6 +111,7 @@ class HMultiply
 {
 public:
     HMultiply();
+    static HMatrix multiplyHMat(BlockCluster* factor1, BlockCluster* factor2, const long rank, const double relError); /*!< \brief The method returns the product of two H-matrices. */
     static HMatrix multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long rank, const double relError); /*!< \brief The method returns the product of two H-matrices. */
 
 private:

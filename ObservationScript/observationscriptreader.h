@@ -1,5 +1,6 @@
 #ifndef OBSERVATIONSCRIPTREADER_H
 #define OBSERVATIONSCRIPTREADER_H
+
 #include "nodesSection.h"
 #include "meshfilepropertiessection.h"
 #include "controlfieldsection.h"

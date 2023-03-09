@@ -1,5 +1,6 @@
 #ifndef OBSERVATIONFIELD_H
 #define OBSERVATIONFIELD_H
+
 #include "global.h"
 
 /**

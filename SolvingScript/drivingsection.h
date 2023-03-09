@@ -1,5 +1,6 @@
 #ifndef DRIVINGSECTION_H
 #define DRIVINGSECTION_H
+
 #include "globallogstrings.h"
 #include "global.h"
 #include "drivingelement.h"

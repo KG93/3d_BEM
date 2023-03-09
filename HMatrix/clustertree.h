@@ -1,9 +1,9 @@
 #ifndef CLUSTERTREE_H
 #define CLUSTERTREE_H
 
+#include "cuboid.h"
 #include "boundaryelements.h"
 #include "LinearElements/linearboundaryelements.h"
-#include "cuboid.h"
 #include "global.h"
 
 #include <concepts>
@@ -12,7 +12,8 @@
 template<typename GeometryContainer>
     concept isGeometry  = std::is_same<GeometryContainer, BoundaryElements>::value
                             || std::is_same<GeometryContainer, LinearBoundaryElements>::value
-                            || std::is_same<GeometryContainer, QVector<VectorTriangle>>::value;
+                            || std::is_same<GeometryContainer, QVector<VectorTriangle>>::value
+                            || std::is_same<GeometryContainer, QVector<Eigen::Vector3d>>::value;
 
 /**
 * \class Cluster
@@ -104,6 +105,14 @@ public:
         }
     }
 
+    ClusterTree(QVector<Eigen::Vector3d>* points)
+    {
+        if(points != nullptr)
+        {
+            assembleClustertree<QVector<Eigen::Vector3d>>(points);
+        }
+    }
+
     /**
      *\brief Create a copy of a cluster tree.
     */
@@ -115,10 +124,13 @@ public:
 //    bool isInCuboid(VectorTriangle triangle, Cuboid cuboid);
 //    bool isInCuboid(LinearTriangle triangle, QVector<LinearTriangleNode> &nodes, Cuboid cuboid);
 //    bool isInCuboid(LinearTriangleNode node, Cuboid cuboid);
+    long size() const; /*!< \brief Get the size of the ClusterTree. */
+    long startIndex() const; /*!< \brief Get the first index of the ClusterTree. */
 
     long getNumberOfElements(BoundaryElements* boundaryElements){ return boundaryElements->triangles.size(); }
     long getNumberOfElements(LinearBoundaryElements* linearBoundaryElements){ return linearBoundaryElements->nodes.size(); }
     long getNumberOfElements(QVector<VectorTriangle>* triangles){ return triangles->size(); }
+    long getNumberOfElements(QVector<Eigen::Vector3d>* points){ return points->size(); }
 
     /**
     * \brief Return a vector of all clusters.
@@ -168,6 +180,7 @@ private:
     Cuboid minimalCuboidForIndices(const QVector<long> &triangleIndices, const BoundaryElements *boundaryElements) const; /*!< Calculate the minimal axis aligned cuboid for a set of triangles. */
     Cuboid minimalCuboidForIndices(const QVector<long> &triangleIndices, const LinearBoundaryElements* linearBoundaryElements) const;
     Cuboid minimalCuboidForIndices(const QVector<long> &triangleIndices, const QVector<VectorTriangle>* triangles) const;
+    Cuboid minimalCuboidForIndices(const QVector<long> &pointIndices, const QVector<Eigen::Vector3d>* points) const;
 
     Cuboid minimalCuboidForTriangleIndexes(QVector<long> triangleIndexes) const;
     Cuboid minimalCuboidForTriangleIndexesMidpointBased(const QVector<long> &triangleIndexes) const; /*!< Calculate the minimal axis aligned cuboid for the minpoints of a set of triangles. */
@@ -178,6 +191,7 @@ private:
     bool isInCuboid(const long index, const BoundaryElements* boundaryElements, const Cuboid cuboid);
     bool isInCuboid(const long index, const LinearBoundaryElements* linearBoundaryElements, const Cuboid cuboid);
     bool isInCuboid(const long index, const QVector<VectorTriangle>* triangles, const Cuboid cuboid);
+    bool isInCuboid(const long index, const QVector<Eigen::Vector3d>* points, const Cuboid cuboid);
 
 //    bool cuboidContainsTriangle(VectorTriangle triangle, Cuboid cuboid); /*!< Check whether a triangle (midpoint) is contained in a cuboid. */
 //    bool cuboidContainsCuboid(Cuboid cuboid, Cuboid quboidContainer); /*!< Check whether a cuboid is contained in a second cuboid. */
@@ -190,6 +204,7 @@ private:
     void recursiveReorder(Cluster* cluster, long &globalTriangleIndex, BoundaryElements* boundaryElements, const BoundaryElements &boundaryElementsCopy); /*!< Reindex the triangles in 'BoundaryElements* boundaryElements' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
     void recursiveReorder(Cluster* cluster, long &globalTriangleIndex, QVector<VectorTriangle>* triangles, const QVector<VectorTriangle> &trianglesCopy); /*!< Reindex the triangles in 'QVector<VectorTriangle>* triangles' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
     void recursiveReorder(Cluster* cluster, long &globalNodeIndex, LinearBoundaryElements* linearBoundaryElements, const LinearBoundaryElements &boundaryElementsCopy); /*!< Reindex the triangles in 'LinearBoundaryElements* linearBoundaryElements' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
+    void recursiveReorder(Cluster* cluster, long &globalPointIndex, QVector<Eigen::Vector3d>* points, const QVector<Eigen::Vector3d>  &pointsCopy); /*!< Reindex the points in 'QVector<Eigen::Vector3d>* points' so that each cluster contains a contiguous set of point indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
 
 
     Cluster* rootCluster = nullptr;

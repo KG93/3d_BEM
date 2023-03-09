@@ -7,7 +7,7 @@
 #include <QFileDialog>
 #include <QPainter>
 #include "hmatrix.h"
-#include "../GUI/colorgradient.h"
+#include "GUI/colorgradient.h"
 #include <QImage>
 
 /**

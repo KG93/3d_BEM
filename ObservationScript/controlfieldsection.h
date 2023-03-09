@@ -1,6 +1,8 @@
 #ifndef CONTROLFIELDSECTION_H
 #define CONTROLFIELDSECTION_H
+
 #include <QString>
+
 #include "global.h"
 //#include "globallogstrings.h"
 

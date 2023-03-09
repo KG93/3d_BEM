@@ -7,15 +7,15 @@
 #include "../HMatrix/hmultiply.h"
 #include "../HMatrix/gmres.h"
 
-#include "Timer.h" //Timer
+#include "../Timer.h" //Timer
 
-#include "boundaryelements.h"
-#include "vectortriangle.h"
-#include "SolvingScript/elementSection.h"
-#include "pointsource.h"
+#include "../boundaryelements.h"
+#include "../vectortriangle.h"
+#include "../SolvingScript/elementSection.h"
+#include "../pointsource.h"
 #include "colorgradient.h"
-#include "ObservationScript/observationpoint.h"
-#include "ObservationScript/observationfield.h"
+#include "../ObservationScript/observationpoint.h"
+#include "../ObservationScript/observationfield.h"
 
 #include <QWidget>
 #include <QPainter>

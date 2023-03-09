@@ -1,11 +1,13 @@
 #ifndef CONTROLSOLVERSECTION_H
 #define CONTROLSOLVERSECTION_H_H
+
 #include "global.h"
+#include "globallogstrings.h"
+
 #include <iostream>
 #include <QObject>
 #include <QRegularExpressionMatch>
 #include <QRegularExpression>
-#include "globallogstrings.h"
 
 
 

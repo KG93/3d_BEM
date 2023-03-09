@@ -1,5 +1,6 @@
 #ifndef INFINITEBAFFLESECTION_H
 #define INFINITEBAFFLESECTION_H
+
 #include "globallogstrings.h"
 #include "global.h"
 

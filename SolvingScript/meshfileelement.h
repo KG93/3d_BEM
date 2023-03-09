@@ -1,8 +1,9 @@
 #ifndef MESHFILEELEMENT_H
+#define MESHFILEELEMENT_H
+
 #include <QString>
 #include <QVector>
 #include <QStringList>
-#define MESHFILEELEMENT_H
 
 /**
 * \class MeshFileElement

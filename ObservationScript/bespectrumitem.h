@@ -1,5 +1,6 @@
 #ifndef BESPECTRUMITEM_H
 #define BESPECTRUMITEM_H
+
 #include <QString>
 #include <QVector>
 #include <eigen3/Eigen/Geometry>

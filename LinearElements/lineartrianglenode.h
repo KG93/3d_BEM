@@ -1,8 +1,9 @@
 #ifndef LINEARTRIANGLENODE_H
 #define LINEARTRIANGLENODE_H
+
 #include <eigen3/Eigen/Geometry>
 #include <QVector>
-#include "../robinboundarycondition.h"
+#include "robinboundarycondition.h"
 
 /**
 *\brief A node for a 3d linear triangle.

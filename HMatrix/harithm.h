@@ -3,13 +3,12 @@
 
 #include "hmatrix.h"
 #include "Timer.h" //Timer
-#include "HMatrix/hmatrixvisuals.h"
+#include "hmatrixvisuals.h"
 #include <eigen3/Eigen/SVD>
 #include <eigen3/Eigen/Eigenvalues> // for operator norm
 #include "hmultiply.h"
 
 static constexpr bool useEigenSvd = false; /*!< Use Eigens SVD implementation or the own Golub Reinsch SVD */
-static constexpr bool useHMultiply = true; /*!< Use better H-matrix-H-matrix multiplication from the external HMultiply class. Recommended. */
 static constexpr bool inversionInLUDecomp = false; /*!< Use the inverse matrix instead of the LU factorization for the diagonal blocks. */
 static constexpr bool qrInLUDecomp = true; /*!< Use the QR decomposition instead of the LU factorization for the diagonal blocks. Recommended. */
 
@@ -99,14 +98,6 @@ public:
     */
     static void addHMat2ToHMat1SamePartition(HMatrix &matrix1, HMatrix &matrix2, const long rank, const double error);
 
-    /**
-    * \brief Multiply two H-matrices. This method is a slow and memory intensive version of the HMultiply method. It takes two H-matrices and a rank and relative error as inputs, and returns the product of the two H-matrices as a new H-matrix.
-    * \param factor1 The first H-matrix to be multiplied.
-    * \param factor2 The second H-matrix to be multiplied.
-    * \param rank The rank to which the product will be truncated.
-    * \param relError The maximum relative error allowed.
-    * \return The product of the two input H-matrices as a new H-matrix.
-    */
     static HMatrix multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long rank, const double relError);
 
     /**

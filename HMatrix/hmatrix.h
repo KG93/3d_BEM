@@ -146,10 +146,21 @@ public:
         this->frobeniusNorm = rootBlockCluster->frobeniusNorm;
         this->rootBlockCluster->isRoot = true;
     }
-    HMatrix(ClusterTree* clustertree1, ClusterTree* clustertree2)
+    HMatrix(ClusterTree* rowClustertree, ClusterTree* columnClustertree, bool populate = false)
     {
-        this->rowClustertree = clustertree1;
-        this->columnClustertree = clustertree2;
+        this->rowClustertree = rowClustertree;
+        this->columnClustertree = columnClustertree;
+        if(populate)
+        {
+            this->populateBlockClusterTree();
+        }
+    }
+    HMatrix(ClusterTree* rowClustertree, ClusterTree* columnClustertree, const long rank, double relativeError, std::function<std::complex<double> (long, long)> implicitMatrix)
+    {
+        this->rowClustertree = rowClustertree;
+        this->columnClustertree = columnClustertree;
+        this->populateBlockClusterTree();
+        assembleBlocks(rank, relativeError, implicitMatrix);
     }
     HMatrix(HMatrix &original, long rank = 0, double error = 0, bool originalIsInSVDFormat = false);
 

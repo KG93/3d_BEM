@@ -60,6 +60,10 @@ Eigen::MatrixXcd HArithm::hMatToFullMat(HMatrix &hmatrix) //test function; extre
     long totalNumberOfRows = hmatrix.rows();
     long totalNumberOfColumns = hmatrix.cols();
     QVector<BlockCluster*> minPartition = hmatrix.getMinPartition();
+    if(minPartition.size() == 0)
+    {
+        std::cerr << "Empty partition in hMatToFullMat call." << std::endl;
+    }
 
     Eigen::MatrixXcd returnMatrix = Eigen::MatrixXcd(totalNumberOfRows, totalNumberOfColumns);
 
@@ -355,174 +359,6 @@ void HArithm::addHMat2ToHMat1SamePartition(HMatrix &matrix1, HMatrix &matrix2, c
     }
 }
 
-HMatrix HArithm::multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long rank, const double relError)
-{
-    if( !factor1.isCrossPartitioned() || !factor2.isCrossPartitioned())
-    {
-        std::cerr<<"At least one factor in multiplyHMat() is not cross partitioned!" << std::endl;
-    }
-    if(factor1.getRootBlock() == nullptr || factor2.getRootBlock() == nullptr)
-    {
-        std::cerr<<"At least one factor in multiplyHMat() is an empty h-matrix!" << std::endl;
-    }
-    if(factor1.getRootBlock()->columnCluster->indices.first() != factor2.getRootBlock()->rowCluster->indices.first() || factor1.getRootBlock()->columnCluster->indices.last() != factor2.getRootBlock()->rowCluster->indices.last())
-    {
-        std::cerr<<"Factor matrices of incompatible sizes in multiplyHMat() call!" << std::endl;
-    }
-    if(factor1.consistencyCheck() == false)
-    {
-        std::cerr << "factor1.consistencyCheck() == false" << std::endl;
-    }
-    if(factor2.consistencyCheck() == false)
-    {
-        std::cerr << "factor2.consistencyCheck() == false" << std::endl;
-    }
-
-    HMatrix product /*= BlockClusterTree(factor1.getRowClustertree(), factor2.getColumnClustertree())*/;
-    if(factor1.getRowClustertree() != nullptr && factor2.getColumnClustertree() != nullptr) //temporary fix
-    {
-        product.setClusterTrees(factor1.getRowClustertree(), factor2.getColumnClustertree());
-        product.createRootNode();
-    }
-    else
-    {
-        BlockCluster* rootBlockCluster = new BlockCluster(factor1.getRootBlock()->rowCluster, factor2.getRootBlock()->columnCluster);
-        product.setRootBlock(rootBlockCluster);
-    }
-
-    MM(factor1, factor2, product, factor1.getRootBlock(), factor2.getRootBlock(), product.getRootBlock(), rank, relError);
-
-    product.updatePartitionWithMatrixInfo();
-
-
-    Timer agglomerationTimer;
-    agglomerationTimer.start();
-    QVector<BlockCluster*> partition = product.getMinPartition(); // test for the agglomeration function
-    for(int i = 0 ; i < partition.length(); i++)
-    {
-        blockSplitting(partition.at(i), rank, relError);
-    }
-    product.updatePartitionWithMatrixInfo();
-
-    product.updatePartition();;
-
-    if(product.consistencyCheck() == false)
-    {
-        std::cerr << "product.consistencyCheck() == false" << std::endl;
-    }
-    return product;
-}
-
-void HArithm::MM(HMatrix &factor1, HMatrix &factor2, HMatrix &product, BlockCluster* factorBlock1, BlockCluster* factorBlock2, BlockCluster* productBlock, const long rank, const double relError)
-{
-    if( !factorBlock1->isLeaf && !factorBlock2->isLeaf) // no factor block is neither full matrix nor reduced-rank matrix
-    {
-        if(factorBlock1->colStartIndex() != factorBlock2->rowStartIndex() || factorBlock1->cols() != factorBlock2->rows())
-        {
-            std::cerr<<"Incompatible blocks in MM() call!" << std::endl;
-            return;
-        }
-        if(productBlock->son11 == nullptr) //son pointers shall not be overriden in following MM() call
-        {
-            productBlock->son11 = new BlockCluster(factorBlock1->rowCluster->son1, factorBlock2->columnCluster->son1, productBlock);
-//        }
-//        if(productBlock->son12 == nullptr) //son pointers shall not be overriden in following MM() call
-//        {
-            productBlock->son12 = new BlockCluster(factorBlock1->rowCluster->son1, factorBlock2->columnCluster->son2, productBlock);
-//        }
-//        if(productBlock->son21 == nullptr) //son pointers shall not be overriden in following MM() call
-//        {
-            productBlock->son21 = new BlockCluster(factorBlock1->rowCluster->son2, factorBlock2->columnCluster->son1, productBlock);
-//        }
-//        if(productBlock->son22 == nullptr) //son pointers shall not be overriden in following MM() call
-//        {
-            productBlock->son22 = new BlockCluster(factorBlock1->rowCluster->son2, factorBlock2->columnCluster->son2, productBlock);
-        }
-
-        #pragma omp parallel
-        {
-            #pragma omp sections
-            {
-                #pragma omp section
-                {
-                    MM(factor1, factor2, product, factorBlock1->son11, factorBlock2->son11, productBlock -> son11, rank, relError);
-                    MM(factor1, factor2, product, factorBlock1->son12, factorBlock2->son21, productBlock -> son11, rank, relError);
-                }
-                #pragma omp section
-                {
-                    MM(factor1, factor2, product, factorBlock1->son11, factorBlock2->son12, productBlock -> son12, rank, relError);
-                    MM(factor1, factor2, product, factorBlock1->son12, factorBlock2->son22, productBlock -> son12, rank, relError);
-                }
-                #pragma omp section
-                {
-                    MM(factor1, factor2, product, factorBlock1->son21, factorBlock2->son11, productBlock -> son21, rank, relError);
-                    MM(factor1, factor2, product, factorBlock1->son22, factorBlock2->son21, productBlock -> son21, rank, relError);
-                }
-                #pragma omp section
-                {
-                    MM(factor1, factor2, product, factorBlock1->son21, factorBlock2->son12, productBlock -> son22, rank, relError);
-                    MM(factor1, factor2, product, factorBlock1->son22, factorBlock2->son22, productBlock -> son22, rank, relError);
-                }
-            }
-        }
-    }
-    else
-    {
-        productBlock->isLeaf = true;
-        MMR(factorBlock1, factorBlock2, productBlock, rank, relError);
-    }
-}
-
-void HArithm::MMR(BlockCluster* factorBlock1, BlockCluster* factorBlock2, BlockCluster* productBlock, const long rank, const double relError)
-{
-    updateProductBlockAdmissibility(factorBlock1, factorBlock2, productBlock);
-    productBlock->isLeaf = true;
-
-    if(factorBlock1->isLeaf && !factorBlock2->isAdmissible) //second condition is for the case that both blocks are leaves, but the second one is preferable
-    {
-        Eigen::MatrixXcd productMat;
-        if(factorBlock1->isAdmissible)
-        {
-            productMat = Eigen::MatrixXcd::Zero( factorBlock1->VAdjMat.rows(), factorBlock2->cols() );
-            matByBlock(factorBlock1->VAdjMat, factorBlock2, factorBlock1->colStartIndex(), factorBlock2->colStartIndex(), productMat);
-            if(!productBlock->isAdmissible)
-            {
-                productBlock->fullMat.noalias() += factorBlock1->UMat * factorBlock1->singularValues.asDiagonal() * productMat;
-            }
-            else
-            {
-                roundedAddRMatToBlock(*productBlock, factorBlock1->UMat, factorBlock1->singularValues, productMat, rank, relError);
-            }
-        }
-        else    //productBlock is not admissible
-        {
-            matByBlock(factorBlock1->fullMat, factorBlock2, factorBlock1->colStartIndex(), factorBlock2->colStartIndex(), productBlock->fullMat);
-        }
-    }
-    else if(factorBlock2->isLeaf)
-    {
-        Eigen::MatrixXcd productMat;
-        if(factorBlock2->isAdmissible)
-        {
-            productMat = Eigen::MatrixXcd::Zero(factorBlock1->rows(), factorBlock2 ->UMat.cols());
-            blockByMat(factorBlock1, factorBlock2 ->UMat, factorBlock1->rowStartIndex(), factorBlock2->rowStartIndex(), productMat);
-
-            if(!productBlock->isAdmissible)
-            {
-                productBlock->fullMat.noalias() += productMat * factorBlock2->singularValues.asDiagonal() * factorBlock2 ->VAdjMat;
-            }
-            else
-            {
-                roundedAddRMatToBlock(*productBlock, productMat, factorBlock2->singularValues, factorBlock2->VAdjMat, rank, relError);
-            }
-        }
-        else
-        {
-            blockByMat(factorBlock1, factorBlock2 ->fullMat, factorBlock1->rowStartIndex(), factorBlock2->rowStartIndex(), productBlock->fullMat);
-        }
-    }
-}
-
 void HArithm::matByBlock(const Eigen::MatrixXcd &lFactor, BlockCluster* rFactorBlock, long columnOffsetFactor1, long columnOffsetFactor2, Eigen::MatrixXcd& product)
 {
     if(rFactorBlock->isLeaf)
@@ -572,40 +408,6 @@ void HArithm::blockByMat(BlockCluster* lFactorBlock, const Eigen::MatrixXcd& rFa
         blockByMat(lFactorBlock->son12, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
         blockByMat(lFactorBlock->son21, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
         blockByMat(lFactorBlock->son22, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
-    }
-}
-
-void HArithm::updateProductBlockAdmissibility (BlockCluster* factorBlock1, BlockCluster* factorBlock2, BlockCluster* productBlock)
-{   // productBlock->isAdmissible can only change from true to false
-    if(productBlock->UMat.size() == 0 && productBlock->fullMat.size() == 0) // check for first MMR call on product block
-    {
-        if( (factorBlock1->isAdmissible || factorBlock2->isAdmissible) /*&& !(factorBlock1->isLeaf && factorBlock2->isAdmissible)*/ )
-        {
-            productBlock->isAdmissible = true;
-        }
-        else
-        {
-            productBlock->isAdmissible = false; //set up productBlock->fullMat to allow for += operator in MMR()
-            productBlock->fullMat = Eigen::MatrixXcd::Zero(productBlock->rowCluster->indices.last() - productBlock->rowCluster->indices.first() + 1, productBlock->columnCluster->indices.last() - productBlock->columnCluster->indices.first() + 1 );
-        }
-    }
-    else
-    {
-        if(productBlock->isAdmissible)
-        {
-
-//            if((factorBlock1->isAdmissible || factorBlock2->isAdmissible))
-            if((factorBlock1->isAdmissible || factorBlock2->isAdmissible) && (productBlock->UMat.cols() <= 0.5 * productBlock->UMat.rows() && productBlock->VAdjMat.rows() <= 0.5 * productBlock->VAdjMat.cols()))
-            {
-                productBlock->isAdmissible = true;
-            }
-            else    //productBlock was admissible earlier, but now changed to inadmissible -> transfer RMat to fullMat
-            {
-                productBlock->isAdmissible = false;
-                addrkMatToFull(productBlock->fullMat, productBlock->UMat, productBlock->singularValues, productBlock->VAdjMat);
-                clearRkMatrix(*productBlock);
-            }
-        }
     }
 }
 
@@ -1522,18 +1324,11 @@ void HArithm::recursiveLUDecomposition(BlockCluster* LBlock, BlockCluster* UBloc
         forwSubsMatValTransposed(LBlock->son21, UBlock->son11, ABlock->son21, rank, relError);
 //        ABlock->son21->clear();
 
-        HMatrix LBlockSon21HMat(LBlock->son21);
-        HMatrix UBlockSon12HMat(UBlock->son12);
+//        HMatrix LBlockSon21HMat(LBlock->son21);
+//        HMatrix UBlockSon12HMat(UBlock->son12);
+//        HMatrix product22 = HMultiply::multiplyHMat(LBlockSon21HMat, UBlockSon12HMat, rank, relError);
+        HMatrix product22 = HMultiply::multiplyHMat(LBlock->son21, UBlock->son12, rank, relError);
 
-        HMatrix product22;
-        if(useHMultiply)
-        {
-            product22 = HMultiply::multiplyHMat(LBlockSon21HMat, UBlockSon12HMat, rank, relError);
-        }
-        else
-        {
-            product22 = multiplyHMat(LBlockSon21HMat, UBlockSon12HMat, rank, relError);
-        }
 
         recursiveHMatSubstraction(ABlock->son22, product22.getRootBlock(), rank, relError);
         product22.clear(false);
@@ -1705,32 +1500,20 @@ void HArithm::forwSubsMatVal(const BlockCluster* LBlock, BlockCluster* XBlock, B
         XBlock->son22 = new BlockCluster(ZBlock->rowCluster->son2, ZBlock->columnCluster->son2, XBlock);
 
         forwSubsMatVal(LBlock->son11, XBlock->son11, ZBlock->son11, rank, relError);
-        HMatrix LBlockSon21HMat(LBlock->son21);
-        HMatrix XBlockSon11HMat(XBlock->son11);
+//        HMatrix LBlockSon21HMat(LBlock->son21);
+//        HMatrix XBlockSon11HMat(XBlock->son11);
+//        HMatrix product21 = HMultiply::multiplyHMat(LBlockSon21HMat, XBlockSon11HMat, rank, relError);
+        HMatrix product21 = HMultiply::multiplyHMat(LBlock->son21, XBlock->son11, rank, relError);
 
-        HMatrix product21;
-        if(useHMultiply)
-        {
-            product21 = HMultiply::multiplyHMat(LBlockSon21HMat, XBlockSon11HMat, rank, relError);
-        }
-        else
-        {
-            product21 = multiplyHMat(LBlockSon21HMat, XBlockSon11HMat, rank, relError);
-        }
+
         recursiveHMatSubstraction(ZBlock->son21, product21.getRootBlock(), rank, relError);
         product21.clear();
         forwSubsMatVal(LBlock->son11, XBlock->son12, ZBlock->son12, rank, relError);
-        HMatrix XBlockSon12HMat(XBlock->son12);
-        HMatrix product22;
 
-        if(useHMultiply)
-        {
-            product22 = HMultiply::multiplyHMat(LBlockSon21HMat, XBlockSon12HMat, rank, relError);
-        }
-        else
-        {
-            product22 = multiplyHMat(LBlockSon21HMat, XBlockSon12HMat, rank, relError);
-        }
+//        HMatrix XBlockSon12HMat(XBlock->son12);
+//        HMatrix product22 = HMultiply::multiplyHMat(LBlockSon21HMat, XBlockSon12HMat, rank, relError);
+        HMatrix product22 = HMultiply::multiplyHMat(LBlock->son21, XBlock->son12, rank, relError);
+
         recursiveHMatSubstraction(ZBlock->son22, product22.getRootBlock(), rank, relError);
         product22.clear();
         forwSubsMatVal(LBlock->son22, XBlock->son21, ZBlock->son21, rank, relError);
@@ -1791,35 +1574,22 @@ void HArithm::forwSubsMatValTransposed(BlockCluster* XBlock, const BlockCluster*
         XBlock->son22 = new BlockCluster(ZBlock->rowCluster->son2, ZBlock->columnCluster->son2, XBlock);
 
         forwSubsMatValTransposed(XBlock->son11, UBlock->son11, ZBlock->son11, rank, relError);
-        HMatrix XBlockSon11HMat(XBlock->son11);
-        HMatrix UBlockSon12HMat(UBlock->son12);
+//        HMatrix XBlockSon11HMat(XBlock->son11);
+//        HMatrix UBlockSon12HMat(UBlock->son12);
 
-        HMatrix product12;
-        if(useHMultiply)
-        {
-            product12 = HMultiply::multiplyHMat(XBlockSon11HMat, UBlockSon12HMat, rank, relError);
-        }
-        else
-        {
-            product12 = multiplyHMat(XBlockSon11HMat, UBlockSon12HMat, rank, relError);
-        }
+//        HMatrix product12 = HMultiply::multiplyHMat(XBlockSon11HMat, UBlockSon12HMat, rank, relError);
+        HMatrix product12 = HMultiply::multiplyHMat(XBlock->son11, UBlock->son12, rank, relError);
+
         recursiveHMatSubstraction(ZBlock->son12, product12.getRootBlock(), rank, relError);
 
         product12.clear();
 
         forwSubsMatValTransposed(XBlock->son21, UBlock->son11, ZBlock->son21, rank, relError);
 
-        HMatrix XBlockSon21HMat(XBlock->son21);
-        HMatrix product22;
+//        HMatrix XBlockSon21HMat(XBlock->son21);
+//        HMatrix product22 = HMultiply::multiplyHMat(XBlockSon21HMat, UBlockSon12HMat, rank, relError);
+        HMatrix product22 = HMultiply::multiplyHMat(XBlock->son21, UBlock->son12, rank, relError);
 
-        if(useHMultiply)
-        {
-            product22 = HMultiply::multiplyHMat(XBlockSon21HMat, UBlockSon12HMat, rank, relError);
-        }
-        else
-        {
-            product22 = multiplyHMat(XBlockSon21HMat, UBlockSon12HMat, rank, relError);
-        }
 
         recursiveHMatSubstraction(ZBlock->son22, product22.getRootBlock(), rank, relError);
         product22.clear();

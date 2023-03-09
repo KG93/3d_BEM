@@ -80,6 +80,24 @@ ClusterTree::ClusterTree(ClusterTree &originalTree)
     this->assembleDepthFirstClusterVector();
 }
 
+long ClusterTree::size() const
+{
+    if(rootCluster != nullptr)
+    {
+        return rootCluster->size();
+    }
+    return 0;
+}
+
+long ClusterTree::startIndex() const
+{
+    if(rootCluster != nullptr)
+    {
+        return rootCluster->startIndex();
+    }
+    return 0;
+}
+
 Cuboid ClusterTree::minimalCuboidForTriangles(QVector<VectorTriangle> triangles) const
 {
     Cuboid cuboid;
@@ -126,6 +144,17 @@ Cuboid ClusterTree::minimalCuboidForIndices(const QVector<long> &triangleIndices
     return cuboid;
 }
 
+Cuboid ClusterTree::minimalCuboidForIndices(const QVector<long> &pointIndices, const QVector<Eigen::Vector3d>* points) const
+{
+    Cuboid cuboid;
+    for(int i=0; i<pointIndices.size(); i++)
+    {
+        long tmpIndex = pointIndices.at(i);
+        cuboid |= points->at(tmpIndex);
+    }
+    return cuboid;
+}
+
 std::tuple<Cuboid, Cuboid> ClusterTree::splitQuboid(Cuboid quboid) const
 {
     Eigen::Vector3d cuboidSideLengths=quboid.maxPoint-quboid.minPoint;
@@ -166,6 +195,18 @@ bool ClusterTree::isInCuboid(const long index, const LinearBoundaryElements* lin
 bool ClusterTree::isInCuboid(const long index, const QVector<VectorTriangle>* triangles, const Cuboid cuboid)
 {
     if( ((cuboid.maxPoint - triangles->at(index).triangleMidpoint).array() >= 0 ).all()  &&  ((cuboid.minPoint - triangles->at(index).triangleMidpoint).array() <= 0 ).all() )
+    {
+       return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool ClusterTree::isInCuboid(const long index, const QVector<Eigen::Vector3d>* points, const Cuboid cuboid)
+{
+    if( ((cuboid.maxPoint - points->at(index)).array() >= 0 ).all()  &&  ((cuboid.minPoint - points->at(index)).array() <= 0 ).all() )
     {
        return true;
     }
@@ -284,6 +325,26 @@ void ClusterTree::recursiveReorder(Cluster* cluster, long &globalNodeIndex, Line
         recursiveReorder(cluster->son1, globalNodeIndex, linearBoundaryElements, boundaryElementsCopy);
         recursiveReorder(cluster->son2, globalNodeIndex, linearBoundaryElements, boundaryElementsCopy);
 
+        cluster->indices = global::createContiguousIndexVector(cluster->son1->indices.first(), cluster->son2->indices.last());
+    }
+}
+
+void ClusterTree::recursiveReorder(Cluster* cluster, long &globalPointIndex, QVector<Eigen::Vector3d>* points, const QVector<Eigen::Vector3d> &pointsCopy)
+{
+    if(cluster->isLeaf)
+    {
+        long numberOfPoints = cluster->indices.length();
+        for(int i = 0; i < numberOfPoints; i++)
+        {
+            (*points)[globalPointIndex] = pointsCopy.at(cluster->indices.at(i));
+            cluster->indices[i] = globalPointIndex;
+            globalPointIndex++;
+        }
+    }
+    else
+    {
+        recursiveReorder(cluster->son1, globalPointIndex, points, pointsCopy);
+        recursiveReorder(cluster->son2, globalPointIndex, points, pointsCopy);
         cluster->indices = global::createContiguousIndexVector(cluster->son1->indices.first(), cluster->son2->indices.last());
     }
 }

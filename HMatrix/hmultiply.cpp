@@ -135,6 +135,34 @@ HMultiply::HMultiply()
 
 }
 
+HMatrix HMultiply::multiplyHMat(BlockCluster* factor1, BlockCluster* factor2, const long rank, const double relError)
+{
+    intermBlCl* productRootBlockCluster = new intermBlCl(factor1->rowCluster, factor2->columnCluster, true);
+    MM(factor1, factor2, productRootBlockCluster); // create product tree and save factor blocks into the product nodes
+    recursProdPartition(productRootBlockCluster, factor1, factor2);  // determine the eventual leave nodes in the product tree
+
+    QVector<intermBlCl*> fullTransitBlocks;
+    findFullFlushTargets(productRootBlockCluster, fullTransitBlocks); // connect all product tree nodes with information with their respective eventual leaf nodes
+
+    findRkFlushTargets(productRootBlockCluster);
+
+    QVector<intermBlCl*> independentWorkBlocks;
+    findIndependentWorkBlocks(productRootBlockCluster, independentWorkBlocks);
+
+    startWorkOnIndependentBlocks(independentWorkBlocks, rank, relError);
+
+    // convert the intermittent blocks into regular blocks
+    BlockCluster* rootBlockCluster = intermBlClToBlockCluster(productRootBlockCluster);
+    rootBlockCluster->isRoot = true;
+    HMatrix product(rootBlockCluster);
+
+    if(product.consistencyCheck() == false)
+    {
+        std::cerr << "product.consistencyCheck() == false" << std::endl;
+    }
+    product.updatePartition();
+    return product;
+}
 
 HMatrix HMultiply::multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long rank, const double relError)
 {
@@ -159,38 +187,9 @@ HMatrix HMultiply::multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long r
         std::cerr << "factor2.consistencyCheck() == false" << std::endl;
     }
 
-//    BlockCluster* rootBlockCluster = new BlockCluster(factor1.getRootBlock()->rowCluster, factor2.getRootBlock()->columnCluster, true);
-//    BlockClusterTree product = BlockClusterTree(/*factor1.getRowClustertree(), factor2.getColumnClustertree(), */rootBlockCluster);
+    HMatrix product = multiplyHMat(factor1.getRootBlock(), factor2.getRootBlock(), rank, relError);
+    product.setClusterTrees(factor1.getRowClustertree(), factor2.getColumnClustertree());
 
-    intermBlCl* productRootBlockCluster = new intermBlCl(factor1.getRootBlock()->rowCluster, factor2.getRootBlock()->columnCluster, true);
-    MM(factor1.getRootBlock(), factor2.getRootBlock(), productRootBlockCluster); // create product tree and save factor blocks into the product nodes
-    recursProdPartition(productRootBlockCluster, factor1.getRootBlock(), factor2.getRootBlock());  // determine the eventual leave nodes in the product tree
-
-    QVector<intermBlCl*> fullTransitBlocks;
-    findFullFlushTargets(productRootBlockCluster, fullTransitBlocks); // connect all product tree nodes with information with their respective eventual leaf nodes
-
-    findRkFlushTargets(productRootBlockCluster);
-
-    QVector<intermBlCl*> independentWorkBlocks;
-    findIndependentWorkBlocks(productRootBlockCluster, independentWorkBlocks);
-
-    startWorkOnIndependentBlocks(independentWorkBlocks, rank, relError);
-
-    // convert the intermittent blocks into regular blocks // at the moment they are expensively copied
-//    intermBlClToBlockCluster(product.getRootBlock(), productRootBlockCluster);
-//    product.setRootBlock(intermBlClToBlockCluster(productRootBlockCluster));
-
-    BlockCluster* rootBlockCluster = intermBlClToBlockCluster(productRootBlockCluster);
-    rootBlockCluster->isRoot = true;
-    HMatrix product(rootBlockCluster);
-//    productRootBlockCluster->clear();
-//    delete productRootBlockCluster;
-
-    if(product.consistencyCheck() == false)
-    {
-        std::cerr << "product.consistencyCheck() == false" << std::endl;
-    }
-    product.updatePartition();
     return product;
 }
 
@@ -522,7 +521,7 @@ void HMultiply::processBlocksDownWardRecursion(intermBlCl* productBlock, const l
 
 void HMultiply::mergeSubtree(intermBlCl* productBlock/*, intermBlCl *nextHighestRkBlock*/, const long rank, const double relError)
 {
-    if(productBlock->intSon11 != nullptr) // block has non-trivial subtree -> process sons first, so that their resulst can be agglomerated
+    if(productBlock->intSon11 != nullptr) // block has non-trivial subtree -> process sons first, so that their results can be agglomerated
     {
         mergeSubtree(productBlock->intSon11, rank, relError);
         mergeSubtree(productBlock->intSon12, rank, relError);

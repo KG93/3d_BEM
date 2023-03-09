@@ -3,3 +3,6 @@ compile_commands.json
 Doxygen/html
 Doxygen/latex
 
+build-Tests*/
+Tests/Tests.pro.user
+

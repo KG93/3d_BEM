@@ -1,10 +1,12 @@
 #ifndef FIELDSECTION_H
 #define FIELDSECTION_H
+
 #include "global.h"
 #include "nodesfield.h"
 #include "boundaryfield.h"
 #include "meshfield.h"
 #include "globallogstrings.h"
+
 #include <QSet>
 #include <QString>
 

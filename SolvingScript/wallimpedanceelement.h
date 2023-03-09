@@ -1,5 +1,6 @@
 #ifndef WALLIMPEDANCEELEMENT_H
 #define WALLIMPEDANCEELEMENT_H
+
 #include "robinboundarycondition.h"
 
 #include <QString>

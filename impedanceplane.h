@@ -1,5 +1,6 @@
 #ifndef IMPEDANCEPLANE_H
 #define IMPEDANCEPLANE_H
+
 #include <eigen3/Eigen/Geometry>
 #include "robinboundarycondition.h"
 

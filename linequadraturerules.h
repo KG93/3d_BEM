@@ -1,5 +1,6 @@
 #ifndef LINEQUADRATURERULES_H
 #define LINEQUADRATURERULES_H
+
 #include <eigen3/Eigen/Geometry>
 
 /**

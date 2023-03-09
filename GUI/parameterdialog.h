@@ -1,7 +1,7 @@
 #ifndef PARAMETERDIALOG_H
 #define PARAMETERDIALOG_H
 
-#include "../global.h"
+#include "global.h"
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QDialog>

@@ -1,6 +1,8 @@
 #ifndef BESPECTRUMSECTION_H
 #define BESPECTRUMSECTION_H
+
 #include <QString>
+
 #include "global.h"
 #include "bespectrumitem.h"
 #include "globallogstrings.h"

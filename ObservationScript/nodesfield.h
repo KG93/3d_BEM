@@ -1,5 +1,6 @@
 #ifndef FIELD_H
 #define FIELD_H
+
 #include "global.h"
 
 /**
