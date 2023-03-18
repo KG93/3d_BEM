@@ -209,14 +209,14 @@ bool BlockCluster::hasFourChildren() const
     return (this->son11 != nullptr) && (this->son12 != nullptr) && (this->son21 != nullptr) && (this->son22 != nullptr);
 }
 
-void BlockCluster::getPartition(const BlockCluster* block, QVector<const BlockCluster*> &partition)
+void BlockCluster::getPartition(const BlockCluster &block, QVector<const BlockCluster*> &partition)
 {
-    if(block->isLeaf) // block is in partition
+    if(block.isLeaf) // block is in partition
     {
-        if(block->fullMat.size() != 0 || block->singularValues.size() != 0)
+        if(block.fullMat.size() != 0 || block.singularValues.size() != 0)
         {
             #pragma omp critical
-            partition.push_back(block);
+            partition.push_back(&block);
         }
     }
     else // block has leaves in blockclustertree
@@ -225,39 +225,41 @@ void BlockCluster::getPartition(const BlockCluster* block, QVector<const BlockCl
         {
             #pragma omp section
             {
-                if(block->son11 != nullptr)
+                if(block.son11 != nullptr)
                 {
-                    BlockCluster::getPartition(block->son11, partition);
+                    BlockCluster::getPartition(* block.son11, partition);
                 }
             }
             #pragma omp section
             {
-                if(block->son12 != nullptr)
+                if(block.son12 != nullptr)
                 {
-                    BlockCluster::getPartition(block->son12, partition);
+                    BlockCluster::getPartition(* block.son12, partition);
                 }
             }
             #pragma omp section
             {
-                if(block->son21 != nullptr)
+                if(block.son21 != nullptr)
                 {
-                    BlockCluster::getPartition(block->son21, partition);
+                    BlockCluster::getPartition(* block.son21, partition);
                 }
             }
             #pragma omp section
             {
-                if(block->son22 != nullptr)
+                if(block.son22 != nullptr)
                 {
-                    BlockCluster::getPartition(block->son22, partition);
+                    BlockCluster::getPartition(* block.son22, partition);
                 }
             }
         }
     }
 }
 
-BlockCluster* BlockCluster::returnCopy(BlockCluster* father, long rank, double error, bool originalIsInSVDFormat) // returns a pointer to a copy of the entire subtree of this
+/*std::unique_ptr<BlockCluster>*/BlockCluster* BlockCluster::returnCopy(BlockCluster* father, long rank, double error, bool originalIsInSVDFormat) // returns a pointer to a copy of the entire subtree of this
 {
-    BlockCluster* returnCluster = new BlockCluster;
+//    std::unique_ptr<BlockCluster> returnCluster = std::make_unique<BlockCluster>();;
+    BlockCluster* returnCluster = new BlockCluster();
+
     *returnCluster = *this;
     if(returnCluster->isAdmissible && returnCluster->singularValues.size() > 0)
     {
@@ -283,6 +285,7 @@ BlockCluster* BlockCluster::returnCopy(BlockCluster* father, long rank, double e
     {
         if(this->son11 != nullptr)
         {
+//            returnCluster->son11 = this->son11->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
             returnCluster->son11 = this->son11->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else
@@ -291,6 +294,7 @@ BlockCluster* BlockCluster::returnCopy(BlockCluster* father, long rank, double e
         }
         if(this->son12 != nullptr)
         {
+//            returnCluster->son12 = this->son12->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
             returnCluster->son12 = this->son12->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else
@@ -299,6 +303,7 @@ BlockCluster* BlockCluster::returnCopy(BlockCluster* father, long rank, double e
         }
         if(this->son21 != nullptr)
         {
+//            returnCluster->son21 = this->son21->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
             returnCluster->son21 = this->son21->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else
@@ -307,6 +312,7 @@ BlockCluster* BlockCluster::returnCopy(BlockCluster* father, long rank, double e
         }
         if(this->son22 != nullptr)
         {
+//            returnCluster->son22 = this->son22->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
             returnCluster->son22 = this->son22->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else

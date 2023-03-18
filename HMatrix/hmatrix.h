@@ -48,8 +48,8 @@ class BlockCluster
     bool hasNan() const; /*!< \brief Check whether the block contains any NaNs. */
     double norm(); /*!< \brief Get the Frobenius norm of the block. */
     bool hasFourChildren() const;  /*!< \brief Check whether the block is cross partitioned. */
-    static void getPartition(const BlockCluster *block, QVector<const BlockCluster *> &partition); /*!< \brief Calculate the partition vector that corresponds to the H-matrix/blockcluster tree.  */
-    BlockCluster* returnCopy(BlockCluster* father = nullptr, long rank = 0, double error = 0, bool originalIsInSVDFormat = false); /*!< \brief Returns a pointer to a copy of the entire subtree of this. */
+    static void getPartition(const BlockCluster &block, QVector<const BlockCluster *> &partition); /*!< \brief Calculate the partition vector that corresponds to the H-matrix/blockcluster tree.  */
+    BlockCluster *returnCopy(BlockCluster* father = nullptr, long rank = 0, double error = 0, bool originalIsInSVDFormat = false); /*!< \brief Returns a pointer to a copy of the entire subtree of this. */
 
     Eigen::VectorXcd row(long colIndex) const; /*!< \brief Get block row. */
     Eigen::VectorXcd col(long colIndex) const; /*!< \brief Get block column. */

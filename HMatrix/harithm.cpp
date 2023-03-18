@@ -33,7 +33,7 @@ void HArithm::VMM(Eigen::RowVectorXcd &y, const Eigen::RowVectorXcd &x, HMatrix 
     #pragma omp parallel for
     for(long i = 0; i < minPartition.length(); i++)
     {
-        BlockCluster *tmpBlock = minPartition.at(i);
+        BlockCluster* tmpBlock = minPartition.at(i);
         long rowStartIndex = tmpBlock->rowStartIndex();
         long numberOfRows = tmpBlock->rows();
         long columnStartIndex = tmpBlock->colStartIndex();
@@ -323,55 +323,55 @@ void HArithm::addHMat2ToHMat1SamePartition(HMatrix &matrix1, HMatrix &matrix2, c
     }
 }
 
-void HArithm::matByBlock(const Eigen::MatrixXcd &lFactor, const BlockCluster *rFactorBlock, long columnOffsetFactor1, long columnOffsetFactor2, Eigen::MatrixXcd& product)
+void HArithm::matByBlock(const Eigen::MatrixXcd &lFactor, const BlockCluster &rFactorBlock, long columnOffsetFactor1, long columnOffsetFactor2, Eigen::MatrixXcd &product)
 {
-    if(rFactorBlock->isLeaf)
+    if(rFactorBlock.isLeaf)
     {
-        long rowStartIndex = rFactorBlock->rowStartIndex();
-        long numberOfRows = rFactorBlock->rows();
-        long columnStartIndex = rFactorBlock->colStartIndex();
-        long numberOfColumns = rFactorBlock->cols();
-        if(rFactorBlock->isAdmissible) // far field block
+        long rowStartIndex = rFactorBlock.rowStartIndex();
+        long numberOfRows = rFactorBlock.rows();
+        long columnStartIndex = rFactorBlock.colStartIndex();
+        long numberOfColumns = rFactorBlock.cols();
+        if(rFactorBlock.isAdmissible) // far field block
         {
-            product.block(0, columnStartIndex-columnOffsetFactor2, lFactor.rows(), numberOfColumns).noalias() += (lFactor.block(0, rowStartIndex-columnOffsetFactor1, lFactor.rows(), numberOfRows) * rFactorBlock->UMat )* rFactorBlock->singularValues.asDiagonal() * rFactorBlock->VAdjMat ;
+            product.block(0, columnStartIndex-columnOffsetFactor2, lFactor.rows(), numberOfColumns).noalias() += (lFactor.block(0, rowStartIndex-columnOffsetFactor1, lFactor.rows(), numberOfRows) * rFactorBlock.UMat )* rFactorBlock.singularValues.asDiagonal() * rFactorBlock.VAdjMat ;
         }
         else // near field block
         {
-            product.block(0, columnStartIndex-columnOffsetFactor2, lFactor.rows(), numberOfColumns).noalias() += lFactor.block(0, rowStartIndex-columnOffsetFactor1, lFactor.rows(), numberOfRows) * rFactorBlock->fullMat;
+            product.block(0, columnStartIndex-columnOffsetFactor2, lFactor.rows(), numberOfColumns).noalias() += lFactor.block(0, rowStartIndex-columnOffsetFactor1, lFactor.rows(), numberOfRows) * rFactorBlock.fullMat;
         }
     }
     else
     {
-        matByBlock(lFactor, rFactorBlock->son11, columnOffsetFactor1, columnOffsetFactor2, product);
-        matByBlock(lFactor, rFactorBlock->son12, columnOffsetFactor1, columnOffsetFactor2, product);
-        matByBlock(lFactor, rFactorBlock->son21, columnOffsetFactor1, columnOffsetFactor2, product);
-        matByBlock(lFactor, rFactorBlock->son22, columnOffsetFactor1, columnOffsetFactor2, product);
+        matByBlock(lFactor, * rFactorBlock.son11, columnOffsetFactor1, columnOffsetFactor2, product);
+        matByBlock(lFactor, * rFactorBlock.son12, columnOffsetFactor1, columnOffsetFactor2, product);
+        matByBlock(lFactor, * rFactorBlock.son21, columnOffsetFactor1, columnOffsetFactor2, product);
+        matByBlock(lFactor, * rFactorBlock.son22, columnOffsetFactor1, columnOffsetFactor2, product);
     }
 }
 
-void HArithm::blockByMat(const BlockCluster* lFactorBlock, const Eigen::MatrixXcd& rFactor, long rowOffsetFactor1, long rowOffsetFactor2, Eigen::MatrixXcd& product)
+void HArithm::blockByMat(const BlockCluster &lFactorBlock, const Eigen::MatrixXcd &rFactor, long rowOffsetFactor1, long rowOffsetFactor2, Eigen::MatrixXcd &product)
 {
-    if(lFactorBlock->isLeaf)
+    if(lFactorBlock.isLeaf)
     {
-        long rowStartIndex = lFactorBlock->rowStartIndex();
-        long numberOfRows = lFactorBlock->rows();
-        long columnStartIndex = lFactorBlock->colStartIndex();
-        long numberOfColumns = lFactorBlock->cols();
-        if(lFactorBlock->isAdmissible) // far field block
+        long rowStartIndex = lFactorBlock.rowStartIndex();
+        long numberOfRows = lFactorBlock.rows();
+        long columnStartIndex = lFactorBlock.colStartIndex();
+        long numberOfColumns = lFactorBlock.cols();
+        if(lFactorBlock.isAdmissible) // far field block
         {
-            product.block(rowStartIndex-rowOffsetFactor1, 0, numberOfRows, rFactor.cols()).noalias() += lFactorBlock->UMat * lFactorBlock->singularValues.asDiagonal() * (lFactorBlock->VAdjMat * rFactor.block(columnStartIndex-rowOffsetFactor2,0,numberOfColumns,rFactor.cols()));
+            product.block(rowStartIndex-rowOffsetFactor1, 0, numberOfRows, rFactor.cols()).noalias() += lFactorBlock.UMat * lFactorBlock.singularValues.asDiagonal() * (lFactorBlock.VAdjMat * rFactor.block(columnStartIndex-rowOffsetFactor2,0,numberOfColumns,rFactor.cols()));
         }
         else // near field block
         {
-            product.block(rowStartIndex-rowOffsetFactor1, 0, numberOfRows, rFactor.cols()).noalias() += lFactorBlock->fullMat * rFactor.block(columnStartIndex-rowOffsetFactor2,0,numberOfColumns,rFactor.cols());
+            product.block(rowStartIndex-rowOffsetFactor1, 0, numberOfRows, rFactor.cols()).noalias() += lFactorBlock.fullMat * rFactor.block(columnStartIndex-rowOffsetFactor2,0,numberOfColumns,rFactor.cols());
         }
     }
     else
     {
-        blockByMat(lFactorBlock->son11, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
-        blockByMat(lFactorBlock->son12, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
-        blockByMat(lFactorBlock->son21, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
-        blockByMat(lFactorBlock->son22, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
+        blockByMat(* lFactorBlock.son11, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
+        blockByMat(* lFactorBlock.son12, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
+        blockByMat(* lFactorBlock.son21, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
+        blockByMat(* lFactorBlock.son22, rFactor, rowOffsetFactor1, rowOffsetFactor2, product);
     }
 }
 
@@ -513,35 +513,35 @@ void HArithm::addrkMatToFull(Eigen::MatrixXcd &fullMat, const Eigen::MatrixXcd &
     }
 }
 
-void HArithm::transportSubblockInToFullAncestorBlock(BlockCluster* ancestorBlock, BlockCluster* subBlock)
+void HArithm::transportSubblockInToFullAncestorBlock(BlockCluster &ancestorBlock, BlockCluster &subBlock)
 {
-    long rows = ancestorBlock->rows();
-    long cols = ancestorBlock->cols();
+    long rows = ancestorBlock.rows();
+    long cols = ancestorBlock.cols();
 
-    if(subBlock->fullMat.size() != 0 || subBlock->UMat.size() != 0)
+    if(subBlock.fullMat.size() != 0 || subBlock.UMat.size() != 0)
     {
-        if(subBlock->UMat.size() != 0)
+        if(subBlock.UMat.size() != 0)
         {
-            addrkMatToFull(subBlock->fullMat, subBlock->UMat, subBlock->singularValues, subBlock->VAdjMat);
+            addrkMatToFull(subBlock.fullMat, subBlock.UMat, subBlock.singularValues, subBlock.VAdjMat);
         }
-        if(ancestorBlock->fullMat.size() == 0)
+        if(ancestorBlock.fullMat.size() == 0)
         {
-            ancestorBlock->fullMat = Eigen::MatrixXcd::Zero(rows, cols);
+            ancestorBlock.fullMat = Eigen::MatrixXcd::Zero(rows, cols);
         }
 
-        long subRows = subBlock->rows();
-        long subCols = subBlock->cols();
-        long subBlockRelativeRowStartIndex = subBlock->rowStartIndex() - ancestorBlock->rowStartIndex();
-        long subBlockRelativeColStartIndex = subBlock->colStartIndex() - ancestorBlock->colStartIndex();
+        long subRows = subBlock.rows();
+        long subCols = subBlock.cols();
+        long subBlockRelativeRowStartIndex = subBlock.rowStartIndex() - ancestorBlock.rowStartIndex();
+        long subBlockRelativeColStartIndex = subBlock.colStartIndex() - ancestorBlock.colStartIndex();
 
         #pragma omp critical
-        ancestorBlock->fullMat.block(subBlockRelativeRowStartIndex, subBlockRelativeColStartIndex, subRows, subCols) += subBlock->fullMat;
+        ancestorBlock.fullMat.block(subBlockRelativeRowStartIndex, subBlockRelativeColStartIndex, subRows, subCols) += subBlock.fullMat;
 
-        subBlock->clearMatrixInfo();
-        ancestorBlock -> isLeaf = true;
-        ancestorBlock -> isAdmissible = false;
+        subBlock.clearMatrixInfo();
+        ancestorBlock . isLeaf = true;
+        ancestorBlock . isAdmissible = false;
     }
-    subBlock -> isLeaf = false;
+    subBlock . isLeaf = false;
 }
 
 void HArithm::setRkMatrixZero(BlockCluster &block)
@@ -558,302 +558,302 @@ void HArithm::clearRkMatrix(BlockCluster &block)
     block.VAdjMat.resize(0,0);
 }
 
-void HArithm::fullRankDirektAgglomerationWithTrimming(BlockCluster* block)
+void HArithm::fullRankDirektAgglomerationWithTrimming(BlockCluster &block)
 {
     fullRankDirektAgglomeration(block);
-    block->trimBelow();
+    block.trimBelow();
 }
 
-void HArithm::fullRankDirektAgglomeration(BlockCluster* block)
+void HArithm::fullRankDirektAgglomeration(BlockCluster &block)
 {
-    if(block->UMat.size() != 0)
+    if(block.UMat.size() != 0)
     {
-        addrkMatToFull(block->fullMat, block->UMat, block->singularValues, block->VAdjMat);
-        clearRkMatrix(*block);
+        addrkMatToFull(block.fullMat, block.UMat, block.singularValues, block.VAdjMat);
+        clearRkMatrix(block);
     }
-    QVector<BlockCluster*> subBlocksWithInformation = HMatrix::getSubBlocksWithMatrixInformation(block);
+    QVector<BlockCluster*> subBlocksWithInformation = HMatrix::getSubBlocksWithMatrixInformation(&block);
     #pragma omp parallel for
     for(long blockIndex = 0; blockIndex < subBlocksWithInformation.length(); blockIndex++)
     {
-        // add subblocks to block->fullmat
-        transportSubblockInToFullAncestorBlock(block, subBlocksWithInformation.at(blockIndex));
+        // add subblocks to block.fullmat
+        transportSubblockInToFullAncestorBlock(block, * subBlocksWithInformation.at(blockIndex));
     }
-    block->isAdmissible = false;
-    if(block->fullMat.size() != 0)
+    block.isAdmissible = false;
+    if(block.fullMat.size() != 0)
     {
-        block -> isLeaf = true;
+        block . isLeaf = true;
     }
 }
 
-void HArithm::fullRankAgglomerationWithTrimming(BlockCluster* block)
+void HArithm::fullRankAgglomerationWithTrimming(BlockCluster &block)
 {
     fullRankAgglomeration(block);
-    block->trimBelow();
+    block.trimBelow();
 }
 
 
-void HArithm::fullRankAgglomeration(BlockCluster* block) //agglomerates all subblocks into the full matrix of the argument block
+void HArithm::fullRankAgglomeration(BlockCluster &block) //agglomerates all subblocks into the full matrix of the argument block
 {
-    long rowIndexStart = block->rowStartIndex();
-    long numberOfRows = block->rows();
-    long columnIndexStart = block->colStartIndex();
-    long numberOfColumns = block->cols();
+    long rowIndexStart = block.rowStartIndex();
+    long numberOfRows = block.rows();
+    long columnIndexStart = block.colStartIndex();
+    long numberOfColumns = block.cols();
 
 
-    if(block->UMat.size() != 0)
+    if(block.UMat.size() != 0)
     {
-        addrkMatToFull(block->fullMat, block->UMat, block->singularValues, block->VAdjMat);
-        clearRkMatrix(*block);
+        addrkMatToFull(block.fullMat, block.UMat, block.singularValues, block.VAdjMat);
+        clearRkMatrix(block);
     }
-    if(block->fullMat.size() == 0)
+    if(block.fullMat.size() == 0)
     {
-        block->fullMat = Eigen::MatrixXcd::Zero(numberOfRows, numberOfColumns);
+        block.fullMat = Eigen::MatrixXcd::Zero(numberOfRows, numberOfColumns);
     }
-    block->isLeaf = true;
-    block->isAdmissible = false;
+    block.isLeaf = true;
+    block.isAdmissible = false;
 
-    if(block->son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-        long sonRowIndexStart = block->son11->rowCluster->indices.first();
-        long sonNumberOfRows = block->son11->rows();
-        long sonColumnIndexStart = block->son11->columnCluster->indices.first();
-        long sonNumberOfColumns = block->son11->cols();
-        block->fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(block->son11);
+        long sonRowIndexStart = block.son11->rowCluster->indices.first();
+        long sonNumberOfRows = block.son11->rows();
+        long sonColumnIndexStart = block.son11->columnCluster->indices.first();
+        long sonNumberOfColumns = block.son11->cols();
+        block.fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(* block.son11);
     }
-    if(block->son12 != nullptr)
+    if(block.son12 != nullptr)
     {
-        long sonRowIndexStart = block->son12->rowCluster->indices.first();
-        long sonNumberOfRows = block->son12->rows();
-        long sonColumnIndexStart = block->son12->columnCluster->indices.first();
-        long sonNumberOfColumns = block->son12->cols();
-        block->fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(block->son12);
+        long sonRowIndexStart = block.son12->rowCluster->indices.first();
+        long sonNumberOfRows = block.son12->rows();
+        long sonColumnIndexStart = block.son12->columnCluster->indices.first();
+        long sonNumberOfColumns = block.son12->cols();
+        block.fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(* block.son12);
     }
-    if(block->son21 != nullptr)
+    if(block.son21 != nullptr)
     {
-        long sonRowIndexStart = block->son21->rowCluster->indices.first();
-        long sonNumberOfRows = block->son21->rows();
-        long sonColumnIndexStart = block->son21->columnCluster->indices.first();
-        long sonNumberOfColumns = block->son21->cols();
-        block->fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(block->son21);
+        long sonRowIndexStart = block.son21->rowCluster->indices.first();
+        long sonNumberOfRows = block.son21->rows();
+        long sonColumnIndexStart = block.son21->columnCluster->indices.first();
+        long sonNumberOfColumns = block.son21->cols();
+        block.fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(* block.son21);
     }
-    if(block->son22 != nullptr)
+    if(block.son22 != nullptr)
     {
-        long sonRowIndexStart = block->son22->rowCluster->indices.first();
-        long sonNumberOfRows = block->son22->rows();
-        long sonColumnIndexStart = block->son22->columnCluster->indices.first();
-        long sonNumberOfColumns = block->son22->cols();
-        block->fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(block->son22);
+        long sonRowIndexStart = block.son22->rowCluster->indices.first();
+        long sonNumberOfRows = block.son22->rows();
+        long sonColumnIndexStart = block.son22->columnCluster->indices.first();
+        long sonNumberOfColumns = block.son22->cols();
+        block.fullMat.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += fullRankAgglomerationRecursion(* block.son22);
     }
 }
 
-Eigen::MatrixXcd HArithm::fullRankAgglomerationRecursion(BlockCluster* block) //agglomerates all subblocks into the full return matrix
+Eigen::MatrixXcd HArithm::fullRankAgglomerationRecursion(BlockCluster &block) //agglomerates all subblocks into the full return matrix
 {
     Eigen::MatrixXcd son11Matrix, son12Matrix, son21Matrix, son22Matrix;
-    if(block->son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-        son11Matrix = fullRankAgglomerationRecursion(block->son11);
+        son11Matrix = fullRankAgglomerationRecursion(* block.son11);
     }
-    if(block->son12 != nullptr)
+    if(block.son12 != nullptr)
     {
-        son12Matrix = fullRankAgglomerationRecursion(block->son12);
+        son12Matrix = fullRankAgglomerationRecursion(* block.son12);
     }
-    if(block->son21 != nullptr)
+    if(block.son21 != nullptr)
     {
-        son21Matrix = fullRankAgglomerationRecursion(block->son21);
+        son21Matrix = fullRankAgglomerationRecursion(* block.son21);
     }
-    if(block->son22 != nullptr)
+    if(block.son22 != nullptr)
     {
-       son22Matrix = fullRankAgglomerationRecursion(block->son22);
+       son22Matrix = fullRankAgglomerationRecursion(* block.son22);
     }
 
-    long rowIndexStart = block->rowStartIndex();
-    long numberOfRows = block->rows();
-    long columnIndexStart = block->colStartIndex();
-    long numberOfColumns = block->cols();
+    long rowIndexStart = block.rowStartIndex();
+    long numberOfRows = block.rows();
+    long columnIndexStart = block.colStartIndex();
+    long numberOfColumns = block.cols();
     Eigen::MatrixXcd returnMatrix = Eigen::MatrixXcd::Zero(numberOfRows, numberOfColumns);
 
-    if(block->son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-        long sonRowIndexStart = block->son11->rowStartIndex();
-        long sonNumberOfRows = block->son11->rows();
-        long sonColumnIndexStart = block->son11->colStartIndex();
-        long sonNumberOfColumns = block->son11->cols();
+        long sonRowIndexStart = block.son11->rowStartIndex();
+        long sonNumberOfRows = block.son11->rows();
+        long sonColumnIndexStart = block.son11->colStartIndex();
+        long sonNumberOfColumns = block.son11->cols();
         returnMatrix.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += son11Matrix;
     }
-    if(block->son12 != nullptr)
+    if(block.son12 != nullptr)
     {
-        long sonRowIndexStart = block->son12->rowStartIndex();
-        long sonNumberOfRows = block->son12->rows();
-        long sonColumnIndexStart = block->son12->colStartIndex();
-        long sonNumberOfColumns = block->son12->cols();
+        long sonRowIndexStart = block.son12->rowStartIndex();
+        long sonNumberOfRows = block.son12->rows();
+        long sonColumnIndexStart = block.son12->colStartIndex();
+        long sonNumberOfColumns = block.son12->cols();
         returnMatrix.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += son12Matrix;
     }
-    if(block->son21 != nullptr)
+    if(block.son21 != nullptr)
     {
-        long sonRowIndexStart = block->son21->rowStartIndex();
-        long sonNumberOfRows = block->son21->rows();
-        long sonColumnIndexStart = block->son21->colStartIndex();
-        long sonNumberOfColumns = block->son21->cols();
+        long sonRowIndexStart = block.son21->rowStartIndex();
+        long sonNumberOfRows = block.son21->rows();
+        long sonColumnIndexStart = block.son21->colStartIndex();
+        long sonNumberOfColumns = block.son21->cols();
         returnMatrix.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += son21Matrix;
     }
-    if(block->son22 != nullptr)
+    if(block.son22 != nullptr)
     {
-        long sonRowIndexStart = block->son22->rowStartIndex();
-        long sonNumberOfRows = block->son22->rows();
-        long sonColumnIndexStart = block->son22->colStartIndex();
-        long sonNumberOfColumns = block->son22->cols();
+        long sonRowIndexStart = block.son22->rowStartIndex();
+        long sonNumberOfRows = block.son22->rows();
+        long sonColumnIndexStart = block.son22->colStartIndex();
+        long sonNumberOfColumns = block.son22->cols();
         returnMatrix.block(sonRowIndexStart - rowIndexStart, sonColumnIndexStart - columnIndexStart, sonNumberOfRows, sonNumberOfColumns) += son22Matrix;
     }
 
-    if(block->UMat.size() != 0)
+    if(block.UMat.size() != 0)
     {
-        addrkMatToFull(returnMatrix, block->UMat, block->singularValues, block->VAdjMat);
-        clearRkMatrix(*block);
+        addrkMatToFull(returnMatrix, block.UMat, block.singularValues, block.VAdjMat);
+        clearRkMatrix(block);
     }
 
-    if(block->fullMat.size() != 0)
+    if(block.fullMat.size() != 0)
     {
-        returnMatrix += block->fullMat;
-        block->fullMat.resize(0,0);
+        returnMatrix += block.fullMat;
+        block.fullMat.resize(0,0);
     }
-    block->isLeaf = false;
+    block.isLeaf = false;
 
     return returnMatrix;
 }
 
-void HArithm::reducedRankAgglomerationWithTrimming(BlockCluster* block, const long rank, const double relError)
+void HArithm::reducedRankAgglomerationWithTrimming(BlockCluster &block, const long rank, const double relError)
 {
     reducedRankAgglomeration(block, rank, relError);
-    block->trimBelow();
+    block.trimBelow();
 }
 
-void HArithm::reducedRankAgglomeration(BlockCluster* block, const long rank, const double relError) //agglomerates all subblocks into the RK matrix of the argument block
+void HArithm::reducedRankAgglomeration(BlockCluster &block, const long rank, const double relError) //agglomerates all subblocks into the RK matrix of the argument block
 {
-//    long rowIndexStart = block->rowStartIndex();
-    long numberOfRows = block->rows();
-//    long columnIndexStart = block->colStartIndex();
-    long numberOfColumns = block->cols();
+//    long rowIndexStart = block.rowStartIndex();
+    long numberOfRows = block.rows();
+//    long columnIndexStart = block.colStartIndex();
+    long numberOfColumns = block.cols();
 
-    block->isLeaf = true;
-    block->isAdmissible = true;
+    block.isLeaf = true;
+    block.isAdmissible = true;
 
-    if(block->fullMat.size() != 0)
+    if(block.fullMat.size() != 0)
     {
-        fullMatRankReduction(*block, rank, relError); // function moves full matrix information into rk matrix
+        fullMatRankReduction(block, rank, relError); // function moves full matrix information into rk matrix
     }
 
     std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> tmp;
-    if(block->son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-//        long sonRowIndexStart = block->son11->rowStartIndex();
-        long sonNumberOfRows = block->son11->rows();
-//        long sonColumnIndexStart = block->son11->colStartIndex();
-        long sonNumberOfColumns = block->son11->cols();
-        tmp = reducedRankAgglomerationRecursion(block->son11, rank, relError);
+//        long sonRowIndexStart = block.son11->rowStartIndex();
+        long sonNumberOfRows = block.son11->rows();
+//        long sonColumnIndexStart = block.son11->colStartIndex();
+        long sonNumberOfColumns = block.son11->cols();
+        tmp = reducedRankAgglomerationRecursion(* block.son11, rank, relError);
         if( std::abs(std::get<1>(tmp)(0)) != 0) // if first singular value is zero -> whole matrix is zero
         {
             long sonRank = std::get<0>(tmp).cols();
 
             Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
             tmpUMat << std::get<0>(tmp), Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank);
-            horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+            horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-            joinVectorsInToFirstOne(block->singularValues, std::get<1>(tmp));
+            joinVectorsInToFirstOne(block.singularValues, std::get<1>(tmp));
 
             Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
             tmpVAdjMat << std::get<2>(tmp), Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns);
-            verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
-            RkMatRankReduction(*block, rank, relError);
+            verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
+            RkMatRankReduction(block, rank, relError);
         }
     }
-    if(block->son12 != nullptr)
+    if(block.son12 != nullptr)
     {
-//        long sonRowIndexStart = block->son12->rowStartIndex();
-        long sonNumberOfRows = block->son12->rows();
-//        long sonColumnIndexStart = block->son12->colStartIndex();
-        long sonNumberOfColumns = block->son12->cols();
-        tmp = reducedRankAgglomerationRecursion(block->son12, rank, relError);
+//        long sonRowIndexStart = block.son12->rowStartIndex();
+        long sonNumberOfRows = block.son12->rows();
+//        long sonColumnIndexStart = block.son12->colStartIndex();
+        long sonNumberOfColumns = block.son12->cols();
+        tmp = reducedRankAgglomerationRecursion(* block.son12, rank, relError);
         if( std::abs(std::get<1>(tmp)(0)) != 0)
         {
             long sonRank = std::get<0>(tmp).cols();
 
             Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
             tmpUMat << std::get<0>(tmp), Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank);
-            horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+            horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-            joinVectorsInToFirstOne(block->singularValues, std::get<1>(tmp));
+            joinVectorsInToFirstOne(block.singularValues, std::get<1>(tmp));
 
             Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
             tmpVAdjMat << Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns), std::get<2>(tmp);
-            verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
-            RkMatRankReduction(*block, rank, relError);
+            verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
+            RkMatRankReduction(block, rank, relError);
         }
     }
-    if(block->son21 != nullptr)
+    if(block.son21 != nullptr)
     {
-//        long sonRowIndexStart = block->son21->rowStartIndex();
-        long sonNumberOfRows = block->son21->rows();
-//        long sonColumnIndexStart = block->son21->colStartIndex();
-        long sonNumberOfColumns = block->son21->cols();
-        tmp = reducedRankAgglomerationRecursion(block->son21, rank, relError);
+//        long sonRowIndexStart = block.son21->rowStartIndex();
+        long sonNumberOfRows = block.son21->rows();
+//        long sonColumnIndexStart = block.son21->colStartIndex();
+        long sonNumberOfColumns = block.son21->cols();
+        tmp = reducedRankAgglomerationRecursion(* block.son21, rank, relError);
         if( std::abs(std::get<1>(tmp)(0)) != 0)
         {
             long sonRank = std::get<0>(tmp).cols();
 
             Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
             tmpUMat << Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank), std::get<0>(tmp);
-            horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+            horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-            joinVectorsInToFirstOne(block->singularValues, std::get<1>(tmp));
+            joinVectorsInToFirstOne(block.singularValues, std::get<1>(tmp));
 
             Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
             tmpVAdjMat << std::get<2>(tmp), Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns);
-            verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
-            RkMatRankReduction(*block, rank, relError);
+            verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
+            RkMatRankReduction(block, rank, relError);
         }
     }
-    if(block->son22 != nullptr)
+    if(block.son22 != nullptr)
     {
-//        long sonRowIndexStart = block->son22->rowStartIndex();
-        long sonNumberOfRows = block->son22->rows();
-//        long sonColumnIndexStart = block->son22->colStartIndex();
-        long sonNumberOfColumns = block->son22->cols();
-        tmp = reducedRankAgglomerationRecursion(block->son22, rank, relError);
+//        long sonRowIndexStart = block.son22->rowStartIndex();
+        long sonNumberOfRows = block.son22->rows();
+//        long sonColumnIndexStart = block.son22->colStartIndex();
+        long sonNumberOfColumns = block.son22->cols();
+        tmp = reducedRankAgglomerationRecursion(* block.son22, rank, relError);
         if( std::abs(std::get<1>(tmp)(0)) != 0)
         {
             long sonRank = std::get<0>(tmp).cols();
 
             Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
             tmpUMat << Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank), std::get<0>(tmp);
-            horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+            horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-            joinVectorsInToFirstOne(block->singularValues, std::get<1>(tmp));
+            joinVectorsInToFirstOne(block.singularValues, std::get<1>(tmp));
 
             Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
             tmpVAdjMat << Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns), std::get<2>(tmp);
-            verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
-            RkMatRankReduction(*block, rank, relError);
+            verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
+            RkMatRankReduction(block, rank, relError);
         }
     }
-    if(block->UMat.cols() != 0 || block->fullMat.size() != 0)
+    if(block.UMat.cols() != 0 || block.fullMat.size() != 0)
     {
-        block->isLeaf = true;
-        if(block->fullMat.size() != 0)
+        block.isLeaf = true;
+        if(block.fullMat.size() != 0)
         {
-            block->isAdmissible = false;
+            block.isAdmissible = false;
         }
         else
         {
-            block->isAdmissible = true;
+            block.isAdmissible = true;
         }
     }
     else
     {
-        block->isLeaf = false;
+        block.isLeaf = false;
     }
 }
 
-std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HArithm::reducedRankAgglomerationRecursion(BlockCluster* block, const long rank, const double relError) //agglomerates all subblocks into the full return matrix
+std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HArithm::reducedRankAgglomerationRecursion(BlockCluster &block, const long rank, const double relError) //agglomerates all subblocks into the full return matrix
 {
     std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> son11RKMatrix, son12RKMatrix, son21RKMatrix, son22RKMatrix; //reduced rank matrices for the sons of the block
     #pragma omp parallel
@@ -862,164 +862,164 @@ std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HArithm::reduce
         {
             #pragma omp section
             {
-                if(block->son11 != nullptr)
+                if(block.son11 != nullptr)
                 {
-                    son11RKMatrix = reducedRankAgglomerationRecursion(block->son11, rank, relError);
+                    son11RKMatrix = reducedRankAgglomerationRecursion(* block.son11, rank, relError);
                 }
             }
             #pragma omp section
             {
-                if(block->son12 != nullptr)
+                if(block.son12 != nullptr)
                 {
-                    son12RKMatrix = reducedRankAgglomerationRecursion(block->son12, rank, relError);
+                    son12RKMatrix = reducedRankAgglomerationRecursion(* block.son12, rank, relError);
                 }
             }
             #pragma omp section
             {
-                if(block->son21 != nullptr)
+                if(block.son21 != nullptr)
                 {
-                    son21RKMatrix = reducedRankAgglomerationRecursion(block->son21, rank, relError);
+                    son21RKMatrix = reducedRankAgglomerationRecursion(* block.son21, rank, relError);
                 }
             }
             #pragma omp section
             {
-                if(block->son22 != nullptr)
+                if(block.son22 != nullptr)
                 {
-                   son22RKMatrix = reducedRankAgglomerationRecursion(block->son22, rank, relError);
+                   son22RKMatrix = reducedRankAgglomerationRecursion(* block.son22, rank, relError);
                 }
             }
         }
     }
-//    long rowIndexStart = block->rowStartIndex();
-    long numberOfRows = block->rows();
-//    long columnIndexStart = block->colStartIndex();
-    long numberOfColumns = block->cols();
+//    long rowIndexStart = block.rowStartIndex();
+    long numberOfRows = block.rows();
+//    long columnIndexStart = block.colStartIndex();
+    long numberOfColumns = block.cols();
 
-    if(block->son11 != nullptr && std::abs(std::get<1>(son11RKMatrix)(0)) != 0)
+    if(block.son11 != nullptr && std::abs(std::get<1>(son11RKMatrix)(0)) != 0)
     {
-//        long sonRowIndexStart = block->son11->rowCluster->triangleIndexes.first();
-        long sonNumberOfRows = block->son11->rows();
-//        long sonColumnIndexStart = block->son11->columnCluster->triangleIndexes.first();
-        long sonNumberOfColumns = block->son11->cols();
+//        long sonRowIndexStart = block.son11->rowCluster->triangleIndexes.first();
+        long sonNumberOfRows = block.son11->rows();
+//        long sonColumnIndexStart = block.son11->columnCluster->triangleIndexes.first();
+        long sonNumberOfColumns = block.son11->cols();
         long sonRank = std::get<0>(son11RKMatrix).cols();
         Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
         tmpUMat << std::get<0>(son11RKMatrix), Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank);
-        horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+        horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-        joinVectorsInToFirstOne(block->singularValues, std::get<1>(son11RKMatrix));
+        joinVectorsInToFirstOne(block.singularValues, std::get<1>(son11RKMatrix));
 
         Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
         tmpVAdjMat << std::get<2>(son11RKMatrix), Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns);
-        verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
+        verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
 
-        RkMatRankReduction(*block, rank, relError);
+        RkMatRankReduction(block, rank, relError);
     }
-    if(block->son12 != nullptr && std::abs(std::get<1>(son12RKMatrix)(0)) != 0)
+    if(block.son12 != nullptr && std::abs(std::get<1>(son12RKMatrix)(0)) != 0)
     {
-//        long sonRowIndexStart = block->son12->rowCluster->triangleIndexes.first();
-        long sonNumberOfRows = block->son12->rows();
-//        long sonColumnIndexStart = block->son12->columnCluster->triangleIndexes.first();
-        long sonNumberOfColumns = block->son12->cols();
+//        long sonRowIndexStart = block.son12->rowCluster->triangleIndexes.first();
+        long sonNumberOfRows = block.son12->rows();
+//        long sonColumnIndexStart = block.son12->columnCluster->triangleIndexes.first();
+        long sonNumberOfColumns = block.son12->cols();
         long sonRank = std::get<0>(son12RKMatrix).cols();
 
         Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
         tmpUMat << std::get<0>(son12RKMatrix), Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank);
-        horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+        horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-        joinVectorsInToFirstOne(block->singularValues, std::get<1>(son12RKMatrix));
+        joinVectorsInToFirstOne(block.singularValues, std::get<1>(son12RKMatrix));
 
         Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
         tmpVAdjMat << Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns), std::get<2>(son12RKMatrix);
-        verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
+        verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
 
-        RkMatRankReduction(*block, rank, relError);
+        RkMatRankReduction(block, rank, relError);
     }
-    if(block->son21 != nullptr && std::abs(std::get<1>(son21RKMatrix)(0)) != 0)
+    if(block.son21 != nullptr && std::abs(std::get<1>(son21RKMatrix)(0)) != 0)
     {
-//        long sonRowIndexStart = block->son21->rowCluster->triangleIndexes.first();
-        long sonNumberOfRows = block->son21->rows();
-//        long sonColumnIndexStart = block->son21->columnCluster->triangleIndexes.first();
-        long sonNumberOfColumns = block->son21->cols();
+//        long sonRowIndexStart = block.son21->rowCluster->triangleIndexes.first();
+        long sonNumberOfRows = block.son21->rows();
+//        long sonColumnIndexStart = block.son21->columnCluster->triangleIndexes.first();
+        long sonNumberOfColumns = block.son21->cols();
         long sonRank = std::get<0>(son21RKMatrix).cols();
 
         Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
         tmpUMat << Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank), std::get<0>(son21RKMatrix);
-        horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+        horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-        joinVectorsInToFirstOne(block->singularValues, std::get<1>(son21RKMatrix));
+        joinVectorsInToFirstOne(block.singularValues, std::get<1>(son21RKMatrix));
 
         Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
         tmpVAdjMat << std::get<2>(son21RKMatrix), Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns);
-        verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
+        verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
 
-        RkMatRankReduction(*block, rank, relError);
+        RkMatRankReduction(block, rank, relError);
     }
-    if(block->son22 != nullptr && std::abs(std::get<1>(son22RKMatrix)(0)) != 0)
+    if(block.son22 != nullptr && std::abs(std::get<1>(son22RKMatrix)(0)) != 0)
     {
-//        long sonRowIndexStart = block->son22->rowCluster->triangleIndexes.first();
-        long sonNumberOfRows = block->son22->rows();
-//        long sonColumnIndexStart = block->son22->columnCluster->triangleIndexes.first();
-        long sonNumberOfColumns = block->son22->cols();
+//        long sonRowIndexStart = block.son22->rowCluster->triangleIndexes.first();
+        long sonNumberOfRows = block.son22->rows();
+//        long sonColumnIndexStart = block.son22->columnCluster->triangleIndexes.first();
+        long sonNumberOfColumns = block.son22->cols();
         long sonRank = std::get<0>(son22RKMatrix).cols();
 
         Eigen::MatrixXcd  tmpUMat = Eigen::MatrixXcd(numberOfRows, sonRank);
         tmpUMat << Eigen::MatrixXcd::Zero(numberOfRows - sonNumberOfRows, sonRank), std::get<0>(son22RKMatrix);
-        horizontalJoinMatricesInToFirstOne(block->UMat, tmpUMat);
+        horizontalJoinMatricesInToFirstOne(block.UMat, tmpUMat);
 
-        joinVectorsInToFirstOne(block->singularValues, std::get<1>(son22RKMatrix));
+        joinVectorsInToFirstOne(block.singularValues, std::get<1>(son22RKMatrix));
 
         Eigen::MatrixXcd  tmpVAdjMat = Eigen::MatrixXcd(sonRank, numberOfColumns);
         tmpVAdjMat << Eigen::MatrixXcd::Zero(sonRank, numberOfColumns - sonNumberOfColumns), std::get<2>(son22RKMatrix);
-        verticalJoinMatricesInToFirstOne(block->VAdjMat, tmpVAdjMat);
+        verticalJoinMatricesInToFirstOne(block.VAdjMat, tmpVAdjMat);
 
-        RkMatRankReduction(*block, rank, relError);
+        RkMatRankReduction(block, rank, relError);
     }
 
-    if(block->fullMat.size() != 0)
+    if(block.fullMat.size() != 0)
     {
-        fullMatRankReduction(*block, rank, relError);
+        fullMatRankReduction(block, rank, relError);
     }
 
-    if(block->UMat.size() == 0)
+    if(block.UMat.size() == 0)
     {
-        setRkMatrixZero(*block);
+        setRkMatrixZero(block);
     }
-    std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> returnRKMatrix = {block->UMat, block->singularValues, block->VAdjMat};
-    clearRkMatrix(*block);
+    std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> returnRKMatrix = {block.UMat, block.singularValues, block.VAdjMat};
+    clearRkMatrix(block);
 
-    block->isLeaf = false;
+    block.isLeaf = false;
     return returnRKMatrix;
 }
 
-void HArithm::blockSplitting(BlockCluster* block, const long rank, const double error)
+void HArithm::blockSplitting(BlockCluster &block, const long rank, const double error)
 {
-    if(block->fullMat.size() == 0 && block->UMat.size() == 0) // no work to do on block
+    if(block.fullMat.size() == 0 && block.UMat.size() == 0) // no work to do on block
     {
         return;
     }
-    else if(block->son11 == nullptr) // block is leaf node
+    else if(block.son11 == nullptr) // block is leaf node
     {
-         if(block->fullMat.size() != 0 && block->UMat.size()!= 0)
+         if(block.fullMat.size() != 0 && block.UMat.size()!= 0)
          {
-            block->fullMat.noalias() += block->UMat * block->singularValues.asDiagonal() * block->VAdjMat;
-            clearRkMatrix(*block);
-            block->isAdmissible = false;
+            block.fullMat.noalias() += block.UMat * block.singularValues.asDiagonal() * block.VAdjMat;
+            clearRkMatrix(block);
+            block.isAdmissible = false;
          }
-         else if( block->UMat.size()!= 0) //block is rk-matrix
+         else if( block.UMat.size()!= 0) //block is rk-matrix
          {
-            block->isAdmissible = true;
+            block.isAdmissible = true;
          }
-         else //block->fullMat.size()!= 0
+         else //block.fullMat.size()!= 0
          {
-            block->isAdmissible = false;
+            block.isAdmissible = false;
          }
-         block->isLeaf = true;
+         block.isLeaf = true;
          return;
     }
     else // block isn't tree leaf
     {
-        block->isLeaf = false;
-        if(block->fullMat.size() != 0)
+        block.isLeaf = false;
+        if(block.fullMat.size() != 0)
         {
 //            #pragma omp parallel
 //            {
@@ -1027,44 +1027,44 @@ void HArithm::blockSplitting(BlockCluster* block, const long rank, const double 
 //                {
                     #pragma omp task
                     {
-//                        long sonRowIndexStart = block->son11->rowStartIndex();
-                        long sonNumberOfRows = block->son11->rows();
-//                        long sonColumnIndexStart = block->son11->colStartIndex();
-                        long sonNumberOfColumns = block->son11->cols();
-                        addFullMatrixInToFirstOne(block->son11->fullMat, block->fullMat.topLeftCorner(sonNumberOfRows, sonNumberOfColumns));
+//                        long sonRowIndexStart = block.son11->rowStartIndex();
+                        long sonNumberOfRows = block.son11->rows();
+//                        long sonColumnIndexStart = block.son11->colStartIndex();
+                        long sonNumberOfColumns = block.son11->cols();
+                        addFullMatrixInToFirstOne(block.son11->fullMat, block.fullMat.topLeftCorner(sonNumberOfRows, sonNumberOfColumns));
                     }
                     #pragma omp task
                     {
-//                        long sonRowIndexStart = block->son12->rowStartIndex();
-                        long sonNumberOfRows = block->son12->rows();
-//                        long sonColumnIndexStart = block->son12->colStartIndex();
-                        long sonNumberOfColumns = block->son12->cols();
-                        addFullMatrixInToFirstOne(block->son12->fullMat, block->fullMat.topRightCorner(sonNumberOfRows, sonNumberOfColumns));
+//                        long sonRowIndexStart = block.son12->rowStartIndex();
+                        long sonNumberOfRows = block.son12->rows();
+//                        long sonColumnIndexStart = block.son12->colStartIndex();
+                        long sonNumberOfColumns = block.son12->cols();
+                        addFullMatrixInToFirstOne(block.son12->fullMat, block.fullMat.topRightCorner(sonNumberOfRows, sonNumberOfColumns));
                     }
                     #pragma omp task
                     {
-//                        long sonRowIndexStart = block->son21->rowStartIndex();
-                        long sonNumberOfRows = block->son21->rows();
-//                        long sonColumnIndexStart = block->son21->colStartIndex();
-                        long sonNumberOfColumns = block->son21->cols();
-                        addFullMatrixInToFirstOne(block->son21->fullMat, block->fullMat.bottomLeftCorner(sonNumberOfRows, sonNumberOfColumns));
+//                        long sonRowIndexStart = block.son21->rowStartIndex();
+                        long sonNumberOfRows = block.son21->rows();
+//                        long sonColumnIndexStart = block.son21->colStartIndex();
+                        long sonNumberOfColumns = block.son21->cols();
+                        addFullMatrixInToFirstOne(block.son21->fullMat, block.fullMat.bottomLeftCorner(sonNumberOfRows, sonNumberOfColumns));
                      }
 //                    #pragma omp task
                     {
-//                        long sonRowIndexStart = block->son22->rowStartIndex();
-                        long sonNumberOfRows = block->son22->rows();
-//                        long sonColumnIndexStart = block->son22->colStartIndex();
-                        long sonNumberOfColumns = block->son22->cols();
-                        addFullMatrixInToFirstOne(block->son22->fullMat, block->fullMat.bottomRightCorner(sonNumberOfRows, sonNumberOfColumns));
+//                        long sonRowIndexStart = block.son22->rowStartIndex();
+                        long sonNumberOfRows = block.son22->rows();
+//                        long sonColumnIndexStart = block.son22->colStartIndex();
+                        long sonNumberOfColumns = block.son22->cols();
+                        addFullMatrixInToFirstOne(block.son22->fullMat, block.fullMat.bottomRightCorner(sonNumberOfRows, sonNumberOfColumns));
                     }
 //                }
 //            }
             #pragma omp taskwait
-            block->fullMat.resize(0,0);
+            block.fullMat.resize(0,0);
         }
-        if(block->UMat.size() != 0)
+        if(block.UMat.size() != 0)
         {
-            if(block->fullMat.size() > 0)
+            if(block.fullMat.size() > 0)
             {
                 std::cerr << "fullMat.size() > 0 " << std::endl;
             }
@@ -1074,41 +1074,41 @@ void HArithm::blockSplitting(BlockCluster* block, const long rank, const double 
 //                {
                     #pragma omp task
                     {
-//                        long sonRowIndexStart = block->son11->rowStartIndex();
-                        long sonNumberOfRows = block->son11->rows();
-//                        long sonColumnIndexStart = block->son11->colStartIndex();
-                        long sonNumberOfColumns = block->son11->cols();
-                        roundedAddRMatToBlock(*block->son11, block->UMat.topRows(sonNumberOfRows), block->singularValues, block->VAdjMat.leftCols(sonNumberOfColumns), rank, error);
+//                        long sonRowIndexStart = block.son11->rowStartIndex();
+                        long sonNumberOfRows = block.son11->rows();
+//                        long sonColumnIndexStart = block.son11->colStartIndex();
+                        long sonNumberOfColumns = block.son11->cols();
+                        roundedAddRMatToBlock(*block.son11, block.UMat.topRows(sonNumberOfRows), block.singularValues, block.VAdjMat.leftCols(sonNumberOfColumns), rank, error);
                     }
                     #pragma omp task
                     {
-//                         long sonRowIndexStart = block->son12->rowStartIndex();
-                         long sonNumberOfRows = block->son12->rows();
-//                         long sonColumnIndexStart = block->son12->colStartIndex();
-                         long sonNumberOfColumns = block->son12->cols();
-                         roundedAddRMatToBlock(*block->son12, block->UMat.topRows(sonNumberOfRows), block->singularValues, block->VAdjMat.rightCols(sonNumberOfColumns), rank, error);
+//                         long sonRowIndexStart = block.son12->rowStartIndex();
+                         long sonNumberOfRows = block.son12->rows();
+//                         long sonColumnIndexStart = block.son12->colStartIndex();
+                         long sonNumberOfColumns = block.son12->cols();
+                         roundedAddRMatToBlock(*block.son12, block.UMat.topRows(sonNumberOfRows), block.singularValues, block.VAdjMat.rightCols(sonNumberOfColumns), rank, error);
                     }
                     #pragma omp task
                     {
-//                        long sonRowIndexStart = block->son21->rowStartIndex();
-                        long sonNumberOfRows = block->son21->rows();
-//                        long sonColumnIndexStart = block->son21->colStartIndex();
-                        long sonNumberOfColumns = block->son21->cols();
-                        roundedAddRMatToBlock(*block->son21, block->UMat.bottomRows(sonNumberOfRows), block->singularValues, block->VAdjMat.leftCols(sonNumberOfColumns), rank, error);
+//                        long sonRowIndexStart = block.son21->rowStartIndex();
+                        long sonNumberOfRows = block.son21->rows();
+//                        long sonColumnIndexStart = block.son21->colStartIndex();
+                        long sonNumberOfColumns = block.son21->cols();
+                        roundedAddRMatToBlock(*block.son21, block.UMat.bottomRows(sonNumberOfRows), block.singularValues, block.VAdjMat.leftCols(sonNumberOfColumns), rank, error);
                     }
 //                    #pragma omp task
                     {
-//                        long sonRowIndexStart = block->son22->rowStartIndex();
-                        long sonNumberOfRows = block->son22->rows();
-//                        long sonColumnIndexStart = block->son22->colStartIndex();
-                        long sonNumberOfColumns = block->son22->cols();
-                        roundedAddRMatToBlock(*block->son22, block->UMat.bottomRows(sonNumberOfRows), block->singularValues, block->VAdjMat.rightCols(sonNumberOfColumns), rank, error);
+//                        long sonRowIndexStart = block.son22->rowStartIndex();
+                        long sonNumberOfRows = block.son22->rows();
+//                        long sonColumnIndexStart = block.son22->colStartIndex();
+                        long sonNumberOfColumns = block.son22->cols();
+                        roundedAddRMatToBlock(*block.son22, block.UMat.bottomRows(sonNumberOfRows), block.singularValues, block.VAdjMat.rightCols(sonNumberOfColumns), rank, error);
                     }
 //                }
 //            }
             #pragma omp taskwait
-            clearRkMatrix(*block);
-            block->isAdmissible = false;
+            clearRkMatrix(block);
+            block.isAdmissible = false;
         }
 //        #pragma omp parallel
 //        {
@@ -1116,19 +1116,19 @@ void HArithm::blockSplitting(BlockCluster* block, const long rank, const double 
 //            {
                 #pragma omp task
                 {
-                    blockSplitting(block->son11, rank, error);
+                    blockSplitting(* block.son11, rank, error);
                 }
                 #pragma omp task
                 {
-                    blockSplitting(block->son12, rank, error);
+                    blockSplitting(* block.son12, rank, error);
                 }
                 #pragma omp task
                 {
-                    blockSplitting(block->son21, rank, error);
+                    blockSplitting(* block.son21, rank, error);
                 }
 //                #pragma omp task
                 {
-                    blockSplitting(block->son22, rank, error);
+                    blockSplitting(* block.son22, rank, error);
                 }
                 #pragma omp taskwait
 
@@ -1156,8 +1156,8 @@ Eigen::VectorXcd HArithm::LUSolve(HMatrix &matrix, Eigen::VectorXcd &rightHandSi
     }
 
     std::pair<HMatrix,HMatrix> LUPair = LUDecomposition(matrix, rank, relError, true);
-    forwardSubstitution(LUPair.first.getRootBlock(), tmpVector, rightHandSide, startIndex);
-    backwardSubstitution(LUPair.second.getRootBlock(), solutionVector, tmpVector, startIndex);
+    forwardSubstitution(* LUPair.first.getRootBlock(), tmpVector, rightHandSide, startIndex);
+    backwardSubstitution(* LUPair.second.getRootBlock(), solutionVector, tmpVector, startIndex);
 
     LUPair.first.clear();
     LUPair.second.clear(true);
@@ -1183,8 +1183,8 @@ Eigen::VectorXcd HArithm::LUSubstitutionSolve(HMatrix &L, HMatrix &U, const Eige
         return solutionVector;
     }
 
-    forwardSubstitution(L.getRootBlock(), tmpVector, rightHandSideCopy);
-    backwardSubstitution(U.getRootBlock(), solutionVector, tmpVector);
+    forwardSubstitution(*L.getRootBlock(), tmpVector, rightHandSideCopy);
+    backwardSubstitution(*U.getRootBlock(), solutionVector, tmpVector);
 
     return solutionVector;
 }
@@ -1196,26 +1196,26 @@ std::pair<HMatrix, HMatrix> HArithm::LUDecomposition(HMatrix &matrix, const long
     HMatrix U(matrix.getRowClustertree(), matrix.getColumnClustertree());
     U.createRootNode();
 
-    recursiveLUDecomposition(L.getRootBlock(), U.getRootBlock(), matrix.getRootBlock(), rank, relError, zeroBlocksUninitialized);
+    recursiveLUDecomposition(*L.getRootBlock(), *U.getRootBlock(), *matrix.getRootBlock(), rank, relError, zeroBlocksUninitialized);
 
     return std::pair<HMatrix,HMatrix> (L,U);
 }
 
-void HArithm::recursiveLUDecomposition(BlockCluster* LBlock, BlockCluster* UBlock, BlockCluster* ABlock, const long rank, const double relError, const bool zeroBlocksUninitialized) // L*U=A
+void HArithm::recursiveLUDecomposition(BlockCluster &LBlock, BlockCluster &UBlock, BlockCluster &ABlock, const long rank, const double relError, const bool zeroBlocksUninitialized) // L*U=A
 {
-    if(ABlock->isLeaf)
+    if(ABlock.isLeaf)
     {
-        if(ABlock->isAdmissible)
+        if(ABlock.isAdmissible)
         {
             fullRankAgglomerationWithTrimming(ABlock);
             std::cerr<<"ABlock->isAdmissible in recursiveLUDecomposition"<<std::endl;
         }
-        long rows =  ABlock->fullMat.rows();
-        long cols =  ABlock->fullMat.cols();
+        long rows =  ABlock.fullMat.rows();
+        long cols =  ABlock.fullMat.cols();
         if constexpr(inversionInLUDecomp)
         {
-            LBlock->fullMat = ABlock->fullMat.inverse();
-            UBlock->fullMat = Eigen::MatrixXcd::Identity(rows, cols);
+            LBlock.fullMat = ABlock.fullMat.inverse();
+            UBlock.fullMat = Eigen::MatrixXcd::Identity(rows, cols);
 
 //            if(ABlock->fullMat.fullPivLu().isInvertible())
 //            {
@@ -1236,61 +1236,61 @@ void HArithm::recursiveLUDecomposition(BlockCluster* LBlock, BlockCluster* UBloc
         }
         else if constexpr(qrInLUDecomp)
         {
-            Eigen::HouseholderQR<Eigen::MatrixXcd> Qr(ABlock->fullMat);
-            LBlock->fullMat = Qr.householderQ();
-            UBlock->fullMat = Qr.matrixQR().triangularView<Eigen::Upper>().toDenseMatrix();
+            Eigen::HouseholderQR<Eigen::MatrixXcd> Qr(ABlock.fullMat);
+            LBlock.fullMat = Qr.householderQ();
+            UBlock.fullMat = Qr.matrixQR().triangularView<Eigen::Upper>().toDenseMatrix();
         }
         else
         {
-            Eigen::MatrixXcd LU = global::LUDecompNoPivoting(ABlock->fullMat);
-            LBlock->fullMat = LU.leftCols(std::min(rows,cols)).triangularView<Eigen::UnitLower>();
-            UBlock->fullMat = LU.topRows(std::min(rows,cols)).triangularView<Eigen::Upper>();
+            Eigen::MatrixXcd LU = global::LUDecompNoPivoting(ABlock.fullMat);
+            LBlock.fullMat = LU.leftCols(std::min(rows,cols)).triangularView<Eigen::UnitLower>();
+            UBlock.fullMat = LU.topRows(std::min(rows,cols)).triangularView<Eigen::Upper>();
         }
-        LBlock->isLeaf = true;
-        LBlock->isAdmissible = false;
-        UBlock->isLeaf = true;
-        UBlock->isAdmissible = false;
+        LBlock.isLeaf = true;
+        LBlock.isAdmissible = false;
+        UBlock.isLeaf = true;
+        UBlock.isAdmissible = false;
     }
     else
     {
-        LBlock->son11 = new BlockCluster(ABlock->rowCluster->son1, ABlock->columnCluster->son1, LBlock);
-        LBlock->son12 = new BlockCluster(ABlock->rowCluster->son1, ABlock->columnCluster->son2, LBlock);
+        LBlock.son11 = new BlockCluster(ABlock.rowCluster->son1, ABlock.columnCluster->son1, &LBlock);
+        LBlock.son12 = new BlockCluster(ABlock.rowCluster->son1, ABlock.columnCluster->son2, &LBlock);
         if(!zeroBlocksUninitialized)
         {
-            convertToAdmissibleZeroBlock(LBlock->son12);
+            convertToAdmissibleZeroBlock(* LBlock.son12);
         }
         else
         {
-            LBlock->son12->isLeaf = true;
+            LBlock.son12->isLeaf = true;
         }
-        LBlock->son21 = new BlockCluster(ABlock->rowCluster->son2, ABlock->columnCluster->son1, LBlock);
-        LBlock->son22 = new BlockCluster(ABlock->rowCluster->son2, ABlock->columnCluster->son2, LBlock);
+        LBlock.son21 = new BlockCluster(ABlock.rowCluster->son2, ABlock.columnCluster->son1, &LBlock);
+        LBlock.son22 = new BlockCluster(ABlock.rowCluster->son2, ABlock.columnCluster->son2, &LBlock);
 
-        UBlock->son11 = new BlockCluster(ABlock->rowCluster->son1, ABlock->columnCluster->son1, UBlock);
-        UBlock->son12 = new BlockCluster(ABlock->rowCluster->son1, ABlock->columnCluster->son2, UBlock);
-        UBlock->son21 = new BlockCluster(ABlock->rowCluster->son2, ABlock->columnCluster->son1, UBlock);
+        UBlock.son11 = new BlockCluster(ABlock.rowCluster->son1, ABlock.columnCluster->son1, &UBlock);
+        UBlock.son12 = new BlockCluster(ABlock.rowCluster->son1, ABlock.columnCluster->son2, &UBlock);
+        UBlock.son21 = new BlockCluster(ABlock.rowCluster->son2, ABlock.columnCluster->son1, &UBlock);
         if(!zeroBlocksUninitialized)
         {
-            convertToAdmissibleZeroBlock(UBlock->son21);
+            convertToAdmissibleZeroBlock(* UBlock.son21);
         }
         else
         {
-            UBlock->son21->isLeaf = true;
+            UBlock.son21->isLeaf = true;
         }
-        UBlock->son22 = new BlockCluster(ABlock->rowCluster->son2, ABlock->columnCluster->son2, UBlock);
+        UBlock.son22 = new BlockCluster(ABlock.rowCluster->son2, ABlock.columnCluster->son2, &UBlock);
 
-        recursiveLUDecomposition(LBlock->son11, UBlock->son11, ABlock->son11, rank, relError, zeroBlocksUninitialized);
+        recursiveLUDecomposition(*LBlock.son11, *UBlock.son11, *ABlock.son11, rank, relError, zeroBlocksUninitialized);
 
-        forwSubsMatVal(LBlock->son11, UBlock->son12, ABlock->son12, rank, relError);
-        forwSubsMatValTransposed(LBlock->son21, UBlock->son11, ABlock->son21, rank, relError);
+        forwSubsMatVal(*LBlock.son11, *UBlock.son12, *ABlock.son12, rank, relError);
+        forwSubsMatValTransposed(* LBlock.son21, * UBlock.son11, * ABlock.son21, rank, relError);
 
-        HMatrix product22 = HMultiply::multiplyHMat(LBlock->son21, UBlock->son12, rank, relError);
-        recursiveHMatSubstraction(ABlock->son22, product22.getRootBlock(), rank, relError);
+        HMatrix product22 = HMultiply::multiplyHMat(*LBlock.son21, *UBlock.son12, rank, relError);
+        recursiveHMatSubstraction(*ABlock.son22, *product22.getRootBlock(), rank, relError);
         product22.clear();
 
-        recursiveLUDecomposition(LBlock->son22, UBlock->son22, ABlock->son22, rank, relError, zeroBlocksUninitialized);
+        recursiveLUDecomposition(*LBlock.son22, *UBlock.son22, *ABlock.son22, rank, relError, zeroBlocksUninitialized);
     }
-    ABlock->clear();
+    ABlock.clear();
 }
 
 Eigen::VectorXcd HArithm::forwardSubstitution(const HMatrix &L, Eigen::VectorXcd b) // solve L * y = b for the unknown y, L is lower triangular H-matrix
@@ -1305,63 +1305,63 @@ Eigen::VectorXcd HArithm::forwardSubstitution(const HMatrix &L, Eigen::VectorXcd
         return Eigen::VectorXcd::Zero(cols);
     }
     Eigen::VectorXcd y(rows);
-    HArithm::forwardSubstitution(L.getRootBlock(), y, b, rowStartIndex);
+    HArithm::forwardSubstitution(* L.getRootBlock(), y, b, rowStartIndex);
     return y;
 }
 
-void HArithm::forwardSubstitution(const BlockCluster* LBlock, Eigen::VectorXcd &solution, Eigen::VectorXcd &b, const long vectorStartIndex) // solve L * y = b for the unknown y, L is lower triangular H-matrix
+void HArithm::forwardSubstitution(const BlockCluster &LBlock, Eigen::VectorXcd &solution, Eigen::VectorXcd &b, const long vectorStartIndex) // solve L * y = b for the unknown y, L is lower triangular H-matrix
 {
-    if(LBlock->isLeaf)
+    if(LBlock.isLeaf)
     {
-        const long startIndex = LBlock->colStartIndex();
-        const long vectorLength = LBlock->rows();
+        const long startIndex = LBlock.colStartIndex();
+        const long vectorLength = LBlock.rows();
         if constexpr(inversionInLUDecomp)
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock->fullMat * b.segment(startIndex - vectorStartIndex, vectorLength);
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock.fullMat * b.segment(startIndex - vectorStartIndex, vectorLength);
         }
         else if constexpr(qrInLUDecomp)
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock->fullMat.adjoint() * b.segment(startIndex - vectorStartIndex, vectorLength);
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock.fullMat.adjoint() * b.segment(startIndex - vectorStartIndex, vectorLength);
         }
         else
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock->fullMat.triangularView<Eigen::Lower>().solve(b.segment(startIndex - vectorStartIndex, vectorLength));
-//            solution.segment(startIndex - vectorStartIndex, vectorLength) = global::forwardSubstitution(LBlock->fullMat, b.segment(startIndex - vectorStartIndex, vectorLength));
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock.fullMat.triangularView<Eigen::Lower>().solve(b.segment(startIndex - vectorStartIndex, vectorLength));
+//            solution.segment(startIndex - vectorStartIndex, vectorLength) = global::forwardSubstitution(LBlock.fullMat, b.segment(startIndex - vectorStartIndex, vectorLength));
         }
     }
     else
     {
-        forwardSubstitution(LBlock->son11, solution, b, vectorStartIndex);
-        subtractiveParallelMatrixVectorPoduct(b, LBlock->son21, solution, vectorStartIndex, vectorStartIndex);
-        forwardSubstitution(LBlock->son22, solution, b, vectorStartIndex);
+        forwardSubstitution(* LBlock.son11, solution, b, vectorStartIndex);
+        subtractiveParallelMatrixVectorPoduct(b, * LBlock.son21, solution, vectorStartIndex, vectorStartIndex);
+        forwardSubstitution(* LBlock.son22, solution, b, vectorStartIndex);
     }
 }
 
-void HArithm::forwardSubstitutionTransposed(Eigen::RowVectorXcd &solution, const BlockCluster* UBlock, Eigen::RowVectorXcd &b, const long vectorStartIndex) // solve y^T * U = b^T for y, U is upper triangular H-matrix
+void HArithm::forwardSubstitutionTransposed(Eigen::RowVectorXcd &solution, const BlockCluster &UBlock, Eigen::RowVectorXcd &b, const long vectorStartIndex) // solve y^T * U = b^T for y, U is upper triangular H-matrix
 {
-    if(UBlock->isLeaf)
+    if(UBlock.isLeaf)
     {
-        const long startIndex = UBlock->rowStartIndex();
-        const long vectorLength = UBlock->cols();
+        const long startIndex = UBlock.rowStartIndex();
+        const long vectorLength = UBlock.cols();
         if constexpr(inversionInLUDecomp)
         {
             solution.segment(startIndex - vectorStartIndex, vectorLength) = b.segment(startIndex - vectorStartIndex, vectorLength);
         }
         else if constexpr(qrInLUDecomp)
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock->fullMat.transpose().triangularView<Eigen::Lower>().solve(b.segment(startIndex - vectorStartIndex, vectorLength).transpose());
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock.fullMat.transpose().triangularView<Eigen::Lower>().solve(b.segment(startIndex - vectorStartIndex, vectorLength).transpose());
         }
         else
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock->fullMat.transpose().triangularView<Eigen::Lower>().solve(b.segment(startIndex - vectorStartIndex, vectorLength).transpose());
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock.fullMat.transpose().triangularView<Eigen::Lower>().solve(b.segment(startIndex - vectorStartIndex, vectorLength).transpose());
         }
     }
     else
     {
-        forwardSubstitutionTransposed(solution, UBlock->son11, b, vectorStartIndex);
-//        subtractiveRecursiveVectorMatrixPoduct(b, solution, UBlock->son12, vectorStartIndex, vectorStartIndex); // faster than recursiveVectorMatrixPoduct(b, -solution, UBlock->son12, vectorStartIndex, vectorStartIndex);
-        subtractiveParallelVectorMatrixPoduct(b, solution, UBlock->son12, vectorStartIndex, vectorStartIndex);
-        forwardSubstitutionTransposed(solution, UBlock->son22, b, vectorStartIndex);
+        forwardSubstitutionTransposed(solution, * UBlock.son11, b, vectorStartIndex);
+//        subtractiveRecursiveVectorMatrixPoduct(b, solution, UBlock.son12, vectorStartIndex, vectorStartIndex); // faster than recursiveVectorMatrixPoduct(b, -solution, UBlock.son12, vectorStartIndex, vectorStartIndex);
+        subtractiveParallelVectorMatrixPoduct(b, solution, * UBlock.son12, vectorStartIndex, vectorStartIndex);
+        forwardSubstitutionTransposed(solution, * UBlock.son22, b, vectorStartIndex);
     }
 }
 
@@ -1377,62 +1377,62 @@ Eigen::VectorXcd HArithm::backwardSubstitution(const HMatrix &U, Eigen::VectorXc
         return Eigen::VectorXcd::Zero(cols);
     }
     Eigen::VectorXcd x(rows);
-    HArithm::backwardSubstitution(U.getRootBlock(), x, y, rowStartIndex);
+    HArithm::backwardSubstitution(* U.getRootBlock(), x, y, rowStartIndex);
     return x;
 }
 
-void HArithm::backwardSubstitution(const BlockCluster *UBlock, Eigen::VectorXcd &solution, Eigen::VectorXcd &y, const long vectorStartIndex) // solve U * x = y, U is upper triangular H-matrix
+void HArithm::backwardSubstitution(const BlockCluster &UBlock, Eigen::VectorXcd &solution, Eigen::VectorXcd &y, const long vectorStartIndex) // solve U * x = y, U is upper triangular H-matrix
 {
-    if(UBlock->isLeaf)
+    if(UBlock.isLeaf)
     {
-        const long startIndex = UBlock->colStartIndex();
-        const long vectorLength = UBlock->rows();
+        const long startIndex = UBlock.colStartIndex();
+        const long vectorLength = UBlock.rows();
         if constexpr(inversionInLUDecomp)
         {
             solution.segment(startIndex - vectorStartIndex, vectorLength) = y.segment(startIndex - vectorStartIndex, vectorLength);
         }
         else if constexpr(qrInLUDecomp)
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock->fullMat.triangularView<Eigen::Upper>().solve(y.segment(startIndex - vectorStartIndex, vectorLength));
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock.fullMat.triangularView<Eigen::Upper>().solve(y.segment(startIndex - vectorStartIndex, vectorLength));
         }
         else
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock->fullMat.triangularView<Eigen::Upper>().solve(y.segment(startIndex - vectorStartIndex, vectorLength));
-//            solution.segment(startIndex - vectorStartIndex, vectorLength) = global::backwardSubstitution(UBlock->fullMat, y.segment(startIndex - vectorStartIndex, vectorLength));
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = UBlock.fullMat.triangularView<Eigen::Upper>().solve(y.segment(startIndex - vectorStartIndex, vectorLength));
+//            solution.segment(startIndex - vectorStartIndex, vectorLength) = global::backwardSubstitution(UBlock.fullMat, y.segment(startIndex - vectorStartIndex, vectorLength));
         }
     }
     else
     {
-        backwardSubstitution(UBlock->son22, solution, y, vectorStartIndex);
-        subtractiveParallelMatrixVectorPoduct(y, UBlock->son12, solution, vectorStartIndex, vectorStartIndex);
-        backwardSubstitution(UBlock->son11, solution, y, vectorStartIndex);
+        backwardSubstitution(* UBlock.son22, solution, y, vectorStartIndex);
+        subtractiveParallelMatrixVectorPoduct(y, * UBlock.son12, solution, vectorStartIndex, vectorStartIndex);
+        backwardSubstitution(* UBlock.son11, solution, y, vectorStartIndex);
     }
 }
 
-void HArithm::backwardSubstitutionTransposed(Eigen::RowVectorXcd &solution, const BlockCluster* LBlock,  Eigen::RowVectorXcd &y, const long vectorStartIndex) // solve x^T * L = y^T for y, L is lower triangular H-matrix
+void HArithm::backwardSubstitutionTransposed(Eigen::RowVectorXcd &solution, const BlockCluster &LBlock,  Eigen::RowVectorXcd &y, const long vectorStartIndex) // solve x^T * L = y^T for y, L is lower triangular H-matrix
 {
-    if(LBlock->isLeaf)
+    if(LBlock.isLeaf)
     {
-        const long startIndex = LBlock->rowStartIndex();
-        const long vectorLength = LBlock->rows();
+        const long startIndex = LBlock.rowStartIndex();
+        const long vectorLength = LBlock.rows();
         if constexpr(inversionInLUDecomp)
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = y.segment(startIndex - vectorStartIndex, vectorLength) * LBlock->fullMat;
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = y.segment(startIndex - vectorStartIndex, vectorLength) * LBlock.fullMat;
         }
         else if constexpr(qrInLUDecomp)
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = y.segment(startIndex - vectorStartIndex, vectorLength) * LBlock->fullMat.adjoint();
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = y.segment(startIndex - vectorStartIndex, vectorLength) * LBlock.fullMat.adjoint();
         }
         else
         {
-            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock->fullMat.transpose().triangularView<Eigen::Upper>().solve(y.segment(startIndex - vectorStartIndex, vectorLength).transpose());
+            solution.segment(startIndex - vectorStartIndex, vectorLength) = LBlock.fullMat.transpose().triangularView<Eigen::Upper>().solve(y.segment(startIndex - vectorStartIndex, vectorLength).transpose());
         }
     }
     else
     {
-        backwardSubstitutionTransposed(solution, LBlock->son22, y, vectorStartIndex);
-        subtractiveParallelVectorMatrixPoduct(y, solution, LBlock->son21, vectorStartIndex, vectorStartIndex);
-        backwardSubstitutionTransposed(solution, LBlock->son11, y, vectorStartIndex);
+        backwardSubstitutionTransposed(solution, * LBlock.son22, y, vectorStartIndex);
+        subtractiveParallelVectorMatrixPoduct(y, solution, * LBlock.son21, vectorStartIndex, vectorStartIndex);
+        backwardSubstitutionTransposed(solution, * LBlock.son11, y, vectorStartIndex);
     }
 }
 
@@ -1440,77 +1440,77 @@ HMatrix HArithm::forwSubsMatVal(const HMatrix &L, HMatrix &Z, const long rank, c
 {
     HMatrix X(Z.getRowClustertree(), Z.getColumnClustertree());
     X.createRootNode();
-    forwSubsMatVal(L.getRootBlock(), X.getRootBlock(), Z.getRootBlock(), rank, relError);
+    forwSubsMatVal(* L.getRootBlock(), * X.getRootBlock(), * Z.getRootBlock(), rank, relError);
     Z.clear();
     return X;
 }
 
-void HArithm::forwSubsMatVal(const BlockCluster* LBlock, BlockCluster* XBlock, BlockCluster* ZBlock, const long rank, const double relError) // solve L * X = Z for X, L is lower triangular h-matrix
+void HArithm::forwSubsMatVal(const BlockCluster &LBlock, BlockCluster &XBlock, BlockCluster &ZBlock, const long rank, const double relError) // solve L * X = Z for X, L is lower triangular h-matrix
 {
-    if(!ZBlock->isLeaf  && LBlock->isLeaf)
+    if(!ZBlock.isLeaf  && LBlock.isLeaf)
     {
         reducedRankAgglomerationWithTrimming(ZBlock, rank, relError);
     }
-    if(ZBlock->isLeaf )
+    if(ZBlock.isLeaf )
     {       
-        if(ZBlock->isAdmissible)
+        if(ZBlock.isAdmissible)
         {
-            XBlock->UMat = Eigen::MatrixXcd(ZBlock->UMat.rows(), ZBlock->UMat.cols());
+            XBlock.UMat = Eigen::MatrixXcd(ZBlock.UMat.rows(), ZBlock.UMat.cols());
             #pragma omp parallel for
-            for(long j = 0; j < ZBlock->UMat.cols(); j++)
+            for(long j = 0; j < ZBlock.UMat.cols(); j++)
             {
-                Eigen::VectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock->UMat.rows());
-                Eigen::VectorXcd zVector = ZBlock->UMat.col(j);
-                long vectorStartIndex = ZBlock->rowStartIndex();
+                Eigen::VectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock.UMat.rows());
+                Eigen::VectorXcd zVector = ZBlock.UMat.col(j);
+                long vectorStartIndex = ZBlock.rowStartIndex();
 
                 forwardSubstitution(LBlock, xVector, zVector, vectorStartIndex);
-                XBlock->UMat.col(j) = xVector;
-                ZBlock->UMat.col(j) = zVector;
+                XBlock.UMat.col(j) = xVector;
+                ZBlock.UMat.col(j) = zVector;
             }
-            XBlock->singularValues = ZBlock->singularValues;
-            XBlock->VAdjMat = ZBlock->VAdjMat;
-            XBlock->isLeaf = true;
-            XBlock->isAdmissible = true;
+            XBlock.singularValues = ZBlock.singularValues;
+            XBlock.VAdjMat = ZBlock.VAdjMat;
+            XBlock.isLeaf = true;
+            XBlock.isAdmissible = true;
         }
         else
         {
-            XBlock->fullMat = Eigen::MatrixXcd(ZBlock->fullMat.rows(), ZBlock->fullMat.cols());
+            XBlock.fullMat = Eigen::MatrixXcd(ZBlock.fullMat.rows(), ZBlock.fullMat.cols());
             #pragma omp parallel for
-            for(long j = 0; j < ZBlock->fullMat.cols(); j++)
+            for(long j = 0; j < ZBlock.fullMat.cols(); j++)
             {
-                Eigen::VectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock->fullMat.rows());
-                Eigen::VectorXcd zVector = ZBlock->fullMat.col(j);
-                long vectorStartIndex = ZBlock->rowStartIndex();
+                Eigen::VectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock.fullMat.rows());
+                Eigen::VectorXcd zVector = ZBlock.fullMat.col(j);
+                long vectorStartIndex = ZBlock.rowStartIndex();
 
                 forwardSubstitution(LBlock, xVector, zVector, vectorStartIndex);
-                XBlock->fullMat.col(j) = xVector;
-                ZBlock->fullMat.col(j) = zVector;
+                XBlock.fullMat.col(j) = xVector;
+                ZBlock.fullMat.col(j) = zVector;
             }
-            XBlock->isLeaf = true;
-            XBlock->isAdmissible = false;
+            XBlock.isLeaf = true;
+            XBlock.isAdmissible = false;
         }
     }
     else
     {
-        XBlock->son11 = new BlockCluster(ZBlock->rowCluster->son1, ZBlock->columnCluster->son1, XBlock);
-        XBlock->son12 = new BlockCluster(ZBlock->rowCluster->son1, ZBlock->columnCluster->son2, XBlock);
-        XBlock->son21 = new BlockCluster(ZBlock->rowCluster->son2, ZBlock->columnCluster->son1, XBlock);
-        XBlock->son22 = new BlockCluster(ZBlock->rowCluster->son2, ZBlock->columnCluster->son2, XBlock);
+        XBlock.son11 = new BlockCluster(ZBlock.rowCluster->son1, ZBlock.columnCluster->son1, &XBlock);
+        XBlock.son12 = new BlockCluster(ZBlock.rowCluster->son1, ZBlock.columnCluster->son2, &XBlock);
+        XBlock.son21 = new BlockCluster(ZBlock.rowCluster->son2, ZBlock.columnCluster->son1, &XBlock);
+        XBlock.son22 = new BlockCluster(ZBlock.rowCluster->son2, ZBlock.columnCluster->son2, &XBlock);
 
-        forwSubsMatVal(LBlock->son11, XBlock->son11, ZBlock->son11, rank, relError);
+        forwSubsMatVal(* LBlock.son11, * XBlock.son11, * ZBlock.son11, rank, relError);
 
-        HMatrix product21 = HMultiply::multiplyHMat(LBlock->son21, XBlock->son11, rank, relError);
-        recursiveHMatSubstraction(ZBlock->son21, product21.getRootBlock(), rank, relError);
+        HMatrix product21 = HMultiply::multiplyHMat(* LBlock.son21, * XBlock.son11, rank, relError);
+        recursiveHMatSubstraction(* ZBlock.son21, * product21.getRootBlock(), rank, relError);
         product21.clear();
 
-        forwSubsMatVal(LBlock->son11, XBlock->son12, ZBlock->son12, rank, relError);
+        forwSubsMatVal(* LBlock.son11, * XBlock.son12, * ZBlock.son12, rank, relError);
 
-        HMatrix product22 = HMultiply::multiplyHMat(LBlock->son21, XBlock->son12, rank, relError);
-        recursiveHMatSubstraction(ZBlock->son22, product22.getRootBlock(), rank, relError);
+        HMatrix product22 = HMultiply::multiplyHMat(* LBlock.son21, * XBlock.son12, rank, relError);
+        recursiveHMatSubstraction(* ZBlock.son22, * product22.getRootBlock(), rank, relError);
         product22.clear();
 
-        forwSubsMatVal(LBlock->son22, XBlock->son21, ZBlock->son21, rank, relError);
-        forwSubsMatVal(LBlock->son22, XBlock->son22, ZBlock->son22, rank, relError);
+        forwSubsMatVal(* LBlock.son22, * XBlock.son21, * ZBlock.son21, rank, relError);
+        forwSubsMatVal(* LBlock.son22, * XBlock.son22, * ZBlock.son22, rank, relError);
     }
 }
 
@@ -1518,96 +1518,96 @@ HMatrix HArithm::forwSubsMatValTransposed(const HMatrix &U, HMatrix &Z, const lo
 {
     HMatrix X(Z.getRowClustertree(), Z.getColumnClustertree());
     X.createRootNode();
-    forwSubsMatValTransposed(X.getRootBlock(), U.getRootBlock(), Z.getRootBlock(), rank, relError);
+    forwSubsMatValTransposed(* X.getRootBlock(), * U.getRootBlock(), * Z.getRootBlock(), rank, relError);
     Z.clear();
     return X;
 }
 
-void HArithm::forwSubsMatValTransposed(BlockCluster* XBlock, const BlockCluster* UBlock, BlockCluster* ZBlock, const long rank, const double relError)
+void HArithm::forwSubsMatValTransposed(BlockCluster &XBlock, const BlockCluster &UBlock, BlockCluster &ZBlock, const long rank, const double relError)
 {
-    if(!ZBlock->isLeaf  && UBlock->isLeaf)    /// if the h-matrix multiplication uses agglomeration a lot, the Z mmatrix can be less deep than the U Matrix
+    if(!ZBlock.isLeaf  && UBlock.isLeaf)    /// if the h-matrix multiplication uses agglomeration a lot, the Z mmatrix can be less deep than the U Matrix
     {
         reducedRankAgglomerationWithTrimming(ZBlock, rank, relError);
     }
-    if(ZBlock->isLeaf)
+    if(ZBlock.isLeaf)
     {
-        if(ZBlock->isAdmissible)
+        if(ZBlock.isAdmissible)
         {
-            XBlock->VAdjMat = Eigen::MatrixXcd(ZBlock->VAdjMat.rows(), ZBlock->VAdjMat.cols());
+            XBlock.VAdjMat = Eigen::MatrixXcd(ZBlock.VAdjMat.rows(), ZBlock.VAdjMat.cols());
             #pragma omp parallel for
-            for(long i = 0; i < ZBlock->VAdjMat.rows(); i++)
+            for(long i = 0; i < ZBlock.VAdjMat.rows(); i++)
             {
-                Eigen::RowVectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock->VAdjMat.cols());
-                Eigen::RowVectorXcd zVector = ZBlock->VAdjMat.row(i);
-                long vectorStartIndex = ZBlock->colStartIndex();
+                Eigen::RowVectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock.VAdjMat.cols());
+                Eigen::RowVectorXcd zVector = ZBlock.VAdjMat.row(i);
+                long vectorStartIndex = ZBlock.colStartIndex();
 
                 forwardSubstitutionTransposed(xVector, UBlock, zVector, vectorStartIndex);
-                XBlock->VAdjMat.row(i) = xVector;
-                ZBlock->VAdjMat.row(i) = zVector;
+                XBlock.VAdjMat.row(i) = xVector;
+                ZBlock.VAdjMat.row(i) = zVector;
             }
-            XBlock->UMat = ZBlock->UMat;
-            XBlock->singularValues = ZBlock->singularValues;
-            XBlock->isLeaf = true;
-            XBlock->isAdmissible = true;
+            XBlock.UMat = ZBlock.UMat;
+            XBlock.singularValues = ZBlock.singularValues;
+            XBlock.isLeaf = true;
+            XBlock.isAdmissible = true;
         }
         else
         {
-            XBlock->fullMat = Eigen::MatrixXcd(ZBlock->fullMat.rows(), ZBlock->fullMat.cols());
+            XBlock.fullMat = Eigen::MatrixXcd(ZBlock.fullMat.rows(), ZBlock.fullMat.cols());
             #pragma omp parallel for
-            for(long i = 0; i < ZBlock->fullMat.rows(); i++)
+            for(long i = 0; i < ZBlock.fullMat.rows(); i++)
             {
-                Eigen::RowVectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock->fullMat.cols());
-                Eigen::RowVectorXcd zVector = ZBlock->fullMat.row(i);
-                long vectorStartIndex = ZBlock->colStartIndex();
+                Eigen::RowVectorXcd xVector = Eigen::VectorXcd::Zero(ZBlock.fullMat.cols());
+                Eigen::RowVectorXcd zVector = ZBlock.fullMat.row(i);
+                long vectorStartIndex = ZBlock.colStartIndex();
 
                 forwardSubstitutionTransposed(xVector, UBlock, zVector, vectorStartIndex);
-                XBlock->fullMat.row(i) = xVector;
-                ZBlock->fullMat.row(i) = zVector;
+                XBlock.fullMat.row(i) = xVector;
+                ZBlock.fullMat.row(i) = zVector;
             }
-            XBlock->isLeaf = true;
-            XBlock->isAdmissible = false;
+            XBlock.isLeaf = true;
+            XBlock.isAdmissible = false;
         }
     }
     else
     {
-        XBlock->son11 = new BlockCluster(ZBlock->rowCluster->son1, ZBlock->columnCluster->son1, XBlock);
-        XBlock->son12 = new BlockCluster(ZBlock->rowCluster->son1, ZBlock->columnCluster->son2, XBlock);
-        XBlock->son21 = new BlockCluster(ZBlock->rowCluster->son2, ZBlock->columnCluster->son1, XBlock);
-        XBlock->son22 = new BlockCluster(ZBlock->rowCluster->son2, ZBlock->columnCluster->son2, XBlock);
+        XBlock.son11 = new BlockCluster(ZBlock.rowCluster->son1, ZBlock.columnCluster->son1, &XBlock);
+        XBlock.son12 = new BlockCluster(ZBlock.rowCluster->son1, ZBlock.columnCluster->son2, &XBlock);
+        XBlock.son21 = new BlockCluster(ZBlock.rowCluster->son2, ZBlock.columnCluster->son1, &XBlock);
+        XBlock.son22 = new BlockCluster(ZBlock.rowCluster->son2, ZBlock.columnCluster->son2, &XBlock);
 
-        forwSubsMatValTransposed(XBlock->son11, UBlock->son11, ZBlock->son11, rank, relError);
+        forwSubsMatValTransposed(* XBlock.son11, * UBlock.son11, * ZBlock.son11, rank, relError);
 
-        HMatrix product12 = HMultiply::multiplyHMat(XBlock->son11, UBlock->son12, rank, relError);
-        recursiveHMatSubstraction(ZBlock->son12, product12.getRootBlock(), rank, relError);
+        HMatrix product12 = HMultiply::multiplyHMat(* XBlock.son11, * UBlock.son12, rank, relError);
+        recursiveHMatSubstraction(* ZBlock.son12, * product12.getRootBlock(), rank, relError);
         product12.clear();
 
-        forwSubsMatValTransposed(XBlock->son21, UBlock->son11, ZBlock->son21, rank, relError);
+        forwSubsMatValTransposed(* XBlock.son21, * UBlock.son11, * ZBlock.son21, rank, relError);
 
-        HMatrix product22 = HMultiply::multiplyHMat(XBlock->son21, UBlock->son12, rank, relError);
-        recursiveHMatSubstraction(ZBlock->son22, product22.getRootBlock(), rank, relError);
+        HMatrix product22 = HMultiply::multiplyHMat(* XBlock.son21, * UBlock.son12, rank, relError);
+        recursiveHMatSubstraction(* ZBlock.son22, * product22.getRootBlock(), rank, relError);
         product22.clear();
 
-        forwSubsMatValTransposed(XBlock->son12, UBlock->son22, ZBlock->son12, rank, relError);
-        forwSubsMatValTransposed(XBlock->son22, UBlock->son22, ZBlock->son22, rank, relError);
+        forwSubsMatValTransposed(* XBlock.son12, * UBlock.son22, * ZBlock.son12, rank, relError);
+        forwSubsMatValTransposed(* XBlock.son22, * UBlock.son22, * ZBlock.son22, rank, relError);
     }
 }
 
-void HArithm::recursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster *block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y += hmatrix * x
+void HArithm::recursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster &block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y += hmatrix * x
 {
-    if(block->isLeaf)
+    if(block.isLeaf)
     {
-        long rowStartIndex = block->rowStartIndex();
-        long numberOfRows = block->rows();
-        long columnStartIndex = block->colStartIndex();
-        long numberOfColumns = block->cols();
+        long rowStartIndex = block.rowStartIndex();
+        long numberOfRows = block.rows();
+        long columnStartIndex = block.colStartIndex();
+        long numberOfColumns = block.cols();
 
-        if(block->isAdmissible) // far field block
+        if(block.isAdmissible) // far field block
         {
-            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() += block->UMat * (block->singularValues.asDiagonal() * (block->VAdjMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns)));
+            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() += block.UMat * (block.singularValues.asDiagonal() * (block.VAdjMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns)));
         }
         else // near field block
         {
-            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() += block->fullMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns);
+            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() += block.fullMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns);
         }
     }
     else
@@ -1616,19 +1616,19 @@ void HArithm::recursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const Block
         {
             #pragma omp section //prevent aliasing by putting the same y rows in one section
             {                   //otherwise use omp critical above
-                recursiveMatrixVectorPoduct(product, block->son11, x, prodStartIndex, xStartIndex);
-                recursiveMatrixVectorPoduct(product, block->son12, x, prodStartIndex, xStartIndex);
+                recursiveMatrixVectorPoduct(product, * block.son11, x, prodStartIndex, xStartIndex);
+                recursiveMatrixVectorPoduct(product, * block.son12, x, prodStartIndex, xStartIndex);
             }
             #pragma omp section
             {
-                recursiveMatrixVectorPoduct(product, block->son21, x, prodStartIndex, xStartIndex);
-                recursiveMatrixVectorPoduct(product, block->son22, x, prodStartIndex, xStartIndex);
+                recursiveMatrixVectorPoduct(product, * block.son21, x, prodStartIndex, xStartIndex);
+                recursiveMatrixVectorPoduct(product, * block.son22, x, prodStartIndex, xStartIndex);
             }
         }
     }
 }
 
-void HArithm::parallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y += hmatrix * x
+void HArithm::parallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster &block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y += hmatrix * x
 {
     QVector<const BlockCluster*> minPartition;
     BlockCluster::getPartition(block, minPartition);
@@ -1636,7 +1636,7 @@ void HArithm::parallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockC
     #pragma omp parallel for
     for(long i = 0; i < minPartition.length(); i++)
     {
-        const BlockCluster *tmpBlock = minPartition.at(i);
+        const BlockCluster* tmpBlock = minPartition.at(i);
         long rowStartIndex = tmpBlock->rowStartIndex();
         long numberOfRows = tmpBlock->rows();
         long columnStartIndex = tmpBlock->colStartIndex();
@@ -1659,22 +1659,22 @@ void HArithm::parallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockC
     }
 }
 
-void HArithm::subtractiveRecursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y -= hmatrix * x
+void HArithm::subtractiveRecursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster &block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y -= hmatrix * x
 {
-    if(block->isLeaf)
+    if(block.isLeaf)
     {
-        long rowStartIndex = block->rowStartIndex();
-        long numberOfRows = block->rows();
-        long columnStartIndex = block->colStartIndex();
-        long numberOfColumns = block->cols();
+        long rowStartIndex = block.rowStartIndex();
+        long numberOfRows = block.rows();
+        long columnStartIndex = block.colStartIndex();
+        long numberOfColumns = block.cols();
 
-        if(block->isAdmissible) // far field block
+        if(block.isAdmissible) // far field block
         {
-            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() -= block->UMat * (block->singularValues.asDiagonal() * (block->VAdjMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns)));
+            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() -= block.UMat * (block.singularValues.asDiagonal() * (block.VAdjMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns)));
         }
         else // near field block
         {
-            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() -= block->fullMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns);
+            product.segment(rowStartIndex - prodStartIndex, numberOfRows).noalias() -= block.fullMat * x.segment(columnStartIndex - xStartIndex, numberOfColumns);
         }
     }
     else
@@ -1683,19 +1683,19 @@ void HArithm::subtractiveRecursiveMatrixVectorPoduct(Eigen::VectorXcd &product, 
         {
             #pragma omp section //prevent aliasing by putting the same y rows in one section
             {                   //otherwise use omp critical above
-                subtractiveRecursiveMatrixVectorPoduct(product, block->son11, x, prodStartIndex, xStartIndex);
-                subtractiveRecursiveMatrixVectorPoduct(product, block->son12, x, prodStartIndex, xStartIndex);
+                subtractiveRecursiveMatrixVectorPoduct(product, * block.son11, x, prodStartIndex, xStartIndex);
+                subtractiveRecursiveMatrixVectorPoduct(product, * block.son12, x, prodStartIndex, xStartIndex);
             }
             #pragma omp section
             {
-                subtractiveRecursiveMatrixVectorPoduct(product, block->son21, x, prodStartIndex, xStartIndex);
-                subtractiveRecursiveMatrixVectorPoduct(product, block->son22, x, prodStartIndex, xStartIndex);
+                subtractiveRecursiveMatrixVectorPoduct(product, * block.son21, x, prodStartIndex, xStartIndex);
+                subtractiveRecursiveMatrixVectorPoduct(product, * block.son22, x, prodStartIndex, xStartIndex);
             }
         }
     }
 }
 
-void HArithm::subtractiveParallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y -= hmatrix * x
+void HArithm::subtractiveParallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster &block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex) // y -= hmatrix * x
 {
     QVector<const BlockCluster*> minPartition;
     BlockCluster::getPartition(block, minPartition);
@@ -1725,22 +1725,22 @@ void HArithm::subtractiveParallelMatrixVectorPoduct(Eigen::VectorXcd &product, c
     }
 }
 
-void HArithm::recursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, const long prodStartIndex, const long xStartIndex) // y += x * hmatrix
+void HArithm::recursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster &block, const long prodStartIndex, const long xStartIndex) // y += x * hmatrix
 {
-    if(block->isLeaf)
+    if(block.isLeaf)
     {
-        long rowStartIndex = block->rowStartIndex();
-        long numberOfRows = block->rows();
-        long columnStartIndex = block->colStartIndex();
-        long numberOfColumns = block->cols();
+        long rowStartIndex = block.rowStartIndex();
+        long numberOfRows = block.rows();
+        long columnStartIndex = block.colStartIndex();
+        long numberOfColumns = block.cols();
 
-        if(block->isAdmissible) // far field block
+        if(block.isAdmissible) // far field block
         {
-            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() += ((x.segment(rowStartIndex - xStartIndex, numberOfRows) * block->UMat) * block->singularValues.asDiagonal()) * block->VAdjMat;
+            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() += ((x.segment(rowStartIndex - xStartIndex, numberOfRows) * block.UMat) * block.singularValues.asDiagonal()) * block.VAdjMat;
         }
         else // near field block
         {
-            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() += x.segment(rowStartIndex - xStartIndex, numberOfRows) * block->fullMat;
+            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() += x.segment(rowStartIndex - xStartIndex, numberOfRows) * block.fullMat;
         }
     }
     else
@@ -1749,19 +1749,19 @@ void HArithm::recursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Ei
         {
             #pragma omp section //prevent aliasing by putting the same product columns in one section
             {                   //otherwise use omp critical above
-                recursiveVectorMatrixPoduct(product, x, block->son11, prodStartIndex, xStartIndex);
-                recursiveVectorMatrixPoduct(product, x, block->son21, prodStartIndex, xStartIndex);
+                recursiveVectorMatrixPoduct(product, x, * block.son11, prodStartIndex, xStartIndex);
+                recursiveVectorMatrixPoduct(product, x, * block.son21, prodStartIndex, xStartIndex);
             }
             #pragma omp section
             {
-                recursiveVectorMatrixPoduct(product, x, block->son12, prodStartIndex, xStartIndex);
-                recursiveVectorMatrixPoduct(product, x, block->son22, prodStartIndex, xStartIndex);
+                recursiveVectorMatrixPoduct(product, x, * block.son12, prodStartIndex, xStartIndex);
+                recursiveVectorMatrixPoduct(product, x, * block.son22, prodStartIndex, xStartIndex);
             }
         }
     }
 }
 
-void HArithm::subtractiveParallelVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, const long prodStartIndex, const long xStartIndex) // y -= x * hmatrix
+void HArithm::subtractiveParallelVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster &block, const long prodStartIndex, const long xStartIndex) // y -= x * hmatrix
 {
     QVector<const BlockCluster*> minPartition;
     BlockCluster::getPartition(block, minPartition);
@@ -1791,22 +1791,22 @@ void HArithm::subtractiveParallelVectorMatrixPoduct(Eigen::RowVectorXcd &product
     }
 }
 
-void HArithm::subtractiveRecursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, const long prodStartIndex, const long xStartIndex) // y -= x * hmatrix
+void HArithm::subtractiveRecursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster &block, const long prodStartIndex, const long xStartIndex) // y -= x * hmatrix
 {
-    if(block->isLeaf)
+    if(block.isLeaf)
     {
-        long rowStartIndex = block->rowStartIndex();
-        long numberOfRows = block->rows();
-        long columnStartIndex = block->colStartIndex();
-        long numberOfColumns = block->cols();
+        long rowStartIndex = block.rowStartIndex();
+        long numberOfRows = block.rows();
+        long columnStartIndex = block.colStartIndex();
+        long numberOfColumns = block.cols();
 
-        if(block->isAdmissible) // far field block
+        if(block.isAdmissible) // far field block
         {
-            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() -= ((x.segment(rowStartIndex - xStartIndex, numberOfRows) * block->UMat) * block->singularValues.asDiagonal()) * block->VAdjMat;
+            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() -= ((x.segment(rowStartIndex - xStartIndex, numberOfRows) * block.UMat) * block.singularValues.asDiagonal()) * block.VAdjMat;
         }
         else // near field block
         {
-            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() -= x.segment(rowStartIndex - xStartIndex, numberOfRows) * block->fullMat;
+            product.segment(columnStartIndex - prodStartIndex, numberOfColumns).noalias() -= x.segment(rowStartIndex - xStartIndex, numberOfRows) * block.fullMat;
         }
     }
     else
@@ -1815,62 +1815,62 @@ void HArithm::subtractiveRecursiveVectorMatrixPoduct(Eigen::RowVectorXcd &produc
         {
             #pragma omp section //prevent aliasing by putting the same product columns in one section
             {                   //otherwise use omp critical above
-                subtractiveRecursiveVectorMatrixPoduct(product, x, block->son11, prodStartIndex, xStartIndex);
-                subtractiveRecursiveVectorMatrixPoduct(product, x, block->son21, prodStartIndex, xStartIndex);
+                subtractiveRecursiveVectorMatrixPoduct(product, x, * block.son11, prodStartIndex, xStartIndex);
+                subtractiveRecursiveVectorMatrixPoduct(product, x, * block.son21, prodStartIndex, xStartIndex);
             }
             #pragma omp section
             {
-                subtractiveRecursiveVectorMatrixPoduct(product, x, block->son12, prodStartIndex, xStartIndex);
-                subtractiveRecursiveVectorMatrixPoduct(product, x, block->son22, prodStartIndex, xStartIndex);
+                subtractiveRecursiveVectorMatrixPoduct(product, x, * block.son12, prodStartIndex, xStartIndex);
+                subtractiveRecursiveVectorMatrixPoduct(product, x, * block.son22, prodStartIndex, xStartIndex);
             }
         }
     }
 }
 
-void HArithm::recursiveHMatAddition(BlockCluster* mat1Block, const BlockCluster* mat2Block, const long rank, const double relError)
+void HArithm::recursiveHMatAddition(BlockCluster &mat1Block, const BlockCluster &mat2Block, const long rank, const double relError)
 {
-    if(mat1Block->isLeaf && mat2Block->isLeaf)
+    if(mat1Block.isLeaf && mat2Block.isLeaf)
     {
-        if(mat1Block->isAdmissible && mat2Block->isAdmissible)
+        if(mat1Block.isAdmissible && mat2Block.isAdmissible)
         {
-            roundedAddRMatToBlock(*mat1Block, mat2Block->UMat, mat2Block->singularValues, mat2Block->VAdjMat, rank, relError);
+            roundedAddRMatToBlock(mat1Block, mat2Block.UMat, mat2Block.singularValues, mat2Block.VAdjMat, rank, relError);
         }
         else
         {
-            if(mat1Block->isAdmissible)
+            if(mat1Block.isAdmissible)
             {
-                addrkMatToFull(mat1Block->fullMat, mat1Block->UMat, mat1Block->singularValues, mat1Block->VAdjMat);
-                clearRkMatrix(*mat1Block);
-                mat1Block->isAdmissible = false;
-                addFullMatrixInToFirstOne(mat1Block->fullMat, mat2Block->fullMat);
+                addrkMatToFull(mat1Block.fullMat, mat1Block.UMat, mat1Block.singularValues, mat1Block.VAdjMat);
+                clearRkMatrix(mat1Block);
+                mat1Block.isAdmissible = false;
+                addFullMatrixInToFirstOne(mat1Block.fullMat, mat2Block.fullMat);
             }
-            else if(mat2Block->isAdmissible)
+            else if(mat2Block.isAdmissible)
             {
-//                addFullMatrixInToFirstOne(mat1Block->fullMat, mat2Block->UMat * mat2Block -> singularValues.asDiagonal() * mat2Block->VAdjMat);
-                addrkMatToFull(mat1Block->fullMat, mat2Block->UMat, mat2Block->singularValues, mat2Block->VAdjMat);
+//                addFullMatrixInToFirstOne(mat1Block.fullMat, mat2Block.UMat * mat2Block . singularValues.asDiagonal() * mat2Block.VAdjMat);
+                addrkMatToFull(mat1Block.fullMat, mat2Block.UMat, mat2Block.singularValues, mat2Block.VAdjMat);
             }
             else
             {
-                addFullMatrixInToFirstOne(mat1Block->fullMat, mat2Block->fullMat);
+                addFullMatrixInToFirstOne(mat1Block.fullMat, mat2Block.fullMat);
             }
         }
     }
-    else if(mat1Block->isLeaf)
+    else if(mat1Block.isLeaf)
     {
-        Cluster *rowCluster =  mat1Block->rowCluster;
-        Cluster *colCluster =  mat1Block->columnCluster;
+        Cluster *rowCluster =  mat1Block.rowCluster;
+        Cluster *colCluster =  mat1Block.columnCluster;
 
         #pragma omp task
-        mat1Block->son11 = copyBlock(mat2Block->son11, rowCluster->son1, colCluster->son1); // copy blocks from matrix 2 into matrix 1,
+        mat1Block.son11 = copyBlock(* mat2Block.son11, rowCluster->son1, colCluster->son1); // copy blocks from matrix 2 into matrix 1,
         #pragma omp task
-        mat1Block->son12 = copyBlock(mat2Block->son12, rowCluster->son1, colCluster->son2); // direct linking would break independence
+        mat1Block.son12 = copyBlock(* mat2Block.son12, rowCluster->son1, colCluster->son2); // direct linking would break independence
         #pragma omp task
-        mat1Block->son21 = copyBlock(mat2Block->son21, rowCluster->son2, colCluster->son1);
+        mat1Block.son21 = copyBlock(* mat2Block.son21, rowCluster->son2, colCluster->son1);
 //        #pragma omp task
-        mat1Block->son22 = copyBlock(mat2Block->son22, rowCluster->son2, colCluster->son2);
+        mat1Block.son22 = copyBlock(* mat2Block.son22, rowCluster->son2, colCluster->son2);
         #pragma omp taskwait
 
-//        if(mat1Block->isAdmissible)
+//        if(mat1Block.isAdmissible)
 //        {
 //            reducedRankAgglomerationWithTrimming(mat1Block, rank, relError);
 //        }
@@ -1881,17 +1881,17 @@ void HArithm::recursiveHMatAddition(BlockCluster* mat1Block, const BlockCluster*
 //        }
         blockSplitting(mat1Block, rank, relError);
     }
-    else if (mat2Block->isLeaf)
+    else if (mat2Block.isLeaf)
     {
-        if(mat2Block->isAdmissible)
+        if(mat2Block.isAdmissible)
         {
-//            addRMatToBlock(*mat1Block, mat2Block->UMat, mat2Block->singularValues, mat2Block->VAdjMat);
+//            addRMatToBlock(*mat1Block, mat2Block.UMat, mat2Block.singularValues, mat2Block.VAdjMat);
 //            reducedRankAgglomerationWithTrimming(mat1Block, rank, relError);
-            roundedAddRMatToBlock(*mat1Block, mat2Block->UMat, mat2Block->singularValues, mat2Block->VAdjMat, rank, relError);
+            roundedAddRMatToBlock(mat1Block, mat2Block.UMat, mat2Block.singularValues, mat2Block.VAdjMat, rank, relError);
         }
         else
         {
-            addFullMatrixInToFirstOne(mat1Block->fullMat, mat2Block->fullMat);
+            addFullMatrixInToFirstOne(mat1Block.fullMat, mat2Block.fullMat);
 //            fullRankDirektAgglomerationWithTrimming(mat1Block);
         }
         blockSplitting(mat1Block, rank, relError);
@@ -1899,89 +1899,89 @@ void HArithm::recursiveHMatAddition(BlockCluster* mat1Block, const BlockCluster*
     else
     {
         #pragma omp task
-        recursiveHMatAddition(mat1Block->son11, mat2Block->son11, rank, relError);
+        recursiveHMatAddition(* mat1Block.son11, * mat2Block.son11, rank, relError);
         #pragma omp task
-        recursiveHMatAddition(mat1Block->son12, mat2Block->son12, rank, relError);
+        recursiveHMatAddition(* mat1Block.son12, * mat2Block.son12, rank, relError);
         #pragma omp task
-        recursiveHMatAddition(mat1Block->son21, mat2Block->son21, rank, relError);
+        recursiveHMatAddition(* mat1Block.son21, * mat2Block.son21, rank, relError);
 //        #pragma omp task
-        recursiveHMatAddition(mat1Block->son22, mat2Block->son22, rank, relError);
+        recursiveHMatAddition(* mat1Block.son22, * mat2Block.son22, rank, relError);
         #pragma omp taskwait
     }
 }
 
-void HArithm::recursiveHMatSubstraction(BlockCluster* mat1Block, const BlockCluster* mat2Block, const long rank, const double relError) // mat1Block - mat2Block
+void HArithm::recursiveHMatSubstraction(BlockCluster &mat1Block, const BlockCluster &mat2Block, const long rank, const double relError) // mat1Block - mat2Block
 {
-    if(mat1Block->isLeaf && mat2Block->isLeaf)
+    if(mat1Block.isLeaf && mat2Block.isLeaf)
     {
-        if(mat1Block->isAdmissible && mat2Block->isAdmissible)
+        if(mat1Block.isAdmissible && mat2Block.isAdmissible)
         {
-            roundedAddRMatToBlock(*mat1Block, mat2Block->UMat, -mat2Block->singularValues, mat2Block->VAdjMat, rank, relError);
+            roundedAddRMatToBlock(mat1Block, mat2Block.UMat, -mat2Block.singularValues, mat2Block.VAdjMat, rank, relError);
         }
         else
         {
-            if(mat1Block->isAdmissible)
+            if(mat1Block.isAdmissible)
             {
-               addrkMatToFull(mat1Block->fullMat, mat1Block->UMat, mat1Block->singularValues, mat1Block->VAdjMat);
-               clearRkMatrix(*mat1Block);
-               mat1Block->isAdmissible = false;
-               addFullMatrixInToFirstOne(mat1Block->fullMat, -mat2Block->fullMat);
+               addrkMatToFull(mat1Block.fullMat, mat1Block.UMat, mat1Block.singularValues, mat1Block.VAdjMat);
+               clearRkMatrix(mat1Block);
+               mat1Block.isAdmissible = false;
+               addFullMatrixInToFirstOne(mat1Block.fullMat, -mat2Block.fullMat);
             }
-            else if(mat2Block->isAdmissible)
+            else if(mat2Block.isAdmissible)
             {
-//                addFullMatrixInToFirstOne(mat1Block->fullMat, mat2Block->UMat * ( -mat2Block->singularValues).asDiagonal() * mat2Block->VAdjMat);
-                addrkMatToFull(mat1Block->fullMat, mat2Block->UMat, -mat2Block->singularValues, mat2Block->VAdjMat);
+//                addFullMatrixInToFirstOne(mat1Block.fullMat, mat2Block.UMat * ( -mat2Block.singularValues).asDiagonal() * mat2Block.VAdjMat);
+                addrkMatToFull(mat1Block.fullMat, mat2Block.UMat, -mat2Block.singularValues, mat2Block.VAdjMat);
             }
             else
             {
-                addFullMatrixInToFirstOne(mat1Block->fullMat, -mat2Block->fullMat);
+                addFullMatrixInToFirstOne(mat1Block.fullMat, -mat2Block.fullMat);
             }
         }
     }
-    else if(mat1Block->isLeaf)
+    else if(mat1Block.isLeaf)
     {
-        Cluster *rowCluster =  mat1Block->rowCluster;
-        Cluster *colCluster =  mat1Block->columnCluster;
+        Cluster *rowCluster =  mat1Block.rowCluster;
+        Cluster *colCluster =  mat1Block.columnCluster;
 
 //        #pragma omp parallel sections
 //        {
             #pragma omp task
             {
-                mat1Block->son11 = copyBlock(mat2Block->son11, rowCluster->son1, colCluster->son1); // copy blocks from matrix 2 into matrix 1,
-                mat1Block->son11->father = mat1Block;
-                recursiveMultiplyHMatByMinusOne(mat1Block->son11);
+                mat1Block.son11 = copyBlock(* mat2Block.son11, rowCluster->son1, colCluster->son1); // copy blocks from matrix 2 into matrix 1,
+                mat1Block.son11->father = &mat1Block;
+                recursiveMultiplyHMatByMinusOne(* mat1Block.son11);
             }
             #pragma omp task
             {
-                mat1Block->son12 = copyBlock(mat2Block->son12, rowCluster->son1, colCluster->son2); // direct linking would break independence
-                mat1Block->son12->father = mat1Block;
-                recursiveMultiplyHMatByMinusOne(mat1Block->son12);
+                mat1Block.son12 = copyBlock(* mat2Block.son12, rowCluster->son1, colCluster->son2); // direct linking would break independence
+                mat1Block.son12->father = &mat1Block;
+                recursiveMultiplyHMatByMinusOne(* mat1Block.son12);
             }
             #pragma omp task
             {
-                mat1Block->son21 = copyBlock(mat2Block->son21, rowCluster->son2, colCluster->son1);
-                mat1Block->son21->father = mat1Block;
-                recursiveMultiplyHMatByMinusOne(mat1Block->son21);
+                mat1Block.son21 = copyBlock(* mat2Block.son21, rowCluster->son2, colCluster->son1);
+                mat1Block.son21->father = &mat1Block;
+                recursiveMultiplyHMatByMinusOne(* mat1Block.son21);
             }
 //            #pragma omp section
             {
-                mat1Block->son22 = copyBlock(mat2Block->son22, rowCluster->son2, colCluster->son2);
-                mat1Block->son22->father = mat1Block;
-                recursiveMultiplyHMatByMinusOne(mat1Block->son22);
+                mat1Block.son22 = copyBlock(* mat2Block.son22, rowCluster->son2, colCluster->son2);
+                mat1Block.son22->father = &mat1Block;
+                recursiveMultiplyHMatByMinusOne(* mat1Block.son22);
             }
 //        }
         #pragma omp taskwait
         blockSplitting(mat1Block, rank, relError);
     }
-    else if (mat2Block->isLeaf)
+    else if (mat2Block.isLeaf)
     {
-        if(mat2Block->isAdmissible)
+        if(mat2Block.isAdmissible)
         {
-            roundedAddRMatToBlock(*mat1Block, mat2Block->UMat, -mat2Block->singularValues, mat2Block->VAdjMat, rank, relError);
+            roundedAddRMatToBlock(mat1Block, mat2Block.UMat, -mat2Block.singularValues, mat2Block.VAdjMat, rank, relError);
         }
         else
         {
-            addFullMatrixInToFirstOne(mat1Block->fullMat, -mat2Block->fullMat);
+            addFullMatrixInToFirstOne(mat1Block.fullMat, -mat2Block.fullMat);
         }
         blockSplitting(mat1Block, rank, relError);
     }
@@ -1990,13 +1990,13 @@ void HArithm::recursiveHMatSubstraction(BlockCluster* mat1Block, const BlockClus
 //        #pragma omp parallel sections
 //        {
             #pragma omp task
-            recursiveHMatSubstraction(mat1Block->son11, mat2Block->son11, rank, relError);
+            recursiveHMatSubstraction(* mat1Block.son11, * mat2Block.son11, rank, relError);
             #pragma omp task
-            recursiveHMatSubstraction(mat1Block->son12, mat2Block->son12, rank, relError);
+            recursiveHMatSubstraction(* mat1Block.son12, * mat2Block.son12, rank, relError);
             #pragma omp task
-            recursiveHMatSubstraction(mat1Block->son21, mat2Block->son21, rank, relError);
+            recursiveHMatSubstraction(* mat1Block.son21, * mat2Block.son21, rank, relError);
 //            #pragma omp section
-            recursiveHMatSubstraction(mat1Block->son22, mat2Block->son22, rank, relError);
+            recursiveHMatSubstraction(* mat1Block.son22, * mat2Block.son22, rank, relError);
             #pragma omp taskwait
 //        }
     }
@@ -2006,21 +2006,21 @@ void HArithm::multiplyHMatByMinusOne(HMatrix &hMat)
 {
     if(hMat.getRootBlock() != nullptr)
     {
-        recursiveMultiplyHMatByMinusOne(hMat.getRootBlock());
+        recursiveMultiplyHMatByMinusOne(* hMat.getRootBlock());
     }
 }
 
-void HArithm::recursiveMultiplyHMatByMinusOne(BlockCluster* matBlock)
+void HArithm::recursiveMultiplyHMatByMinusOne(BlockCluster &matBlock)
 {
-    if(matBlock->isLeaf)
+    if(matBlock.isLeaf)
     {
-        if(matBlock->isAdmissible)
+        if(matBlock.isAdmissible)
         {
-            matBlock->singularValues *= -1;
+            matBlock.singularValues *= -1;
         }
         else
         {
-            matBlock->fullMat *= -1;
+            matBlock.fullMat *= -1;
         }
     }
     else
@@ -2028,56 +2028,57 @@ void HArithm::recursiveMultiplyHMatByMinusOne(BlockCluster* matBlock)
         #pragma omp parallel sections
         {
             #pragma omp section
-            recursiveMultiplyHMatByMinusOne(matBlock->son11);
+            recursiveMultiplyHMatByMinusOne(* matBlock.son11);
             #pragma omp section
-            recursiveMultiplyHMatByMinusOne(matBlock->son12);
+            recursiveMultiplyHMatByMinusOne(* matBlock.son12);
             #pragma omp section
-             recursiveMultiplyHMatByMinusOne(matBlock->son21);
+             recursiveMultiplyHMatByMinusOne(* matBlock.son21);
             #pragma omp section
-            recursiveMultiplyHMatByMinusOne(matBlock->son22);
+            recursiveMultiplyHMatByMinusOne(* matBlock.son22);
         }
     }
 }
 
-void HArithm::convertToAdmissibleZeroBlock(BlockCluster* matBlock)
+void HArithm::convertToAdmissibleZeroBlock(BlockCluster &matBlock)
 {
-    setRkMatrixZero(*matBlock);
-    matBlock->isLeaf = true;
-    matBlock->isAdmissible = true;
+    setRkMatrixZero(matBlock);
+    matBlock.isLeaf = true;
+    matBlock.isAdmissible = true;
 }
 
-BlockCluster* HArithm::copyBlock(const BlockCluster* matBlock, Cluster* rowCluster, Cluster* colCluster)
+/*std::unique_ptr<BlockCluster>*/ BlockCluster* HArithm::copyBlock(const BlockCluster &matBlock, Cluster* rowCluster, Cluster* colCluster)
 {
-    BlockCluster* returnBlock = new BlockCluster;
-    *returnBlock = *matBlock;
+//    std::unique_ptr<BlockCluster> returnBlock = std::make_unique<BlockCluster>();;
+    BlockCluster* returnBlock = new BlockCluster();
+    *returnBlock = matBlock;
     returnBlock->rowCluster = rowCluster;
     returnBlock->columnCluster = colCluster;
     if(!returnBlock->isLeaf)
     {
         if(rowCluster->isLeaf || rowCluster->isLeaf)
         {
-            std::cerr << "if(rowCluster->isLeaf || rowCluster->isLeaf) in copyBlock() call" << std::endl;
+            std::cerr << "if(rowCluster.isLeaf || rowCluster.isLeaf) in copyBlock() call" << std::endl;
         }
         #pragma omp parallel sections
         {
             #pragma omp section
             {
-                returnBlock->son11 = copyBlock(matBlock->son11, rowCluster->son1, colCluster->son1);
+                returnBlock->son11 = copyBlock(* matBlock.son11, rowCluster->son1, colCluster->son1);
                 returnBlock->son11->father = returnBlock;
             }
             #pragma omp section
             {
-                returnBlock->son12 = copyBlock(matBlock->son12, rowCluster->son1, colCluster->son2);
+                returnBlock->son12 = copyBlock(* matBlock.son12, rowCluster->son1, colCluster->son2);
                 returnBlock->son12->father = returnBlock;
             }
             #pragma omp section
             {
-                returnBlock->son21 = copyBlock(matBlock->son21, rowCluster->son2, colCluster->son1);
+                returnBlock->son21 = copyBlock(* matBlock.son21, rowCluster->son2, colCluster->son1);
                 returnBlock->son21->father = returnBlock;
             }
             #pragma omp section
             {
-                returnBlock->son22 = copyBlock(matBlock->son22, rowCluster->son2, colCluster->son2);
+                returnBlock->son22 = copyBlock(* matBlock.son22, rowCluster->son2, colCluster->son2);
                 returnBlock->son22->father = returnBlock;
             }
         }
@@ -2085,34 +2086,34 @@ BlockCluster* HArithm::copyBlock(const BlockCluster* matBlock, Cluster* rowClust
     return returnBlock;
 }
 
-Eigen::VectorXcd HArithm::getRankKBlockDiagonal(const BlockCluster* matBlock, long rank)
+Eigen::VectorXcd HArithm::getRankKBlockDiagonal(const BlockCluster &matBlock, long rank)
 {
-    long diagonalLength = std::min(matBlock->rows(), matBlock->cols());
+    long diagonalLength = std::min(matBlock.rows(), matBlock.cols());
 
-    if(matBlock->isAdmissible)
+    if(matBlock.isAdmissible)
     {
-        if(matBlock->singularValues.size() == 0)
+        if(matBlock.singularValues.size() == 0)
         {
             return Eigen::VectorXcd::Zero(diagonalLength);
         }
 
         if(rank <= 0)
         {
-            rank = matBlock->singularValues.size();
+            rank = matBlock.singularValues.size();
         }
 
         Eigen::VectorXcd diagonal(diagonalLength);
         for(long i = 0; i < diagonalLength; i++)
         {
-            diagonal(i) = ((matBlock->UMat.row(i).head(rank).transpose().array() * matBlock->singularValues.head(rank).array()).array() * matBlock->VAdjMat.col(i).head(rank).array()).sum();
+            diagonal(i) = ((matBlock.UMat.row(i).head(rank).transpose().array() * matBlock.singularValues.head(rank).array()).array() * matBlock.VAdjMat.col(i).head(rank).array()).sum();
         }
         return diagonal;
     }
     else
     {
-        if(matBlock->fullMat.size() != 0)
+        if(matBlock.fullMat.size() != 0)
         {
-            return matBlock->fullMat.diagonal();
+            return matBlock.fullMat.diagonal();
         }
         else
         {
@@ -2121,26 +2122,26 @@ Eigen::VectorXcd HArithm::getRankKBlockDiagonal(const BlockCluster* matBlock, lo
     }
 }
 
-Eigen::VectorXcd HArithm::getRankKBlockIndexedElements(BlockCluster* matBlock, QVector<long> &rowIndices, QVector<long> &colIndices, long rank)
+Eigen::VectorXcd HArithm::getRankKBlockIndexedElements(BlockCluster &matBlock, QVector<long> &rowIndices, QVector<long> &colIndices, long rank)
 {
     long returnVectorLenght = std::min(rowIndices.size(), colIndices.size());
-    if(matBlock->isAdmissible)
+    if(matBlock.isAdmissible)
     {
-        if(matBlock->singularValues.size() == 0)
+        if(matBlock.singularValues.size() == 0)
         {
             return Eigen::VectorXcd::Zero(returnVectorLenght);
         }
 
         if(rank <= 0)
         {
-            rank = matBlock->singularValues.size();
+            rank = matBlock.singularValues.size();
         }
 
         Eigen::VectorXcd returnVector(returnVectorLenght);
 
         for(long i = 0; i < returnVectorLenght; i++)
         {
-            returnVector(i) = ((matBlock->UMat.row(rowIndices.at(i)).head(rank).transpose().array() * matBlock->singularValues.head(rank).array()).array() * matBlock->VAdjMat.col(colIndices.at(i)).head(rank).array()).sum();
+            returnVector(i) = ((matBlock.UMat.row(rowIndices.at(i)).head(rank).transpose().array() * matBlock.singularValues.head(rank).array()).array() * matBlock.VAdjMat.col(colIndices.at(i)).head(rank).array()).sum();
         }
         return returnVector;
     }
@@ -2148,11 +2149,11 @@ Eigen::VectorXcd HArithm::getRankKBlockIndexedElements(BlockCluster* matBlock, Q
     {
         Eigen::VectorXcd returnVector(returnVectorLenght);
 
-        if(matBlock->fullMat.size() != 0)
+        if(matBlock.fullMat.size() != 0)
         {
             for(long i = 0; i < returnVectorLenght; i++)
             {
-                returnVector(i) = matBlock->fullMat(rowIndices.at(i), colIndices.at(i));
+                returnVector(i) = matBlock.fullMat(rowIndices.at(i), colIndices.at(i));
             }
             return returnVector;
         }
@@ -2210,15 +2211,15 @@ double HArithm::spectralNormFromLU(HMatrix &L, HMatrix &U, const unsigned long m
     {
         Eigen::RowVectorXcd uTmp = Eigen::RowVectorXcd::Zero(dim);
         Eigen::RowVectorXcd vAdj = v.adjoint();
-        HArithm::forwardSubstitutionTransposed(uTmp, U.getRootBlock(), vAdj); // Solve uTmp * U = v^* for uTmp1; U is upper triangular H-matrix.
+        HArithm::forwardSubstitutionTransposed(uTmp, * U.getRootBlock(), vAdj); // Solve uTmp * U = v^* for uTmp1; U is upper triangular H-matrix.
         u = Eigen::RowVectorXcd::Zero(dim);
-        HArithm::backwardSubstitutionTransposed(u, L.getRootBlock(), uTmp); // Solve u * L = uTmp for u, L is lower triangular H-matrix
+        HArithm::backwardSubstitutionTransposed(u, * L.getRootBlock(), uTmp); // Solve u * L = uTmp for u, L is lower triangular H-matrix
 
         Eigen::VectorXcd vTmp = Eigen::VectorXcd::Zero(dim);
         Eigen::VectorXcd uAdj = u.adjoint();
-        HArithm::forwardSubstitution(L.getRootBlock(), vTmp, uAdj); // Solve L * vTmp = u^* for vTmp, L is lower triangular H-matrix
+        HArithm::forwardSubstitution(* L.getRootBlock(), vTmp, uAdj); // Solve L * vTmp = u^* for vTmp, L is lower triangular H-matrix
         v = Eigen::VectorXcd::Zero(dim);
-        HArithm::backwardSubstitution(U.getRootBlock(), v, vTmp); // Solve U * v = vTmp for v, U is upper triangular H-matrix
+        HArithm::backwardSubstitution(* U.getRootBlock(), v, vTmp); // Solve U * v = vTmp for v, U is upper triangular H-matrix
 
         normEstimate = std::sqrt(v.norm());
         v.normalize();
@@ -2268,7 +2269,7 @@ void HArithm::MVMLeastSignificant(Eigen::VectorXcd &y, HMatrix &hmatrix, const E
     #pragma omp parallel for
     for(long i = 0; i < minPartition.length(); i++)
     {
-        BlockCluster *tmpBlock = minPartition.at(i);
+        BlockCluster* tmpBlock = minPartition.at(i);
         long rowStartIndex = tmpBlock->rowStartIndex();
         long numberOfRows = tmpBlock->rows();
         long columnStartIndex = tmpBlock->colStartIndex();
@@ -2294,7 +2295,7 @@ void HArithm::VMMLeastSignificant(Eigen::RowVectorXcd &y, const Eigen::RowVector
     #pragma omp parallel for
     for(long i = 0; i < minPartition.length(); i++)
     {
-        BlockCluster *tmpBlock = minPartition.at(i);
+        BlockCluster* tmpBlock = minPartition.at(i);
         long rowStartIndex = tmpBlock->rowStartIndex();
         long numberOfRows = tmpBlock->rows();
         long columnStartIndex = tmpBlock->colStartIndex();
@@ -2364,9 +2365,9 @@ double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long 
 
 
     Eigen::VectorXcd tmpCol = Eigen::VectorXcd::Zero(dim);
-    HArithm::forwardSubstitution(L.getRootBlock(), tmpCol, unitColumnVector); // Solve L * tmpCol = unitColumnVector for tmpCol, L is lower triangular H-matrix
+    HArithm::forwardSubstitution(* L.getRootBlock(), tmpCol, unitColumnVector); // Solve L * tmpCol = unitColumnVector for tmpCol, L is lower triangular H-matrix
     columnVector = Eigen::VectorXcd::Zero(dim);
-    HArithm::backwardSubstitution(U.getRootBlock(), columnVector, tmpCol); // Solve U * columnVector = tmpCol for columnVector, U is upper triangular H-matrix
+    HArithm::backwardSubstitution(* U.getRootBlock(), columnVector, tmpCol); // Solve U * columnVector = tmpCol for columnVector, U is upper triangular H-matrix
 
     std::complex<double> lastGain = 0;
     while(tmpRank < maxRank)
@@ -2392,9 +2393,9 @@ double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long 
         unitRowVector = Eigen::RowVectorXcd::Zero(dim);
         unitRowVector(rowIndex) = 1;
         Eigen::RowVectorXcd tmpRow = Eigen::RowVectorXcd::Zero(dim);
-        HArithm::forwardSubstitutionTransposed(tmpRow, U.getRootBlock(), unitRowVector); // Solve tmpRow * U = unitRowVector for tmpRow; U is upper triangular H-matrix.
+        HArithm::forwardSubstitutionTransposed(tmpRow, * U.getRootBlock(), unitRowVector); // Solve tmpRow * U = unitRowVector for tmpRow; U is upper triangular H-matrix.
         rowVector = Eigen::RowVectorXcd::Zero(dim);
-        HArithm::backwardSubstitutionTransposed(rowVector, L.getRootBlock(), tmpRow); // Solve u * L = uTmp for u, L is lower triangular H-matrix
+        HArithm::backwardSubstitutionTransposed(rowVector, * L.getRootBlock(), tmpRow); // Solve u * L = uTmp for u, L is lower triangular H-matrix
 
         if(tmpRank >= 1)
         {
@@ -2414,9 +2415,9 @@ double HArithm::frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long 
         unitColumnVector = Eigen::VectorXcd::Zero(dim);
         unitColumnVector(columnIndex) = 1;
         tmpCol = Eigen::VectorXcd::Zero(dim);
-        HArithm::forwardSubstitution(L.getRootBlock(), tmpCol, unitColumnVector); // Solve L * tmpCol = unitColumnVector for tmpCol, L is lower triangular H-matrix
+        HArithm::forwardSubstitution(* L.getRootBlock(), tmpCol, unitColumnVector); // Solve L * tmpCol = unitColumnVector for tmpCol, L is lower triangular H-matrix
         columnVector = Eigen::VectorXcd::Zero(dim);
-        HArithm::backwardSubstitution(U.getRootBlock(), columnVector, tmpCol); // Solve U * columnVector = tmpCol for columnVector, U is upper triangular H-matrix
+        HArithm::backwardSubstitution(* U.getRootBlock(), columnVector, tmpCol); // Solve U * columnVector = tmpCol for columnVector, U is upper triangular H-matrix
 
         std::complex<double> alpha = 1.0 / rowVector(columnIndex);
 
@@ -2466,34 +2467,34 @@ void HArithm::transpose(HMatrix &matrix)
     matrix.setClusterTrees(columnClustertree, rowClustertree);
     if(matrix.getRootBlock() != nullptr)
     {
-        transpose(matrix.getRootBlock());
+        transpose(* matrix.getRootBlock());
     }
 }
 
-void HArithm::transpose(BlockCluster* matBlock)
+void HArithm::transpose(BlockCluster &matBlock)
 {
-    std::swap(matBlock->rowCluster, matBlock->columnCluster);
+    std::swap(matBlock.rowCluster, matBlock.columnCluster);
 
-    if(matBlock->isLeaf)
+    if(matBlock.isLeaf)
     {
-        if(matBlock->isAdmissible)
+        if(matBlock.isAdmissible)
         {
-            std::swap(matBlock->UMat,matBlock->VAdjMat);
-            matBlock->UMat.transposeInPlace();
-            matBlock->VAdjMat.transposeInPlace();
+            std::swap(matBlock.UMat,matBlock.VAdjMat);
+            matBlock.UMat.transposeInPlace();
+            matBlock.VAdjMat.transposeInPlace();
         }
         else
         {
-            matBlock->fullMat.transposeInPlace();
+            matBlock.fullMat.transposeInPlace();
         }
     }
     else
     {
-        std::swap(matBlock->son21, matBlock->son12);
-        transpose(matBlock->son11);
-        transpose(matBlock->son12);
-        transpose(matBlock->son21);
-        transpose(matBlock->son22);
+        std::swap(matBlock.son21, matBlock.son12);
+        transpose(* matBlock.son11);
+        transpose(* matBlock.son12);
+        transpose(* matBlock.son21);
+        transpose(* matBlock.son22);
     }
 }
 

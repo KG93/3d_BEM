@@ -1136,9 +1136,9 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
         #pragma omp parallel sections
         {
             #pragma omp section
-            HArithm::recursiveHMatAddition(reflMatPhi.getRootBlock(), newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError); // for reflective planes
+            HArithm::recursiveHMatAddition(* reflMatPhi.getRootBlock(), * newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError); // for reflective planes
             #pragma omp section
-            HArithm::recursiveHMatAddition(reflMatDPhi.getRootBlock(), newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
+            HArithm::recursiveHMatAddition(* reflMatDPhi.getRootBlock(), * newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
         }
         omp_set_max_active_levels(1);
 
@@ -3424,8 +3424,8 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
 //            reflectedClusterTree.clear(); // can't be deleted here -> still a memory leak
             continue;
         }
-        HArithm::recursiveHMatAddition(reflMatPhi.getRootBlock(), newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError);
-        HArithm::recursiveHMatAddition(reflMatDPhi.getRootBlock(), newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
+        HArithm::recursiveHMatAddition(* reflMatPhi.getRootBlock(), * newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError);
+        HArithm::recursiveHMatAddition(* reflMatDPhi.getRootBlock(), * newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
 //        HArithm::recursiveHMatSubstraction(reflMatPhi.getRootBlock(), newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError);
 //        HArithm::recursiveHMatSubstraction(reflMatDPhi.getRootBlock(), newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
 

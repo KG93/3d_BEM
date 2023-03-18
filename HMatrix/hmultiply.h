@@ -111,11 +111,11 @@ class HMultiply
 {
 public:
     HMultiply();
-    static HMatrix multiplyHMat(BlockCluster* factor1, BlockCluster* factor2, const long rank, const double relError); /*!< \brief The method returns the product of two H-matrices. */
+    static HMatrix multiplyHMat(BlockCluster &factor1, BlockCluster &factor2, const long rank, const double relError); /*!< \brief The method returns the product of two H-matrices. */
     static HMatrix multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long rank, const double relError); /*!< \brief The method returns the product of two H-matrices. */
 
 private:
-    static void MM(BlockCluster* factorBlock1, BlockCluster* factorBlock2, intermBlCl* productBlock); /*!< \brief The method sets up the product tree and sets up the partial sums in the tree nodes. The actual work is handled by later tasks. */
+    static void MM(BlockCluster &factorBlock1, BlockCluster &factorBlock2, intermBlCl* productBlock); /*!< \brief The method sets up the product tree and sets up the partial sums in the tree nodes. The actual work is handled by later tasks. */
     static void findFullFlushTargets(intermBlCl* startBlock, QVector<intermBlCl*> transitBlocks); /*!< \brief The method flushes full matrices further down the product tree. */
     static void findRkFlushTargets(intermBlCl* potentialTargetBlock, intermBlCl*transitBlock = nullptr); /*!< \brief The method flushes low rank matrices further down the product tree. */
     static void setFullMergeTarget(intermBlCl* targetBlock, intermBlCl* transitBlock); /*!< \brief The method merges sub blocks (the sub-tree) up into a full matrix in the target block. */

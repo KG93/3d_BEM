@@ -140,9 +140,9 @@ namespace Eigen
                 long rows = lhs.hMatrix->rows();
                 HArithm::MVM(copy, *lhs.hMatrix, rhs);
                 Eigen::VectorXcd forwSubsSolution = Eigen::VectorXcd::Zero(rows);
-                HArithm::forwardSubstitution(lhs.hLMatrix->getRootBlock(), forwSubsSolution, copy, 0); // solve L * y = b for y, L is lower triangular h-matrix
+                HArithm::forwardSubstitution(*(lhs.hLMatrix->getRootBlock()), forwSubsSolution, copy, 0); // solve L * y = b for y, L is lower triangular h-matrix
                 Eigen::VectorXcd backwSubsSolution = Eigen::VectorXcd::Zero(rows);
-                HArithm::backwardSubstitution(lhs.hUMatrix->getRootBlock(), backwSubsSolution, forwSubsSolution, 0); // U * x = y, U is upper triangular h-matrix
+                HArithm::backwardSubstitution(*(lhs.hUMatrix->getRootBlock()), backwSubsSolution, forwSubsSolution, 0); // U * x = y, U is upper triangular h-matrix
                 dst += backwSubsSolution;
             }
         };
@@ -196,9 +196,9 @@ public:
 
         Eigen::VectorXcd rightHandSideCopy = b;
         Eigen::VectorXcd forwSubsSolution = Eigen::VectorXcd::Zero(AwithLU.rows());
-        HArithm::forwardSubstitution(AwithLU.hLMatrix->getRootBlock(), forwSubsSolution, rightHandSideCopy); // solve L * y = b for y, L is lower triangular h-matrix
+        HArithm::forwardSubstitution(*(AwithLU.hLMatrix->getRootBlock()), forwSubsSolution, rightHandSideCopy); // solve L * y = b for y, L is lower triangular h-matrix
         Eigen::VectorXcd backwSubsSolution = Eigen::VectorXcd::Zero(AwithLU.rows());
-        HArithm::backwardSubstitution(AwithLU.hUMatrix->getRootBlock(), backwSubsSolution, forwSubsSolution); // U * x = y, U is upper triangular h-matrix
+        HArithm::backwardSubstitution(*(AwithLU.hUMatrix->getRootBlock()), backwSubsSolution, forwSubsSolution); // U * x = y, U is upper triangular h-matrix
 
         Eigen::VectorXcd solution = gmres.solveWithGuess(backwSubsSolution, xGuess);
         std::cout << "gmres.iterations(): " << gmres.iterations() << std::endl;
