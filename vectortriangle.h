@@ -6,7 +6,7 @@
 #include <QtGlobal>
 #include <eigen3/Eigen/Geometry>
 
-/*!
+/**
  * \brief The VectorTriangle class represents a simple triangle in 3D space.
  */
 class VectorTriangle
@@ -15,7 +15,7 @@ public:
     //! Constructs a default VectorTriangle.
     VectorTriangle();
 
-    /*!
+    /**
      * \brief Constructs a VectorTriangle with the given nodes. The node ordering is counter-clockwise for the triangle front side.
      * \param Node1 the first node of the triangle
      * \param Node2 the second node of the triangle
@@ -26,7 +26,7 @@ public:
         this->node2 = Node2;
         this->node3 = Node3;
     }
-    /*!
+    /**
      * \brief Constructs a VectorTriangle with the given element index and nodes.
      * \param elementIndex the index of the element
      * \param Node1 the first node of the triangle
@@ -40,7 +40,7 @@ public:
         this->node3 = Node3;
     }
 
-    /*!
+    /**
      * \brief Constructs a VectorTriangle with the given element index, nodes, and normal vector.
      * \param elementIndex the index of the element
      * \param Node1 the first node of the triangle
@@ -56,7 +56,7 @@ public:
         this->normal = normal;
     }
 
-    /*!
+    /**
      * \brief Constructs a VectorTriangle with the given element index, nodes, normal vector, and Robin boundary condition.
      * \param elementIndex the index of the element
      * \param Node1 the first node of the triangle
@@ -97,13 +97,13 @@ public:
     //! The Robin boundary condition of the triangle.
     RobinBoundaryCondition robinBoundaryCondition;
 
-    /*!
+    /**
      * \brief phi
      * The value of the solution (phi) at the triangle.
      */
     std::complex<double> phi;
 
-    /*!
+    /**
      * \brief dPhi
      * The value of the normal derivative (dPhi)
      */
