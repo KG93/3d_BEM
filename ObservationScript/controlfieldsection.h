@@ -11,10 +11,10 @@ class ControlFieldSection
 public:
     ControlFieldSection();
 
-    /*!
-    Handles a script line for the control field section.
-    @param line The line to be handled.
-    @return True if the line was valid, false otherwise.
+    /**
+    * Handles a script line for the control field section.
+    * \param line The line to be handled.
+    * \return True if the line was valid, false otherwise.
     */
     bool handleScriptLine(const QString& line);
     double f1;

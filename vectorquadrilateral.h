@@ -6,7 +6,7 @@
 #include <QtGlobal>
 #include <eigen3/Eigen/Geometry>
 
-/*!
+/**
  * \brief The VectorQuadrilateral class represents a simple quadrilateral in 3D space.
  *
  * This class is used in the Boundary Element Method to represent the boundary of a domain.
@@ -21,7 +21,7 @@ public:
         node4 = {0,0,0};
     }
 
-    /*!
+    /**
      * \brief Constructs a quadrilateral with the given nodes.
      *
      * \param Node1 The first node of the quadrilateral.
@@ -36,7 +36,7 @@ public:
             this->node4 = Node4;
     }
 
-    /*!
+    /**
      * \brief Constructs a quadrilateral with the given index and nodes.
      *
      * \param elementIndex The index of the quadrilateral.
@@ -53,39 +53,39 @@ public:
             this->node4 = Node4;
     }
 
-    /*!
+    /**
     * \brief The index of the quadrilateral.
     */
     qint64 elementIndex;
 
-    /*!
+    /**
      * \brief The first node of the quadrilateral.
      */
     Eigen::Vector3d node1;
 
-    /*!
+    /**
      * \brief The second node of the quadrilateral.
      */
     Eigen::Vector3d node2;
 
-    /*!
+    /**
      * \brief The third node of the quadrilateral.
      */
     Eigen::Vector3d node3;
 
-    /*!
+    /**
      * \brief The fourth node of the quadrilateral.
      */
     Eigen::Vector3d node4;
 
-    /*!
+    /**
      * \brief The color of the quadrilateral.
      *
      * This property is used for visualizing the quadrilateral in a graphics view.
      */
     Eigen::Vector3d color = {0.5, 0.5, 1};
 
-    /*!
+    /**
      * \brief The Robin boundary condition of the quadrilateral.
      */
     RobinBoundaryCondition robinBoundaryCondition;

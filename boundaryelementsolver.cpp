@@ -890,7 +890,7 @@ void BoundaryElementSolver::hMatrixSolve()
     HArithm::MVM(rightHandside, phiHMat, f);
     if(testACA) // just for testing
     {
-        testPhiHMat = HArithm::hMatToFullMat(phiHMat);
+        testPhiHMat = phiHMat.toFullMat();
     }
     phiHMat.clear(true); // phimat in not needed anymore
 
@@ -919,7 +919,7 @@ void BoundaryElementSolver::hMatrixSolve()
 
     if(testACA) // just for testing
     {
-        testDPhiHMat = HArithm::hMatToFullMat(dPhiHMat);
+        testDPhiHMat = dPhiHMat.toFullMat();
     }
 
     double normDPhiResiduum = 0;

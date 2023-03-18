@@ -45,15 +45,15 @@ class BlockCluster
     void trimBelow(); /*!< \brief Trim the subtree of the block. */
     void compressAdmissibleBlock(const long rank, const double error); /*!< \brief Truncate the low rank matrix. */
     void compressSVDBlock(const long rank, const double error); /*!< \brief Truncate the low rank matrix. The matrix is assumed to be already in SVD form. */
-    bool hasNan(); /*!< \brief Check whether the block contains any NaNs. */
+    bool hasNan() const; /*!< \brief Check whether the block contains any NaNs. */
     double norm(); /*!< \brief Get the Frobenius norm of the block. */
-
-    static void getPartition(BlockCluster* block, QVector<BlockCluster *> &partition); /*!< \brief Calculate the partition vector that corresponds to the H-matrix/blockcluster tree.  */
+    bool hasFourChildren() const;  /*!< \brief Check whether the block is cross partitioned. */
+    static void getPartition(const BlockCluster *block, QVector<const BlockCluster *> &partition); /*!< \brief Calculate the partition vector that corresponds to the H-matrix/blockcluster tree.  */
     BlockCluster* returnCopy(BlockCluster* father = nullptr, long rank = 0, double error = 0, bool originalIsInSVDFormat = false); /*!< \brief Returns a pointer to a copy of the entire subtree of this. */
 
     Eigen::VectorXcd row(long colIndex) const; /*!< \brief Get block row. */
     Eigen::VectorXcd col(long colIndex) const; /*!< \brief Get block column. */
-    Eigen::MatrixXcd block(long rowIndex, long colIndex, long numberOfRows, long numberOfCols) const;  /*!< \brief Get sub block of the block. */
+//    Eigen::MatrixXcd block(long rowIndex, long colIndex, long numberOfRows, long numberOfCols) const;  /*!< \brief Get sub block of the block as a full matrix. */
 
     /**
     * \brief Full rank assembly of an H-block by ACA with full pivoting.
@@ -146,6 +146,7 @@ public:
         this->frobeniusNorm = rootBlockCluster->frobeniusNorm;
         this->rootBlockCluster->isRoot = true;
     }
+
     HMatrix(ClusterTree* rowClustertree, ClusterTree* columnClustertree, bool populate = false)
     {
         this->rowClustertree = rowClustertree;
@@ -155,6 +156,7 @@ public:
             this->populateBlockClusterTree();
         }
     }
+
     HMatrix(ClusterTree* rowClustertree, ClusterTree* columnClustertree, const long rank, double relativeError, std::function<std::complex<double> (long, long)> implicitMatrix)
     {
         this->rowClustertree = rowClustertree;
@@ -162,15 +164,32 @@ public:
         this->populateBlockClusterTree();
         assembleBlocks(rank, relativeError, implicitMatrix);
     }
-    HMatrix(HMatrix &original, long rank = 0, double error = 0, bool originalIsInSVDFormat = false);
+
+    HMatrix(const HMatrix &original, long rank = 0, double error = 0, bool originalIsInSVDFormat = false); /*!< \brief Construct a truncated copy of the original HMatrix. If originalIsInSVDFormat the copy truncation is a lot faster. */
 
     ~HMatrix(){
-//        delete rootBlockCluster;
         minPartition.clear();
     }
 
-    HMatrix& operator=(const HMatrix &hMat) = default; // use default copy assignment operator
+//    HMatrix& operator=(const HMatrix &hMat) = default; // use default copy assignment operator
+    HMatrix& operator=(const HMatrix &hMat) /*!< \brief The copy assignment operator */
+    {
+        if(this->rootBlockCluster != nullptr)
+        {
+            this->rootBlockCluster->clear();
+//            std::cout << "clear in copy assign constructor called!" << std::endl;
+        }
+        this->rootBlockCluster = hMat.rootBlockCluster;
 
+        this->minPartition = hMat.minPartition;
+        this->nearFieldBlocks = hMat.nearFieldBlocks;
+        this->farFieldBlocks = hMat.farFieldBlocks;
+        this->rowClustertree = hMat.rowClustertree;
+        this->columnClustertree = hMat.columnClustertree;
+        this->frobeniusNorm = hMat.frobeniusNorm;
+
+        return *this;
+    }
 
     void createRootNode(); /*!< \brief Create the root block for the blockclustertree. */
 
@@ -181,14 +200,14 @@ public:
     void assembleBlocks(const long rank, double relativeError, std::function<std::complex<double> (long, long)> implicitMatrix, bool updatePartition = true);
     void assembleBlocksExtra(const long rank, double relativeError,  std::function<QVector<std::pair<long,long>>(BlockCluster*,double)> getPivotIndices, std::function<std::complex<double> (long, long)> implicitMatrixLowRank, bool updatePartition = true);
 
-    QVector<BlockCluster*> getDiagonalBlocks(); /*!< \brief Assemble a vector of the diagonal partition blocks. */
-    BlockCluster* getRootBlock(); /*!< \brief Get the root block of the H-matrix. */
+    QVector<BlockCluster*> getDiagonalBlocks() const; /*!< \brief Assemble a vector of the diagonal partition blocks. */
+    BlockCluster* getRootBlock() const; /*!< \brief Get the root block of the H-matrix. */
     void setRootBlock(BlockCluster* rootBlockCluster); /*!< \brief Set the root block of the H-matrix. */
     ClusterTree* getRowClustertree(){return rowClustertree;} /*!< \brief Get the clustertree for the matrix row indices. */
     ClusterTree* getColumnClustertree(){return columnClustertree;} /*!< \brief Get the clustertree for the matrix column indices. */
     void clear(bool callMalloc_trim = false); /*!< \brief Clear the entire blockcluster tree. */
     void recursiveClear(BlockCluster* blockClusterNode);  /*!< \brief Recursively clear the blockcluster tree. */
-    bool isCrossPartitioned(); /*!< \brief Check whether the blocks in the blockclustertree are only cross partitioned. */
+    bool isCrossPartitioned() const; /*!< \brief Check whether the blocks in the blockclustertree are only cross partitioned. */
     bool isBlockAdmissible(const BlockCluster *blockCluster); /*!< \brief Check whether the block is admissible. (Has suitable low rank representation.) */
     void updatePartition(); /*!< \brief Update the partition vector. */
     void updatePartitionWithNullptrCheck(); /*!< \brief Update the partition vector. Check for nullpointers. */
@@ -201,15 +220,14 @@ public:
     long rowStartIndex() const; /*!< \brief Get the global index of the first matrix row.*/
     long colStartIndex() const; /*!< \brief Get the global index of the first matrix column.*/
     double getCompressionRatio(); /*!< \brief Get the ratio of actual (low rank) memory requirements compared to the full rank requirements. */
-    bool consistencyCheck(); /*!< \brief Check the consistency of the blockcluster tree. */
-    bool recursiveConsistencyCheck(BlockCluster* blockClusterNode);
+    bool consistencyCheck() const; /*!< \brief Check the consistency of the blockcluster tree. */
     long calculateMaxBlockRank(); /*!< \brief Get the maximum local block rank (of all low rank blocks). */
-    long calculateSizeOfAdmissibleBlocks();  /*!< \brief Calculate the sum of the size of all low rank blocks. */
+    long calculateSizeOfAdmissibleBlocks(); /*!< \brief Calculate the sum of the size of all low rank blocks. */
     double norm(bool calcMinPartition = true); /*!< \brief Get the Frobenius norm of the H-matrix. */
     double normInSVDForm(bool calcMinPartition = true); /*!< \brief Get the Frobenius norm of the H-matrix. Assumes that all low rank blocks are already in SVD representaion. (faster) */
-    bool hasNan(bool calcMinPartition = true);  /*!< \brief Check whether the H-matrix contains any NaNs. */
-
-    QVector<BlockCluster*> minPartition;
+    bool hasNan(bool calcMinPartition = true); /*!< \brief Check whether the H-matrix contains any NaNs. */
+    Eigen::MatrixXcd toFullMat(); /*!< \brief Convert the H-matrix to a full matrix. Costs O(n*m). */
+//    QVector<BlockCluster*> minPartition;
     int nearFieldBlocks = 0;
     int farFieldBlocks = 0;
 
@@ -218,22 +236,24 @@ private:
     void createBlockClusterChildren(BlockCluster* blockClusterNode); /*!< \brief Recursively set up the blockcluster tree structure. */
     void setUpRandomMatrices(long maxRank); /*!< \brief Initialize random matrices in the partition blocks. */
 
-    double admissibilityConstant = 3; /*!< \brief Constant used in the admissibility condition for a block. */
+    static constexpr double admissibilityConstant = 3; /*!< \brief Constant used in the admissibility condition for a block. */
     double clusterDistance(Cluster* cluster1, Cluster* cluster2); /*!< \brief Calculate the distance between two clusters. */
-    double clusterSize(Cluster* cluster); /*!< \brief Calculate the size of a cluster. */
-    void checkBlockPartition(BlockCluster* blockCluster, bool &onlyCrossPartitions); /*!< \brief Check whether all blocks are only cross partitioned. */
+    double clusterSize(Cluster* cluster) const; /*!< \brief Calculate the size of a cluster. */
+    void checkBlockPartition(BlockCluster* blockCluster, bool &onlyCrossPartitions) const; /*!< \brief Check whether all blocks are only cross partitioned. */
     void recursiveAppendPartitionBlock(BlockCluster* blockCluster); /*!< \brief Recursively assemble the partition vector. */
     void recAppendPartitionBlockNullptrCheck(BlockCluster* blockCluster, int depth);
-    static void recAppendPartitionBlockMatInfo(BlockCluster* blockCluster, QVector<BlockCluster *> &subBlocksWithInformation);
-    void recursiveAppendDiagonalBlock(BlockCluster* blockCluster, QVector<BlockCluster *> &diagonalBlocks); /*!< \brief Collect pointers to the diagonal partition blocks in vector. */
+    static void recAppendPartitionBlockMatInfo(BlockCluster* blockCluster, QVector<BlockCluster*> &subBlocksWithInformation);
+    void recursiveAppendDiagonalBlock(BlockCluster* blockCluster, QVector<BlockCluster*> &diagonalBlocks) const; /*!< \brief Collect pointers to the diagonal partition blocks in vector. */
+    bool recursiveConsistencyCheck(BlockCluster* blockClusterNode) const; /*!< \brief Recursively check the consistency of the blockcluster tree. */
+
     bool useWeakAdmissibility = false;
 
     int maxRank = 5; // unused in bem solver
     double frobeniusNorm = -1;
     ClusterTree* rowClustertree = nullptr;
     ClusterTree* columnClustertree = nullptr;
-    BlockCluster *rootBlockCluster = nullptr;
-//    QVector<BlockCluster*> minPartition;
+    BlockCluster* rootBlockCluster = nullptr;
+    QVector<BlockCluster*> minPartition;
 };
 
 #endif // HMATRIX_H

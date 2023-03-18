@@ -20,7 +20,7 @@ public:
     QVector<LinearTriangle> triangles; /*!< \brief A list of triangles that make up the discretization. */
 
     /**
-    * @brief The average triangle dimension.
+    * \brief The average triangle dimension.
     */
     double averageTriangleDim = 0;
 
@@ -35,7 +35,7 @@ private:
     void calculateAssociatedTriangles(); /*!< \brief Add the indices of the triangles that are associated with a node to the node. */
 
     /**
-    * @brief Calculate the collocation points for the BEM.
+    * \brief Calculate the collocation points for the BEM.
     *
     * This method calculates the geometric midpoint of each triangle in the discretization and stores
     * the resulting points in the #collocationPoints member. These points are used as the collocation
@@ -45,7 +45,7 @@ private:
     void calculateCollocationPoints();
 
     /**
-    * @brief Calculate the area of each triangle in the discretization.
+    * \brief Calculate the area of each triangle in the discretization.
     *
     * This method calculates the area of each triangle in the discretization and stores the results in
     * the #trianglesArea member.
@@ -54,7 +54,7 @@ private:
     void calculateTrianglesArea();
 
     /**
-    * @brief Calculate the area of each triangle and estimate the average triangle dimension.
+    * \brief Calculate the area of each triangle and estimate the average triangle dimension.
     */
     void calculateTrianglesAreaAndAverageDimension();
 };

@@ -8,7 +8,7 @@
 #include <eigen3/Eigen/Eigenvalues> // for operator norm
 #include "hmultiply.h"
 
-static constexpr bool useEigenSvd = false; /*!< Use Eigens SVD implementation or the own Golub Reinsch SVD */
+static constexpr bool useEigenSvd = false; /*!< Use Eigens SVD implementation if true or the own Golub Reinsch SVD if false. */
 static constexpr bool inversionInLUDecomp = false; /*!< Use the inverse matrix instead of the LU factorization for the diagonal blocks. */
 static constexpr bool qrInLUDecomp = true; /*!< Use the QR decomposition instead of the LU factorization for the diagonal blocks. Recommended. */
 
@@ -38,13 +38,6 @@ public:
     * \param hmatrix The h-matrix that will be multiplied.
     */
     static void VMM(Eigen::RowVectorXcd &y, const Eigen::RowVectorXcd &x, HMatrix &hmatrix);
-
-    /**
-    * \brief Convert H-matrix to a full matrix.
-    * \param hmatrix The h-matrix that will be converted.
-    * \return The resulting full matrix.
-    */
-    static Eigen::MatrixXcd hMatToFullMat(HMatrix &hmatrix);
 
     /**
     * \brief Compress (truncate) all admissible H-matrix blocks. If either control parameter is zero, the parameter will be ignored.
@@ -115,8 +108,8 @@ public:
     */
     static void MM(HMatrix &factor1, HMatrix &factor2, HMatrix &product, BlockCluster* factorBlock1, BlockCluster* factorBlock2, BlockCluster* productBlock, const long rank, const double relError);
     static void MMR(BlockCluster* factorBlock1, BlockCluster* factorBlock2, BlockCluster* productBlock, const long rank, const double relError);
-    static void matByBlock(const Eigen::MatrixXcd &lFactor, BlockCluster* rFactorBlock, long columnOffsetFactor1, long columnOffsetFactor2, Eigen::MatrixXcd& product);
-    static void blockByMat(BlockCluster* lFactorBlock, const Eigen::MatrixXcd& rFactor, long rowOffsetFactor1, long rowOffsetFactor2, Eigen::MatrixXcd& product);
+    static void matByBlock(const Eigen::MatrixXcd &lFactor, const BlockCluster* rFactorBlock, long columnOffsetFactor1, long columnOffsetFactor2, Eigen::MatrixXcd& product);
+    static void blockByMat(const BlockCluster *lFactorBlock, const Eigen::MatrixXcd& rFactor, long rowOffsetFactor1, long rowOffsetFactor2, Eigen::MatrixXcd& product);
     static void updateProductBlockAdmissibility (BlockCluster* factorBlock1, BlockCluster* factorBlock2, BlockCluster* productBlock);
 
     /**
@@ -230,30 +223,34 @@ public:
     * \param rank The rank to which the resulting matrix will be truncated.
     * \param error The maximum error allowed in the truncated matrix.
     */
-    static void reducedRankAgglomerationWithTrimming(BlockCluster* block, const long rank, const double error); /*!< \brief Agglomerate subtree into the low rank matrix of the block. Then trim subtree below the block. */
-    static void reducedRankAgglomeration(BlockCluster* block, const long rank, const double error);
+    static void reducedRankAgglomerationWithTrimming(BlockCluster* block, const long rank, const double relError); /*!< \brief Agglomerate subtree into the low rank matrix of the block. Then trim subtree below the block. */
+    static void reducedRankAgglomeration(BlockCluster* block, const long rank, const double relError);
     static std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> reducedRankAgglomerationRecursion(BlockCluster* block, const long rank, const double relError);
 
-    static void blockSplitting(BlockCluster* block, long rank, const double error);  /*!< \brief Flush the matrices of the block down to the leaf nodes. */
+    static void blockSplitting(BlockCluster* block, const long rank, const double error);  /*!< \brief Flush the matrices of the block down to the leaf nodes. */
 
     static Eigen::VectorXcd LUSolve(HMatrix &A, Eigen::VectorXcd &b, const long rank, const double relError);  /*!< \brief Solve  Ax=b  for x with H-LU-factorization. */
     static Eigen::VectorXcd LUSubstitutionSolve(HMatrix &L, HMatrix &U, const Eigen::VectorXcd &rightHandSide);   /*!< \brief Solve  LUx=b for x via forward and backward substitution. */
-    static std::pair<HMatrix,HMatrix> LUDecomposition(HMatrix &matrix, const long rank, const double relError, bool zeroBlocksUninitialized = false);   /*!< \brief Calculate the LU-factorization of an H-matrix. */
-    static void recursiveLUDecomposition(BlockCluster* LBlock, BlockCluster* UBlock, BlockCluster* ABlock, const long rank, const double relError,  bool zeroBlocksUninitialized = false);  /*!< \brief Recursive LU factorization. (L*U=A) */
+    static std::pair<HMatrix,HMatrix> LUDecomposition(HMatrix &matrix, const long rank, const double relError, const bool zeroBlocksUninitialized = false);   /*!< \brief Calculate the LU-factorization of an H-matrix. The operation destroys the matrix. */
+    static void recursiveLUDecomposition(BlockCluster* LBlock, BlockCluster* UBlock, BlockCluster* ABlock, const long rank, const double relError,  const bool zeroBlocksUninitialized = false);  /*!< \brief Recursive LU factorization. (L*U=A) */
+    static Eigen::VectorXcd forwardSubstitution(const HMatrix &L, Eigen::VectorXcd b); /*!< \brief Solve L * y = b for y; L is lower triangular H-matrix. */
     static void forwardSubstitution(const BlockCluster* LBlock, Eigen::VectorXcd &solution, Eigen::VectorXcd &b, const long vectorStartIndex = 0); /*!< \brief Solve L * y = b for y; L is lower triangular H-matrix. */
     static void forwardSubstitutionTransposed(Eigen::RowVectorXcd &solution, const BlockCluster* UBlock, Eigen::RowVectorXcd &b, const long vectorStartIndex = 0); /*!< \brief Solve y^T * U = b^T for y; U is upper triangular H-matrix. */
-    static void backwardSubstitution(const BlockCluster* UBlock, Eigen::VectorXcd &solution, Eigen::VectorXcd &y, const long vectorStartIndex = 0); /*!< \brief Solve U * x = y for x; U is upper triangular H-matrix. */
+    static Eigen::VectorXcd backwardSubstitution(const HMatrix &U, Eigen::VectorXcd y); /*!< \brief Solve U * x = y for x; U is upper triangular H-matrix. */
+    static void backwardSubstitution(const BlockCluster *UBlock, Eigen::VectorXcd &solution, Eigen::VectorXcd &y, const long vectorStartIndex = 0); /*!< \brief Solve U * x = y for x; U is upper triangular H-matrix. */
     static void backwardSubstitutionTransposed(Eigen::RowVectorXcd &solution, const BlockCluster* LBlock, Eigen::RowVectorXcd &y, const long vectorStartIndex = 0); /*!< \brief Solve x^T * L = y^T for x; L is lower triangular H-matrix*/
+    static HMatrix forwSubsMatVal(const HMatrix &L, HMatrix &Z, const long rank, const double relError); /*!< \brief Solve L * X = Z for X, L is lower triangular H-matrix; X is the return value; Z is destroyed */
     static void forwSubsMatVal(const BlockCluster* LBlock, BlockCluster* XBlock, BlockCluster* ZBlock, const long rank, const double relError); /*!< \brief Solve L * X = Z for X, L is lower triangular H-matrix */
-    static void forwSubsMatValTransposed(BlockCluster* XBlock, const BlockCluster* UBlock, BlockCluster* ZBlock, const long rank, const double relError); /*!< \brief Solve L * X = Z for X, L is lower triangular H-matrix */
+    static HMatrix forwSubsMatValTransposed(const HMatrix &U, HMatrix &Z, const long rank, const double relError); /*!< \brief Solve X * U = Z for X, U is upper triangular H-matrix; X is the return value */
+    static void forwSubsMatValTransposed(BlockCluster* XBlock, const BlockCluster* UBlock, BlockCluster* ZBlock, const long rank, const double relError); /*!< \brief Solve X * U = Z for X, U is upper triangular H-matrix; Z is destroyed */
 
-    static void recursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, long prodStartIndex, long xStartIndex); /*!< \brief Recursively calculate y += hmatrix * x */
-    static void parallelMatrixVectorPoduct(Eigen::VectorXcd &product, BlockCluster *block, const Eigen::VectorXcd &x, long prodStartIndex, long xStartIndex); /*!< \brief Calculate y += hmatrix * x; better parallelized. */
-    static void subtractiveRecursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, long prodStartIndex, long xStartIndex); /*!< \brief Recursively calculate y -= hmatrix * x */
-    static void subtractiveParallelMatrixVectorPoduct(Eigen::VectorXcd &product, BlockCluster* block, const Eigen::VectorXcd &x, long prodStartIndex, long xStartIndex); /*!< \brief Calculate y -= hmatrix * x; better parallelized. */
-    static void recursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, long prodStartIndex, long xStartIndex); /*!< \brief Recursively calculate y += x * hmatrix; y and x are row-vectors */
-    static void subtractiveRecursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, long prodStartIndex, long xStartIndex); /*!< \brief Recursively calculate y -= x * hmatrix; y and x are row-vectors */
-    static void subtractiveParallelVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, BlockCluster *block, long prodStartIndex, long xStartIndex); /*!< \brief Recursively calculate y -= x * hmatrix; y and x are row-vectors; better parallelized */
+    static void recursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex); /*!< \brief Recursively calculate y += hmatrix * x */
+    static void parallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex); /*!< \brief Calculate y += hmatrix * x; better parallelized. */
+    static void subtractiveRecursiveMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex); /*!< \brief Recursively calculate y -= hmatrix * x */
+    static void subtractiveParallelMatrixVectorPoduct(Eigen::VectorXcd &product, const BlockCluster* block, const Eigen::VectorXcd &x, const long prodStartIndex, const long xStartIndex); /*!< \brief Calculate y -= hmatrix * x; better parallelized. */
+    static void recursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, const long prodStartIndex, const long xStartIndex); /*!< \brief Recursively calculate y += x * hmatrix; y and x are row-vectors */
+    static void subtractiveRecursiveVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, const long prodStartIndex, const long xStartIndex); /*!< \brief Recursively calculate y -= x * hmatrix; y and x are row-vectors */
+    static void subtractiveParallelVectorMatrixPoduct(Eigen::RowVectorXcd &product, const Eigen::RowVectorXcd &x, const BlockCluster* block, const long prodStartIndex, const long xStartIndex); /*!< \brief Recursively calculate y -= x * hmatrix; y and x are row-vectors; better parallelized */
     static void recursiveHMatAddition(BlockCluster* mat1Block, const BlockCluster* mat2Block, const long rank, const double relError); /*!< \brief Recursive addition for H-matrices based on same clustertree; the partitions can be different */
     static void recursiveHMatSubstraction(BlockCluster* mat1Block, const BlockCluster* mat2Block, const long rank, const double relError); /*!< \brief Recursive subtraction for H-matrices based on same clustertree; the partitions can be different */
 
@@ -261,19 +258,22 @@ public:
     static void recursiveMultiplyHMatByMinusOne(BlockCluster* matBlock); /*!< \brief Multiply subtree by -1. */
     static void convertToAdmissibleZeroBlock(BlockCluster* matBlock); /*!< \brief Make block zero block in low rank representation. */
 
-    static BlockCluster* copyBlock(BlockCluster* matBlock, Cluster* rowCluster, Cluster* colCluster); /*!< \brief Make independent copy of the subtree of matBlock. */
+    static BlockCluster* copyBlock(const BlockCluster* matBlock, Cluster* rowCluster, Cluster* colCluster); /*!< \brief Make independent copy of the subtree of matBlock. */
 
-    static Eigen::VectorXcd getRankKBlockDiagonal(BlockCluster* matBlock, long rank = 0);
-    static Eigen::VectorXcd getRankKBlockIndexedElements(BlockCluster* matBlock, QVector<long> &rowIndices, QVector<long>& colIndices, long rank = 0);
+    static Eigen::VectorXcd getRankKBlockDiagonal(const BlockCluster* matBlock, long rank = 0);
+    static Eigen::VectorXcd getRankKBlockIndexedElements(BlockCluster* matBlock, QVector<long> &rowIndices, QVector<long> &colIndices, long rank = 0);
 
     static double spectralNorm(HMatrix &A, const unsigned long maxIterations = 20); /*!< \brief Approximates the spectral norm a matrix via power iteration. */
     static double spectralNormFromLU(HMatrix &L, HMatrix &U, const unsigned long maxIterations = 20); /*!< \brief Approximates the spectral norm of the inverse of a matrix via the LU-decomposition of the matrix. The method is a power iteration with forward- and backward substitution. */
 
-    static double spectralNormLeastSignificant(HMatrix &A, const unsigned long maxIterations = 20); // Approximates the spectral norm of a matrix, where only the least significant rank-1 matrix of each block is taken into account. Can be used as an approximation of the spectral norm of the residual matrix after ACA assembly
+    static double spectralNormLeastSignificant(HMatrix &A, const unsigned long maxIterations = 20);  /*!< \brief Approximates the spectral norm of an H-matrix, where only the least significant rank-1 matrix of each partition block is taken into account. Can be used as an approximate upper bound of the spectral norm of the residual matrix after ACA assembly. */
     static void MVMLeastSignificant(Eigen::VectorXcd &y, HMatrix &hmatrix, const Eigen::VectorXcd &x);
     static void VMMLeastSignificant(Eigen::RowVectorXcd &y, const Eigen::RowVectorXcd &x, HMatrix &hmatrix);
 
     static double frobeniusNormFromLU(HMatrix &L, HMatrix &U, const unsigned long maxIterations = 20); /*!< \brief Approximates the frobenius norm of the inverse of a matrix via the LU-decomposition of the matrix. Low accuracy.*/
-};
 
+    static void transpose(HMatrix &matrix); /*!< \brief Transpose the HMatrix in place. */
+
+    static void transpose(BlockCluster* matBlock); /*!< \brief Recursive transposition the subtree of the BlockCluster. */
+};
 #endif // HARITHM_H

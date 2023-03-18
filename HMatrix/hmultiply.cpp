@@ -723,7 +723,7 @@ void HMultiply::RkMatRankReduction(Eigen::MatrixXcd &UMat, Eigen::VectorXcd &sin
 
         Eigen::MatrixXcd A = (R_A * singularValues.head(R_A.cols()).asDiagonal()) * R_B_Transpose.triangularView<Eigen::Lower>();
 
-        if(useEigenSvd)
+        if constexpr(useEigenSvd)
         {
 //            Eigen::JacobiSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd(A);
             Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd(A);

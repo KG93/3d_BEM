@@ -5,7 +5,7 @@
 #include <eigen3/Eigen/Geometry>
 
 /**
-*\brief A point in 3d space.
+* \brief A point in 3d space.
 */
 class Node
 {
@@ -20,7 +20,7 @@ public:
 
 //    int index;
     /**
-    *\brief The 3D coordinates of the node.
+    * \brief The 3D coordinates of the node.
     */
     Eigen::Vector3d coordinates;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

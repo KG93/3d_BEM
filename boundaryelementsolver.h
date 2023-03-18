@@ -697,9 +697,9 @@ private:
     std::complex<double> sourcePhiTerm(const PointSource source, const Eigen::Vector3d listeningPosition); /*!< Calculate only the phi term os the external sound field source at an observation point. */
     void setCouplingParameterNegative(); /*!< Set the BEM coupling parameter negative. */
 
-    const double PI2 = 2.0 * global::PI;
-    const double PI4 = 4.0 * global::PI;
-    const std::complex<double> imaginaryUnit = std::complex<double>(0.0, 1.0);
+    static constexpr double PI2 = 2.0 * global::PI;
+    static constexpr double PI4 = 4.0 * global::PI;
+    static constexpr std::complex<double> imaginaryUnit = std::complex<double>(0.0, 1.0);
     double staticPressure = 101325; //Pa at 20°C and sea level
     double airDensity = 1.2041;
     QRandomGenerator randomGenerator;
@@ -731,9 +731,9 @@ private:
     unsigned long fieldACAMaxRank = 0; /*!< Sets the (maximum) local rank of the ACA for the field calculation. If set to zero, only the fieldACARelativeError tolerance is used.*/
     bool calculateNormAndCond = false; /*!< Controls whether to estimate the norm and condition number of the dphi bem matrix. */
 
-    const bool avoidHMatGLS = true;
-    const bool avoidGLS = true; /*!< Assemble the BEM matrices with implicit substitution and avoid the GLS routine. */
-    const bool testACA = false; ///// set true only for testing; stops the solve routines after matrix assembly
+    static constexpr bool avoidHMatGLS = true;
+    static constexpr bool avoidGLS = true; /*!< Assemble the BEM matrices with implicit substitution and avoid the GLS routine. */
+    static constexpr bool testACA = false; ///// set true only for testing; stops the solve routines after matrix assembly
     bool burtonMillerCoupling = true;
     bool kirkupCoupling = true;
     bool negativeCoupling = false;

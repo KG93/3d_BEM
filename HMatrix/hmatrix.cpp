@@ -176,7 +176,7 @@ void BlockCluster::compressSVDBlock(const long rank, const double error)
     VAdjMat.conservativeResize(newRank, Eigen::NoChange);
 }
 
-bool BlockCluster::hasNan()
+bool BlockCluster::hasNan() const
 {
     return UMat.hasNaN() || singularValues.hasNaN() || VAdjMat.hasNaN() || fullMat.hasNaN();
 }
@@ -204,13 +204,20 @@ double BlockCluster::norm()
     }
 }
 
+bool BlockCluster::hasFourChildren() const
+{
+    return (this->son11 != nullptr) && (this->son12 != nullptr) && (this->son21 != nullptr) && (this->son22 != nullptr);
+}
 
-void BlockCluster::getPartition(BlockCluster* block, QVector<BlockCluster*> &partition)
+void BlockCluster::getPartition(const BlockCluster* block, QVector<const BlockCluster*> &partition)
 {
     if(block->isLeaf) // block is in partition
     {
-        #pragma omp critical
-        partition.push_back(block);
+        if(block->fullMat.size() != 0 || block->singularValues.size() != 0)
+        {
+            #pragma omp critical
+            partition.push_back(block);
+        }
     }
     else // block has leaves in blockclustertree
     {
@@ -218,19 +225,31 @@ void BlockCluster::getPartition(BlockCluster* block, QVector<BlockCluster*> &par
         {
             #pragma omp section
             {
-            BlockCluster::getPartition(block->son11, partition);
+                if(block->son11 != nullptr)
+                {
+                    BlockCluster::getPartition(block->son11, partition);
+                }
             }
             #pragma omp section
             {
-            BlockCluster::getPartition(block->son12, partition);
+                if(block->son12 != nullptr)
+                {
+                    BlockCluster::getPartition(block->son12, partition);
+                }
             }
             #pragma omp section
             {
-            BlockCluster::getPartition(block->son21, partition);
+                if(block->son21 != nullptr)
+                {
+                    BlockCluster::getPartition(block->son21, partition);
+                }
             }
             #pragma omp section
             {
-            BlockCluster::getPartition(block->son22, partition);
+                if(block->son22 != nullptr)
+                {
+                    BlockCluster::getPartition(block->son22, partition);
+                }
             }
         }
     }
@@ -326,32 +345,32 @@ Eigen::VectorXcd BlockCluster::col(long colIndex) const
     }
 }
 
-Eigen::MatrixXcd BlockCluster::block(long rowIndex, long colIndex, long numberOfRows, long numberOfCols) const
-{
-    if(isAdmissible)
-    {
-        long rank = singularValues.size();
-        if(numberOfRows <= numberOfCols)
-        {
-            return (UMat.block(rowIndex, 0 , numberOfRows, rank) * singularValues.asDiagonal()) * VAdjMat.block(0, colIndex, rank, numberOfCols);
-        }
-        else
-        {
-            return UMat.block(rowIndex, 0 , numberOfRows, rank) * (singularValues.asDiagonal() * VAdjMat.block(0, colIndex, rank, numberOfCols));
-        }
-    }
-    else
-    {
-        return fullMat.block(rowIndex, colIndex, numberOfRows, numberOfCols);
-    }
-}
+//Eigen::MatrixXcd BlockCluster::block(long rowIndex, long colIndex, long numberOfRows, long numberOfCols) const
+//{
+//    if(isAdmissible)
+//    {
+//        long rank = singularValues.size();
+//        if(numberOfRows <= numberOfCols)
+//        {
+//            return (UMat.block(rowIndex, 0 , numberOfRows, rank) * singularValues.asDiagonal()) * VAdjMat.block(0, colIndex, rank, numberOfCols);
+//        }
+//        else
+//        {
+//            return UMat.block(rowIndex, 0 , numberOfRows, rank) * (singularValues.asDiagonal() * VAdjMat.block(0, colIndex, rank, numberOfCols));
+//        }
+//    }
+//    else
+//    {
+//        return fullMat.block(rowIndex, colIndex, numberOfRows, numberOfCols);
+//    }
+//}
 
 void BlockCluster::fullRankAssembly(std::function<std::complex<double> (long, long)> implicitMatrix)
 {
-    long rowStartIndex = this->rowStartIndex();
-    long columnStartIndex = this->colStartIndex();
-    long blockRows = this->rows();
-    long blockColumns = this->cols();
+    const long rowStartIndex = this->rowStartIndex();
+    const long columnStartIndex = this->colStartIndex();
+    const long blockRows = this->rows();
+    const long blockColumns = this->cols();
 
     fullMat = Eigen::MatrixXcd(blockRows, blockColumns);
 
@@ -380,10 +399,10 @@ void BlockCluster::fullPivotACA(const long rank, const double relativeError, std
 
     double norm = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
     double residuumNorm = 0;
-    long rowStartIndexx = rowStartIndex();
-    long columnStartIndex = colStartIndex();
-    long blockRows = rows(); //assumes contiguous ascending indexes
-    long blockColumns = cols();
+    const long rowStartIndex = this->rowStartIndex();
+    const long columnStartIndex = this->colStartIndex();
+    const long blockRows = this->rows(); //assumes contiguous ascending indexes
+    const long blockColumns = this->cols();
 
     long maxRank = std::min(blockRows, blockColumns);
     long initialRankReservation = 5;
@@ -406,7 +425,7 @@ void BlockCluster::fullPivotACA(const long rank, const double relativeError, std
     Eigen::MatrixXcd Residuum(blockRows, blockColumns);
     for (int i = 0; i < blockRows ; i++)
     {
-        calcHBlockRowFromImplicit(rowVector, rowStartIndexx + i, columnStartIndex, implicitMatrix);
+        calcHBlockRowFromImplicit(rowVector, rowStartIndex + i, columnStartIndex, implicitMatrix);
         Residuum.row(i) = rowVector;
     }
     norm = Residuum.norm();
@@ -418,14 +437,14 @@ void BlockCluster::fullPivotACA(const long rank, const double relativeError, std
     {
         Residuum.cwiseAbs().maxCoeff(&rowIndex, &columnIndex);
 
-        calcHBlockRowFromImplicit(rowVector, rowStartIndexx + rowIndex, columnStartIndex, implicitMatrix);
+        calcHBlockRowFromImplicit(rowVector, rowStartIndex + rowIndex, columnStartIndex, implicitMatrix);
 
         if(tmpRank >= 1)
         {
             rowVector -= (UMat.leftCols(tmpRank).row(rowIndex) * singularValues.head(tmpRank).asDiagonal()) * VAdjMat.topRows(tmpRank);
         }
 
-        calcHBlockColumnFromImplicit(columnVector, rowStartIndexx, columnStartIndex + columnIndex,  implicitMatrix);
+        calcHBlockColumnFromImplicit(columnVector, rowStartIndex, columnStartIndex + columnIndex,  implicitMatrix);
 
         std::complex<double> alpha = 1.0 / rowVector(columnIndex);
 
@@ -475,13 +494,13 @@ void BlockCluster::partialPivotACA(const long rank, const double relativeError, 
 
     std::complex<double> normEstimate = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
     double relErrorTarget = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
-    long rowStartIndex = this->rowStartIndex();
-    long columnStartIndex = this->colStartIndex();
-    long blockRows = this->rows(); //assumes contiguous ascending indexes
-    long blockColumns = this->cols();
+    const long rowStartIndex = this->rowStartIndex();
+    const long columnStartIndex = this->colStartIndex();
+    const long blockRows = this->rows(); //assumes contiguous ascending indexes
+    const long blockColumns = this->cols();
 
     long maxRank = std::min(blockRows, blockColumns);
-    long initialRankReservation = 5;
+    const long initialRankReservation = 5;
     if(rank > 0)
     {
         maxRank = std::min(maxRank, rank);
@@ -599,12 +618,12 @@ void BlockCluster::partialPivotACAextra(const long rank, const double relativeEr
 
     std::complex<double> normEstimate = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
     double relErrorTarget = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
-    long rowStartIndex = this->rowStartIndex();
-    long columnStartIndex = this->colStartIndex();
-    long blockRows = rows(); //assumes contiguous ascending indexes
-    long blockColumns = cols();
+    const long rowStartIndex = this->rowStartIndex();
+    const long columnStartIndex = this->colStartIndex();
+    const long blockRows = rows(); //assumes contiguous ascending indexes
+    const long blockColumns = cols();
     long maxRank = std::min(blockRows, blockColumns);
-    long initialRankReservation = 5;
+    const long initialRankReservation = 5;
     if(rank > 0)
     {
         maxRank = std::min(maxRank, rank);
@@ -766,7 +785,7 @@ void BlockCluster::calcHBlockColumnFromImplicit(Eigen::VectorXcd &columnVector, 
 
 //}
 
-HMatrix::HMatrix(HMatrix &original, long rank, double error, bool originalIsInSVDFormat)
+HMatrix::HMatrix(const HMatrix &original, long rank, double error, bool originalIsInSVDFormat)
 {
     this->rowClustertree = original.rowClustertree;
     this->columnClustertree = original.columnClustertree;
@@ -844,7 +863,7 @@ void HMatrix::assembleBlocksExtra(const long rank, double relativeError, /*std::
     }
 }
 
-QVector<BlockCluster*> HMatrix::getDiagonalBlocks()
+QVector<BlockCluster*> HMatrix::getDiagonalBlocks() const
 {
     QVector<BlockCluster*> diagonalBlocks;
     if(rootBlockCluster != nullptr)
@@ -899,7 +918,7 @@ void HMatrix::recursiveClear(BlockCluster* blockClusterNode)
     blockClusterNode = nullptr;
 }
 
-BlockCluster* HMatrix::getRootBlock()
+BlockCluster* HMatrix::getRootBlock() const
 {
     if(rootBlockCluster == nullptr)
     {
@@ -1119,13 +1138,13 @@ double HMatrix::clusterDistance(Cluster* cluster1, Cluster* cluster2)
     }
 }
 
-double HMatrix::clusterSize(Cluster* cluster)
+double HMatrix::clusterSize(Cluster* cluster) const
 {
     Eigen::Vector3d cuboidSideLengths = cluster->minCuboid.maxPoint - cluster->minCuboid.minPoint;
     return cuboidSideLengths.norm();
 }
 
-bool HMatrix::isCrossPartitioned()
+bool HMatrix::isCrossPartitioned() const
 {
     bool onlyCrossPartitions = true; // bool value returned true if all non leaf blocks have four sons
 
@@ -1133,7 +1152,7 @@ bool HMatrix::isCrossPartitioned()
     return onlyCrossPartitions;
 }
 
-void HMatrix::checkBlockPartition(BlockCluster* blockCluster, bool & onlyCrossPartitions)
+void HMatrix::checkBlockPartition(BlockCluster* blockCluster, bool &onlyCrossPartitions) const
 {
     if(onlyCrossPartitions == false)
     {
@@ -1141,7 +1160,7 @@ void HMatrix::checkBlockPartition(BlockCluster* blockCluster, bool & onlyCrossPa
     }
     else
     {
-        if(blockCluster->isLeaf==true) //block is not partitioned ->Y break
+        if(blockCluster->isLeaf == true) //block is not partitioned ->Y break
         {
             return;
         }
@@ -1222,7 +1241,7 @@ void HMatrix::updatePartitionWithNullptrCheck()
 
 void HMatrix::recAppendPartitionBlockNullptrCheck(BlockCluster* blockCluster, int depth)
 {
-    depth +=1;
+    ++depth;
 //    std::cout<<"depth: "<<depth<<std::endl;
     if(blockCluster->isLeaf)
     {
@@ -1271,24 +1290,28 @@ void HMatrix::recAppendPartitionBlockMatInfo(BlockCluster* blockCluster, QVector
     {
         if(blockCluster->fullMat.cols() != 0)
         {
-            std::cout<<"blockCluster->AMat.cols() != 0 && blockCluster->fullMat.cols() != 0"<<std::endl;
+            std::cout << "blockCluster->AMat.cols() != 0 && blockCluster->fullMat.cols() != 0" << std::endl;
         }
 
         blockCluster->isAdmissible = true;
         blockCluster->isLeaf = true;
         subBlocksWithInformation.append(blockCluster);
-//        farFieldBlocks += 1;
+//        ++farFieldBlocks;
     }
     else if(blockCluster->fullMat.cols() != 0)
     {
         blockCluster->isAdmissible = false;
         blockCluster->isLeaf = true;
         subBlocksWithInformation.append(blockCluster);
-//        nearFieldBlocks += 1;
+//        ++nearFieldBlocks;
+    }
+    else if(blockCluster->hasFourChildren())
+    {
+        blockCluster->isLeaf = false;
     }
     else
     {
-        blockCluster->isLeaf = false;
+        blockCluster->isLeaf = true;
     }
 
     if(blockCluster->son11 != nullptr)
@@ -1309,7 +1332,7 @@ void HMatrix::recAppendPartitionBlockMatInfo(BlockCluster* blockCluster, QVector
     }
 }
 
-void HMatrix::recursiveAppendDiagonalBlock(BlockCluster* blockCluster, QVector<BlockCluster*> &diagonalBlocks)
+void HMatrix::recursiveAppendDiagonalBlock(BlockCluster* blockCluster, QVector<BlockCluster*> &diagonalBlocks) const
 {
     if(blockCluster->son11 != nullptr && blockCluster->son22 != nullptr)
     {
@@ -1428,7 +1451,7 @@ double HMatrix::getCompressionRatio()
     return ((double) fullMatMemory) / hMatMemory;
 }
 
-bool HMatrix::consistencyCheck()
+bool HMatrix::consistencyCheck() const
 {
     if(rootBlockCluster != nullptr)
     {
@@ -1440,7 +1463,7 @@ bool HMatrix::consistencyCheck()
     }
 }
 
-bool HMatrix::recursiveConsistencyCheck(BlockCluster* blockCluster)
+bool HMatrix::recursiveConsistencyCheck(BlockCluster* blockCluster) const
 {
     bool useCerr = true;
     if(blockCluster->isLeaf)
@@ -1701,4 +1724,52 @@ bool HMatrix::hasNan(bool calcMinPartition)
         }
     }
     return hasNan;
+}
+
+Eigen::MatrixXcd HMatrix::toFullMat() //test function; extremely expensive for large matrices O(n^2)
+{
+    const long totalNumberOfRows = this->rows();
+    const long totalNumberOfColumns = this->cols();
+    const long globalRowStartIndex = this->rowStartIndex(); // The H-matrix may be a subblock of another h-matrix
+    const long globalColumnStartIndex = this->colStartIndex(); // -> the corresponding the row- and col-indices therefore may not start at zero
+
+    if(this->minPartition.size() == 0)
+    {
+//        this->updatePartition();
+        this->updatePartitionWithMatrixInfo();
+    }
+    if(this->minPartition.size() == 0)
+    {
+        std::cerr << "Empty partition in toFullMat call." << std::endl;
+    }
+
+    Eigen::MatrixXcd returnMatrix = Eigen::MatrixXcd(totalNumberOfRows, totalNumberOfColumns);
+
+    #pragma omp parallel for
+    for(long i = 0; i < this->minPartition.length(); i++)
+    {
+        const BlockCluster* tmpBlock = this->minPartition.at(i);
+        const long rowStartIndex = tmpBlock->rowStartIndex();
+        const long numberOfRows = tmpBlock->rows();
+        const long columnStartIndex = tmpBlock->colStartIndex();
+        const long numberOfColumns = tmpBlock->cols();
+
+        if(tmpBlock->isAdmissible) // far field block
+        {
+            if(numberOfRows < numberOfColumns)
+            {
+                returnMatrix.block(rowStartIndex - globalRowStartIndex, columnStartIndex - globalColumnStartIndex, numberOfRows, numberOfColumns).noalias() = (tmpBlock->UMat * tmpBlock->singularValues.asDiagonal()) * tmpBlock->VAdjMat;
+            }
+            else
+            {
+                returnMatrix.block(rowStartIndex - globalRowStartIndex, columnStartIndex - globalColumnStartIndex, numberOfRows, numberOfColumns).noalias() = tmpBlock->UMat * (tmpBlock->singularValues.asDiagonal() * tmpBlock->VAdjMat);
+            }
+        }
+        else
+        {
+//            std::cerr << rowStartIndex - globalRowStartIndex << " " << columnStartIndex - globalColumnStartIndex << std::endl;
+            returnMatrix.block(rowStartIndex - globalRowStartIndex, columnStartIndex - globalColumnStartIndex, numberOfRows, numberOfColumns) = tmpBlock->fullMat;
+        }
+    }
+    return returnMatrix;
 }

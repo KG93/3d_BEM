@@ -4,7 +4,7 @@
 #include "global.h"
 #include <eigen3/Eigen/Geometry>
 
-/*!<
+/**
 * \brief The class describes an acoustic point source in 3d space.
 */
 class PointSource

@@ -255,7 +255,7 @@ QVector<quint64> global::pairListToSinglesVec(const QVector<QPair<quint64,quint6
     return singlesVector;
 }
 
-QVector<QPair<quint64,quint64>> global::singlesVectorToPairList(const QVector<quint64>& vector)
+QVector<QPair<quint64,quint64>> global::singlesVectorToPairList(const QVector<quint64> &vector)
 {
     QVector<QPair<quint64,quint64>> pairList;
     pairList.reserve(vector.length()/2);
@@ -268,7 +268,7 @@ QVector<QPair<quint64,quint64>> global::singlesVectorToPairList(const QVector<qu
 }
 
 
-QVector<QPair<quint64,quint64>> global::diffIntervals(QVector<QPair<quint64,quint64>>& includeVector, QVector<QPair<quint64,quint64>>& excludeVector)
+QVector<QPair<quint64,quint64>> global::diffIntervals(QVector<QPair<quint64,quint64>> &includeVector, QVector<QPair<quint64,quint64>> &excludeVector)
 {
     QVector<QPair<quint64,quint64>> diffVector;
     mergeIntervals(includeVector); //returns list of ordered disjunct intervals with max individual length
@@ -394,16 +394,16 @@ bool global::valueIsInInterval(quint64 value,const QVector<QPair<quint64,quint64
 //    return (value >= interval->first && value <= interval->second);
 }
 
-void global::printQStringList(QStringList stringList)
+void global::printQStringList(const QStringList &stringList)
 {
-   for(int i=0;i<stringList.length();i++)
+   for(int i=0; i<stringList.length(); i++)
    {
-        std::cout<<stringList.value(i).toUtf8().constData()<<" ";
+        std::cout << stringList.value(i).toUtf8().constData() << " ";
    }
-   std::cout<<std::endl;
+   std::cout << std::endl;
 }
 
-QVector<long> global::createContiguousIndexVector(long startIndex, long endIndex)
+QVector<long> global::createContiguousIndexVector(const long startIndex, const long endIndex)
 {
     if(startIndex<0 || startIndex>endIndex)
     {
@@ -419,7 +419,7 @@ QVector<long> global::createContiguousIndexVector(long startIndex, long endIndex
     return indexes;
 }
 
-QVector<long> global::createRandomPermutationVector(long startIndex, long endIndex)
+QVector<long> global::createRandomPermutationVector(const long startIndex, const long endIndex)
 {
     QVector<long> indexes = createContiguousIndexVector(startIndex, endIndex);
     long numberOfIndexes = endIndex - startIndex + 1;
@@ -484,7 +484,7 @@ void global::setTrianglesDPhi(QVector<VectorTriangle>& triangleVector, const Eig
     }
 }
 
-void global::calculateTriangleMidPoints(QVector<VectorTriangle>& triangleVector)
+void global::calculateTriangleMidPoints(QVector<VectorTriangle> &triangleVector)
 {
     for(int i=0; i<triangleVector.size(); i++)
     {
@@ -492,7 +492,7 @@ void global::calculateTriangleMidPoints(QVector<VectorTriangle>& triangleVector)
     }
 }
 
-Eigen::Matrix3d global::triangleCoordinateMatrix(const VectorTriangle triangle)
+Eigen::Matrix3d global::triangleCoordinateMatrix(const VectorTriangle &triangle)
 {
     Eigen::Matrix3d coordinateMatrix;
     coordinateMatrix.col(0) = triangle.node1;
@@ -501,7 +501,7 @@ Eigen::Matrix3d global::triangleCoordinateMatrix(const VectorTriangle triangle)
     return coordinateMatrix;
 }
 
-Eigen::Matrix3d global::quadrilateralCoordinateMatrix(const VectorQuadrilateral quadrilateral)
+Eigen::Matrix3d global::quadrilateralCoordinateMatrix(const VectorQuadrilateral &quadrilateral)
 {
     Eigen::MatrixXd coordinateMatrix(3, 4);
     coordinateMatrix.col(0) = quadrilateral.node1;
@@ -511,7 +511,7 @@ Eigen::Matrix3d global::quadrilateralCoordinateMatrix(const VectorQuadrilateral 
     return coordinateMatrix;
 }
 
-Eigen::Vector3d global::calculateAveragePoint(const QVector<VectorTriangle>& triangleVector, const QVector<VectorQuadrilateral>& quadrilateralVector)
+Eigen::Vector3d global::calculateAveragePoint(const QVector<VectorTriangle> &triangleVector, const QVector<VectorQuadrilateral> &quadrilateralVector)
 {
     Eigen::MatrixXd coordinates(3, 3 * triangleVector.length() + 4 * quadrilateralVector.length());
     for(int i = 0; i < triangleVector.length(); i++)
@@ -525,7 +525,7 @@ Eigen::Vector3d global::calculateAveragePoint(const QVector<VectorTriangle>& tri
     return coordinates.rowwise().mean();
 }
 
-double global::calculateMaxRelativeDistance(const QVector<VectorTriangle>& triangleVector, Eigen::Vector3d refNode)
+double global::calculateMaxRelativeDistance(const QVector<VectorTriangle> &triangleVector, const Eigen::Vector3d &refNode)
 {
     if(triangleVector.length() == 0)
     {
@@ -540,7 +540,7 @@ double global::calculateMaxRelativeDistance(const QVector<VectorTriangle>& trian
     return coordinates.colwise().norm().maxCoeff();
 }
 
-Eigen::Vector3d global::calculateMaxNorm(const QVector<VectorTriangle>& triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/)
+Eigen::Vector3d global::calculateMaxNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/)
 {
     Eigen::MatrixXd coordinates(3, 3 * triangleVector.length());
     for(int i = 0; i < triangleVector.length(); i++)
@@ -550,7 +550,7 @@ Eigen::Vector3d global::calculateMaxNorm(const QVector<VectorTriangle>& triangle
     return coordinates.rowwise().maxCoeff();
 }
 
-Eigen::Vector3d global::triangleCompWiseMaxNorm(const VectorTriangle& triangle)
+Eigen::Vector3d global::triangleCompWiseMaxNorm(const VectorTriangle &triangle)
 {
     double x,y,z;
 
@@ -564,7 +564,7 @@ Eigen::Vector3d global::triangleCompWiseMaxNorm(const VectorTriangle& triangle)
     return returnPoint;
 }
 
-Eigen::Vector3d global::triangleCompWiseMinNorm(const VectorTriangle& triangle)
+Eigen::Vector3d global::triangleCompWiseMinNorm(const VectorTriangle &triangle)
 {
     double x,y,z;
 
@@ -580,7 +580,7 @@ Eigen::Vector3d global::triangleCompWiseMinNorm(const VectorTriangle& triangle)
 
 
 
-Eigen::Vector3d global::calculateMinNorm(const QVector<VectorTriangle>& triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/)
+Eigen::Vector3d global::calculateMinNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/)
 {
     Eigen::MatrixXd coordinates(3, 3 * triangleVector.length());
     for(int i = 0; i < triangleVector.length(); i++)
@@ -643,7 +643,7 @@ double global::maxOfThree(double a, double b, double c)
     }
 }
 
-double global::maxClDouble3(Eigen::Vector3d node)
+double global::maxClDouble3(const  Eigen::Vector3d &node)
 {
     double a=node(0);
     double b=node(1);
@@ -672,7 +672,7 @@ double global::maxClDouble3(Eigen::Vector3d node)
     }
 }
 
-double global::minClDouble3(Eigen::Vector3d node)
+double global::minClDouble3(const Eigen::Vector3d &node)
 {
     double a=node(0);
     double b=node(1);
@@ -795,13 +795,13 @@ int global::allIntsUnique(int a, int b, int c, int d)
 }
 
 
-double global::lineLength(Eigen::Vector3d point1,Eigen::Vector3d point2)
+double global::lineLength(const Eigen::Vector3d &point1, const Eigen::Vector3d &point2)
 {
     Eigen::Vector3d vector = point1 - point2;
     return vector.norm();
 }
 
-double global::quadrilateralAspectRatio(const VectorQuadrilateral& parentQuadrilateral)
+double global::quadrilateralAspectRatio(const VectorQuadrilateral &parentQuadrilateral)
 {
     QVector3D node1(parentQuadrilateral.node1(0),parentQuadrilateral.node1(1),parentQuadrilateral.node1(2));
     QVector3D node2(parentQuadrilateral.node2(0),parentQuadrilateral.node2(1),parentQuadrilateral.node2(2));
@@ -838,7 +838,7 @@ double global::quadrilateralAspectRatio(const VectorQuadrilateral& parentQuadril
     return aspectRatio;
 }
 
-QVector<VectorTriangle> global::quadrilateralsToTriangles(const QVector<VectorQuadrilateral>& quadrilaterals)
+QVector<VectorTriangle> global::quadrilateralsToTriangles(const QVector<VectorQuadrilateral> &quadrilaterals)
 {
     QVector<VectorTriangle> triangles;
     for(int i = 0; i < quadrilaterals.length(); i++)
@@ -868,7 +868,7 @@ QVector<VectorTriangle> global::quadrilateralsToTriangles(const QVector<VectorQu
 
 }
 
-QPair<Eigen::Vector3d, double> global::centerAndVolumeOfMassOfTriangleObject(const QVector<VectorTriangle>& triangleVector)
+QPair<Eigen::Vector3d, double> global::centerAndVolumeOfMassOfTriangleObject(const QVector<VectorTriangle> &triangleVector)
 {
        double totalVolume = 0, currentVolume;
        double xCenter = 0, yCenter = 0, zCenter = 0;
@@ -1289,7 +1289,7 @@ double global::areaOfTriangle(const VectorTriangle &triangle)
     return (vec1.cross(vec2)).norm() / 2.0;
 }
 
-Eigen::MatrixXcd global::LUDecompNoPivoting(Eigen::MatrixXcd A) //L*U = A
+Eigen::MatrixXcd global::LUDecompNoPivoting(const Eigen::MatrixXcd &A) //L*U = A
 {
     Eigen::MatrixXcd LU = Eigen::MatrixXcd::Zero(A.rows(), A.cols());
     std::complex<double> sum = 0;
@@ -1316,6 +1316,48 @@ Eigen::MatrixXcd global::LUDecompNoPivoting(Eigen::MatrixXcd A) //L*U = A
         }
     }
     return LU;
+}
+
+Eigen::VectorXcd global::forwardSubstitution(const Eigen::MatrixXcd &lowerTriangular, Eigen::VectorXcd rightHandSide)
+{
+    long rows = lowerTriangular.rows();
+    long cols = lowerTriangular.cols();
+    if(rows != cols)
+    {
+        std::cerr << "Nonsquare matrix in forwardSubstitution call." << std::endl;
+        return Eigen::VectorXcd::Zero(rows);
+    }
+    Eigen::VectorXcd solution(rows);
+
+    for(long rowIndex = 0; rowIndex < rows; ++rowIndex)
+    {
+        solution(rowIndex) = rightHandSide(rowIndex) / lowerTriangular(rowIndex, rowIndex);
+        const long segmentStart = rowIndex + 1;
+        const long segmentLength = rows - segmentStart;
+        rightHandSide.segment(segmentStart, segmentLength) -= solution(rowIndex) * lowerTriangular.block(segmentStart, rowIndex, segmentLength, 1);
+    }
+    return solution;
+}
+
+Eigen::VectorXcd global::backwardSubstitution(const Eigen::MatrixXcd &upperTriangular, Eigen::VectorXcd rightHandSide)
+{
+    long rows = upperTriangular.rows();
+    long cols = upperTriangular.cols();
+    if(rows != cols)
+    {
+        std::cerr << "Nonsquare matrix in backwardSubstitution call." << std::endl;
+        return Eigen::VectorXcd::Zero(rows);
+    }
+    Eigen::VectorXcd solution(rows);
+
+    for(long rowIndex = rows - 1; rowIndex > 0; --rowIndex)
+    {
+        solution(rowIndex) = rightHandSide(rowIndex) / upperTriangular(rowIndex, rowIndex);
+        const long segmentLength = rowIndex;
+        rightHandSide.head(segmentLength) -= solution(rowIndex) * upperTriangular.block(0, rowIndex, segmentLength, 1);
+    }
+    solution(0) = rightHandSide(0) / upperTriangular(0, 0);
+    return solution;
 }
 
 void global::printMatrixToFile(const QString fileName, const Eigen::MatrixXcd &A)

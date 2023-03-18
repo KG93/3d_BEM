@@ -30,12 +30,12 @@ public:
 /**
 * \brief Set to true for debugging.
 */
-static const bool debugging = false;
+static constexpr bool debugging = false;
 
 /**
 * \brief Set to true for active development.
 */
-static const bool activeProgramming = false;
+static constexpr bool activeProgramming = false;
 
 /**
 * \brief A small value used for triangle partition in the quadrature method for almost singular integrals.
@@ -55,7 +55,7 @@ static constexpr double tiny = 10.0 * Eigen::NumTraits< std::complex<double> >::
 /**
 * \brief The maximum integer.
 */
-static constexpr double maxInt = Eigen::NumTraits< int >::highest();
+static constexpr double maxInt = Eigen::NumTraits<int>::highest();
 
 /**
 * \brief Call malloc_trim on Linux only.
@@ -90,7 +90,7 @@ static QRegularExpression regExWithOptionalValue(const QString &identifier);
 /**
 * \brief Remove quotes and whitespaces from string.
 */
-static void removeQuotesAndWhitespace(QString& line);
+static void removeQuotesAndWhitespace(QString &line);
 
 /**
 * \brief Remove quotes from string.
@@ -118,17 +118,17 @@ static bool upperBoundCompare(QPair<quint64,quint64> a, QPair<quint64,quint64> b
 
 static bool valueIsInInterval(quint64 value, const QVector<QPair<quint64,quint64>> &intervalVector);
 
-static void printQStringList(QStringList stringList);
+static void printQStringList(const QStringList &stringList);
 
 /**
 * \brief Create a continuous ascending vector.
 */
-static QVector<long> createContiguousIndexVector(long startIndex, long endIndex);
+static QVector<long> createContiguousIndexVector(const long startIndex, const long endIndex);
 
 /**
 * \brief Create a random permutation vector in O(n).
 */
-static QVector<long> createRandomPermutationVector(long startIndex, long endIndex);
+static QVector<long> createRandomPermutationVector(const long startIndex, const long endIndex);
 
 /**
 * \brief Write phi-solution from boundary elements into vector.
@@ -150,30 +150,30 @@ static void setTrianglesPhi(QVector<VectorTriangle>& triangleVector, const Eigen
 */
 static void setTrianglesDPhi(QVector<VectorTriangle>& triangleVector, const Eigen::VectorXcd& phiVector);
 
-static void calculateTriangleMidPoints(QVector<VectorTriangle>& triangleVector);
+static void calculateTriangleMidPoints(QVector<VectorTriangle> &triangleVector);
 
-static Eigen::Matrix3d triangleCoordinateMatrix(const VectorTriangle triangle);
-static Eigen::Matrix3d quadrilateralCoordinateMatrix(const VectorQuadrilateral quadrilateral);
+static Eigen::Matrix3d triangleCoordinateMatrix(const VectorTriangle &triangle);
+static Eigen::Matrix3d quadrilateralCoordinateMatrix(const VectorQuadrilateral &quadrilateral);
 
-static Eigen::Vector3d calculateAveragePoint(const QVector<VectorTriangle>& triangleVector, const QVector<VectorQuadrilateral>& quadrilateralVector);
-static double calculateMaxRelativeDistance(const QVector<VectorTriangle>& triangleVector, Eigen::Vector3d refNode); // calculates the  maximum distance between all the triangle nodes and the reference point
-static Eigen::Vector3d calculateMaxNorm(const QVector<VectorTriangle>& triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/);
-static Eigen::Vector3d triangleCompWiseMaxNorm(const VectorTriangle& triangle);
-static Eigen::Vector3d calculateMinNorm(const QVector<VectorTriangle>& triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/);
-static Eigen::Vector3d triangleCompWiseMinNorm(const VectorTriangle& triangle);
+static Eigen::Vector3d calculateAveragePoint(const QVector<VectorTriangle> &triangleVector, const QVector<VectorQuadrilateral> &quadrilateralVector);
+static double calculateMaxRelativeDistance(const QVector<VectorTriangle> &triangleVector, const Eigen::Vector3d &refNode); // calculates the  maximum distance between all the triangle nodes and the reference point
+static Eigen::Vector3d calculateMaxNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/);
+static Eigen::Vector3d triangleCompWiseMaxNorm(const VectorTriangle &triangle);
+static Eigen::Vector3d calculateMinNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/);
+static Eigen::Vector3d triangleCompWiseMinNorm(const VectorTriangle &triangle);
 
 static quint64 indexOfMaxOfThree(double a, double b, double c);
 static double maxOfThree(double a, double b, double c);
-static double maxClDouble3(Eigen::Vector3d node);
+static double maxClDouble3(const Eigen::Vector3d &node);
 static double minOfThree(double a, double b, double c);
-static double minClDouble3(Eigen::Vector3d node);
+static double minClDouble3(const Eigen::Vector3d &node);
 static double maxOfFour(double a, double b, double c, double d);
 static int allIntsUnique(int a, int b, int c, int d);
 
 /**
 * \brief Calculate the distance between two points.
 */
-static double lineLength(Eigen::Vector3d point1,Eigen::Vector3d point2);
+static double lineLength(const Eigen::Vector3d &point1, const Eigen::Vector3d &point2);
 
 static double quadrilateralAspectRatio(const VectorQuadrilateral &parentQuadrilateral);
 
@@ -222,7 +222,17 @@ static double areaOfTriangle(const VectorTriangle &triangle);
 /**
 * \brief Calculate the LU-decomposition of a complex matrix. L*U = A
 */
-static Eigen::MatrixXcd LUDecompNoPivoting(Eigen::MatrixXcd A);
+static Eigen::MatrixXcd LUDecompNoPivoting(const Eigen::MatrixXcd &A);
+
+/**
+* \brief Solve the system L*x = b, L is lower triangular for x by forward substitution.
+*/
+static Eigen::VectorXcd forwardSubstitution(const Eigen::MatrixXcd &lowerTriangular, Eigen::VectorXcd rightHandSide);
+
+/**
+* \brief Solve the system U*x = b, U is upper triangular for x by backward substitution.
+*/
+static Eigen::VectorXcd backwardSubstitution(const Eigen::MatrixXcd &upperTriangular, Eigen::VectorXcd rightHandSide);
 
 /**
 * \brief Write an Eigen matrix into a file.
@@ -234,17 +244,17 @@ static void printMatrixToFile(const QString fileName, const Eigen::MatrixXcd &A)
 */
 // templated functions in the header file
 template<typename container>
-static void printVector(container &vector);
+static void printVector(const container &vector);
 };
 
 template<typename container>
-void global::printVector(container &vector)
+void global::printVector(const container &vector)
 {
-   for(typename container::const_iterator it = vector.begin(); it != vector.end(); ++it)
-   {
-       std::cout << *it << " ";
-   }
-   std::cout << std::endl;
+    for(typename container::const_iterator it = vector.begin(); it != vector.end(); ++it)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
 }
 
 #endif // GLOBAL_H
