@@ -16,22 +16,71 @@ class BlockCluster
 {
     public:
     BlockCluster(){}
+
     BlockCluster(Cluster* rowCluster, Cluster* columnCluster)
     {
         this->rowCluster = rowCluster;
         this->columnCluster = columnCluster;
     }
+
     BlockCluster(Cluster* rowCluster, Cluster* columnCluster, bool isRoot)
     {
         this->rowCluster = rowCluster;
         this->columnCluster = columnCluster;
         this->isRoot = isRoot;
     }
+
     BlockCluster(Cluster* rowCluster, Cluster* columnCluster, BlockCluster* father)
     {
         this->rowCluster = rowCluster;
         this->columnCluster = columnCluster;
         this->father = father;
+    }
+
+    BlockCluster(const BlockCluster &block)
+    {
+        this->son11 = nullptr;
+        this->son12 = nullptr;
+        this->son21 = nullptr;
+        this->son22 = nullptr;
+
+        this->isAdmissible = block.isAdmissible;
+        this->isRoot = block.isRoot;
+        this->isLeaf = block.isLeaf;
+
+        this->rowCluster = block.rowCluster;
+        this->columnCluster = block.columnCluster;
+
+        this->frobeniusNorm = block.frobeniusNorm;
+
+        this->fullMat = block.fullMat;
+        this->UMat = block.UMat;
+        this->singularValues = block.singularValues;
+        this->VAdjMat = block.VAdjMat;
+    }
+
+    BlockCluster& operator=(const BlockCluster &block) /*!< \brief The copy assignment operator */
+    {
+        this->son11 = nullptr;
+        this->son12 = nullptr;
+        this->son21 = nullptr;
+        this->son22 = nullptr;
+
+        this->isAdmissible = block.isAdmissible;
+        this->isRoot = block.isRoot;
+        this->isLeaf = block.isLeaf;
+
+        this->rowCluster = block.rowCluster;
+        this->columnCluster = block.columnCluster;
+
+        this->frobeniusNorm = block.frobeniusNorm;
+
+        this->fullMat = block.fullMat;
+        this->UMat = block.UMat;
+        this->singularValues = block.singularValues;
+        this->VAdjMat = block.VAdjMat;
+
+        return *this;
     }
 
     long rows() const; /*!< \brief Get number of rows of the block. */
@@ -49,7 +98,7 @@ class BlockCluster
     double norm(); /*!< \brief Get the Frobenius norm of the block. */
     bool hasFourChildren() const;  /*!< \brief Check whether the block is cross partitioned. */
     static void getPartition(const BlockCluster &block, QVector<const BlockCluster *> &partition); /*!< \brief Calculate the partition vector that corresponds to the H-matrix/blockcluster tree.  */
-    BlockCluster *returnCopy(BlockCluster* father = nullptr, long rank = 0, double error = 0, bool originalIsInSVDFormat = false); /*!< \brief Returns a pointer to a copy of the entire subtree of this. */
+    std::unique_ptr<BlockCluster> returnCopy(BlockCluster* father = nullptr, long rank = 0, double error = 0, bool originalIsInSVDFormat = false); /*!< \brief Returns a pointer to a copy of the entire subtree of this. */
 
     Eigen::VectorXcd row(long colIndex) const; /*!< \brief Get block row. */
     Eigen::VectorXcd col(long colIndex) const; /*!< \brief Get block column. */
@@ -111,10 +160,15 @@ class BlockCluster
     Cluster* rowCluster = nullptr;
     Cluster* columnCluster = nullptr;
     BlockCluster* father = nullptr;
-    BlockCluster* son11 = nullptr;
-    BlockCluster* son12 = nullptr;
-    BlockCluster* son21 = nullptr;
-    BlockCluster* son22 = nullptr;
+//    BlockCluster* son11 = nullptr;
+//    BlockCluster* son12 = nullptr;
+//    BlockCluster* son21 = nullptr;
+//    BlockCluster* son22 = nullptr;
+    std::unique_ptr<BlockCluster> son11 = nullptr;
+    std::unique_ptr<BlockCluster> son12 = nullptr;
+    std::unique_ptr<BlockCluster> son21 = nullptr;
+    std::unique_ptr<BlockCluster> son22 = nullptr;
+
     bool isAdmissible = false;
     bool isRoot = false;
     bool isLeaf = false;
@@ -140,12 +194,12 @@ class HMatrix
 public:
     HMatrix(){};
 
-    HMatrix(BlockCluster *rootBlockCluster) //
-    {
-        this->rootBlockCluster = rootBlockCluster;
-        this->frobeniusNorm = rootBlockCluster->frobeniusNorm;
-        this->rootBlockCluster->isRoot = true;
-    }
+//    HMatrix(BlockCluster *rootBlockCluster) //
+//    {
+//        this->rootBlockCluster = rootBlockCluster;
+//        this->frobeniusNorm = rootBlockCluster->frobeniusNorm;
+//        this->rootBlockCluster->isRoot = true;
+//    }
 
     HMatrix(ClusterTree* rowClustertree, ClusterTree* columnClustertree, bool populate = false)
     {
@@ -179,8 +233,8 @@ public:
             this->rootBlockCluster->clear();
 //            std::cout << "clear in copy assign constructor called!" << std::endl;
         }
-        this->rootBlockCluster = hMat.rootBlockCluster;
-
+//        this->rootBlockCluster = hMat.rootBlockCluster;
+        this->rootBlockCluster = hMat.rootBlockCluster->returnCopy();
         this->minPartition = hMat.minPartition;
         this->nearFieldBlocks = hMat.nearFieldBlocks;
         this->farFieldBlocks = hMat.farFieldBlocks;
@@ -201,18 +255,19 @@ public:
     void assembleBlocksExtra(const long rank, double relativeError,  std::function<QVector<std::pair<long,long>>(BlockCluster*,double)> getPivotIndices, std::function<std::complex<double> (long, long)> implicitMatrixLowRank, bool updatePartition = true);
 
     QVector<BlockCluster*> getDiagonalBlocks() const; /*!< \brief Assemble a vector of the diagonal partition blocks. */
+    void setRootBlock(std::unique_ptr<BlockCluster> &root); /*!< \brief Set the root block of the H-matrix. */
     BlockCluster* getRootBlock() const; /*!< \brief Get the root block of the H-matrix. */
-    void setRootBlock(BlockCluster* rootBlockCluster); /*!< \brief Set the root block of the H-matrix. */
+//    void setRootBlock(BlockCluster* rootBlockCluster); /*!< \brief Set the root block of the H-matrix. */
     ClusterTree* getRowClustertree(){return rowClustertree;} /*!< \brief Get the clustertree for the matrix row indices. */
     ClusterTree* getColumnClustertree(){return columnClustertree;} /*!< \brief Get the clustertree for the matrix column indices. */
     void clear(bool callMalloc_trim = false); /*!< \brief Clear the entire blockcluster tree. */
-    void recursiveClear(BlockCluster* blockClusterNode);  /*!< \brief Recursively clear the blockcluster tree. */
+    void recursiveClear(BlockCluster &blockClusterNode);  /*!< \brief Recursively clear the blockcluster tree. */
     bool isCrossPartitioned() const; /*!< \brief Check whether the blocks in the blockclustertree are only cross partitioned. */
-    bool isBlockAdmissible(const BlockCluster *blockCluster); /*!< \brief Check whether the block is admissible. (Has suitable low rank representation.) */
+    bool isBlockAdmissible(const BlockCluster &blockCluster); /*!< \brief Check whether the block is admissible. (Has suitable low rank representation.) */
     void updatePartition(); /*!< \brief Update the partition vector. */
     void updatePartitionWithNullptrCheck(); /*!< \brief Update the partition vector. Check for nullpointers. */
     void updatePartitionWithMatrixInfo(); /*!< \brief Update the partition vector with all blocks that contain actual matrix information. */
-    static QVector<BlockCluster*> getSubBlocksWithMatrixInformation(BlockCluster* blockCluster); /*!< \brief Get all tree blocks that contain actual matrix information. */
+    static QVector<BlockCluster*> getSubBlocksWithMatrixInformation(BlockCluster &blockCluster); /*!< \brief Get all tree blocks that contain actual matrix information. */
 
     long rows() const; /*!< \brief Get number of rows of the matrix. */
     long cols() const; /*!< \brief Get number of colums of the matrix. */
@@ -233,18 +288,18 @@ public:
 
 private:
 //    void createRootNode();
-    void createBlockClusterChildren(BlockCluster* blockClusterNode); /*!< \brief Recursively set up the blockcluster tree structure. */
+    void createBlockClusterChildren(BlockCluster &blockClusterNode); /*!< \brief Recursively set up the blockcluster tree structure. */
     void setUpRandomMatrices(long maxRank); /*!< \brief Initialize random matrices in the partition blocks. */
 
     static constexpr double admissibilityConstant = 3; /*!< \brief Constant used in the admissibility condition for a block. */
     double clusterDistance(Cluster* cluster1, Cluster* cluster2); /*!< \brief Calculate the distance between two clusters. */
     double clusterSize(Cluster* cluster) const; /*!< \brief Calculate the size of a cluster. */
-    void checkBlockPartition(BlockCluster* blockCluster, bool &onlyCrossPartitions) const; /*!< \brief Check whether all blocks are only cross partitioned. */
-    void recursiveAppendPartitionBlock(BlockCluster* blockCluster); /*!< \brief Recursively assemble the partition vector. */
-    void recAppendPartitionBlockNullptrCheck(BlockCluster* blockCluster, int depth);
-    static void recAppendPartitionBlockMatInfo(BlockCluster* blockCluster, QVector<BlockCluster*> &subBlocksWithInformation);
-    void recursiveAppendDiagonalBlock(BlockCluster* blockCluster, QVector<BlockCluster*> &diagonalBlocks) const; /*!< \brief Collect pointers to the diagonal partition blocks in vector. */
-    bool recursiveConsistencyCheck(BlockCluster* blockClusterNode) const; /*!< \brief Recursively check the consistency of the blockcluster tree. */
+    void checkBlockPartition(BlockCluster &blockCluster, bool &onlyCrossPartitions) const; /*!< \brief Check whether all blocks are only cross partitioned. */
+    void recursiveAppendPartitionBlock(BlockCluster &blockCluster); /*!< \brief Recursively assemble the partition vector. */
+    void recAppendPartitionBlockNullptrCheck(BlockCluster &blockCluster, int depth);
+    static void recAppendPartitionBlockMatInfo(BlockCluster &blockCluster, QVector<BlockCluster*> &subBlocksWithInformation);
+    void recursiveAppendDiagonalBlock(BlockCluster &blockCluster, QVector<BlockCluster*> &diagonalBlocks) const; /*!< \brief Collect pointers to the diagonal partition blocks in vector. */
+    bool recursiveConsistencyCheck(BlockCluster &blockClusterNode) const; /*!< \brief Recursively check the consistency of the blockcluster tree. */
 
     bool useWeakAdmissibility = false;
 
@@ -252,7 +307,8 @@ private:
     double frobeniusNorm = -1;
     ClusterTree* rowClustertree = nullptr;
     ClusterTree* columnClustertree = nullptr;
-    BlockCluster* rootBlockCluster = nullptr;
+//    BlockCluster* rootBlockCluster = nullptr;
+    std::unique_ptr<BlockCluster> rootBlockCluster = nullptr;
     QVector<BlockCluster*> minPartition;
 };
 

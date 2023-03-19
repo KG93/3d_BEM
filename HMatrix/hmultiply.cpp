@@ -72,25 +72,25 @@ void intermBlCl::clear()
     if(intSon11 != nullptr)
     {
         intSon11->clear();
-        delete intSon11;
+//        delete intSon11;
         intSon11 = nullptr;
     }
     if(intSon12 != nullptr)
     {
         intSon12->clear();
-        delete intSon12;
+//        delete intSon12;
         intSon12 = nullptr;
     }
     if(intSon21 != nullptr)
     {
         intSon21->clear();
-        delete intSon21;
+//        delete intSon21;
         intSon21 = nullptr;
     }
     if(intSon22 != nullptr)
     {
         intSon22->clear();
-        delete intSon22;
+//        delete intSon22;
         intSon22 = nullptr;
     }
 }
@@ -102,25 +102,25 @@ void intermBlCl::trimBelow()
     if(intSon11 != nullptr)
     {
         intSon11->clear();
-        delete intSon11;
+//        delete intSon11;
         intSon11 = nullptr;
     }
     if(intSon12 != nullptr)
     {
         intSon12->clear();
-        delete intSon12;
+//        delete intSon12;
         intSon12 = nullptr;
     }
     if(intSon21 != nullptr)
     {
         intSon21->clear();
-        delete intSon21;
+//        delete intSon21;
         intSon21 = nullptr;
     }
     if(intSon22 != nullptr)
     {
         intSon22->clear();
-        delete intSon22;
+//        delete intSon22;
         intSon22 = nullptr;
     }
 }
@@ -137,24 +137,27 @@ HMultiply::HMultiply()
 
 HMatrix HMultiply::multiplyHMat(BlockCluster &factor1, BlockCluster &factor2, const long rank, const double relError)
 {
-    intermBlCl* productRootBlockCluster = new intermBlCl(factor1.rowCluster, factor2.columnCluster, true);
-    MM(factor1, factor2, productRootBlockCluster); // create product tree and save factor blocks into the product nodes
-    recursProdPartition(productRootBlockCluster, &factor1, &factor2);  // determine the eventual leave nodes in the product tree
+//    intermBlCl* productRootBlockCluster = new intermBlCl(factor1.rowCluster, factor2.columnCluster, true);
+    std::unique_ptr<intermBlCl> productRootBlockCluster = std::make_unique<intermBlCl>(factor1.rowCluster, factor2.columnCluster, true);
+    MM(factor1, factor2, *productRootBlockCluster); // create product tree and save factor blocks into the product nodes
+    recursProdPartition(*productRootBlockCluster, factor1, factor2);  // determine the eventual leave nodes in the product tree
 
     QVector<intermBlCl*> fullTransitBlocks;
-    findFullFlushTargets(productRootBlockCluster, fullTransitBlocks); // connect all product tree nodes with information with their respective eventual leaf nodes
+    findFullFlushTargets(*productRootBlockCluster, fullTransitBlocks); // connect all product tree nodes with information with their respective eventual leaf nodes
 
-    findRkFlushTargets(productRootBlockCluster);
+    findRkFlushTargets(*productRootBlockCluster);
 
     QVector<intermBlCl*> independentWorkBlocks;
-    findIndependentWorkBlocks(productRootBlockCluster, independentWorkBlocks);
+    findIndependentWorkBlocks(*productRootBlockCluster, independentWorkBlocks);
 
     startWorkOnIndependentBlocks(independentWorkBlocks, rank, relError);
 
     // convert the intermittent blocks into regular blocks
-    BlockCluster* rootBlockCluster = intermBlClToBlockCluster(productRootBlockCluster);
+    std::unique_ptr<BlockCluster> rootBlockCluster = intermBlClToBlockCluster(productRootBlockCluster);
+
     rootBlockCluster->isRoot = true;
-    HMatrix product(rootBlockCluster);
+    HMatrix product;
+    product.setRootBlock(rootBlockCluster);
 
     if(product.consistencyCheck() == false)
     {
@@ -193,7 +196,7 @@ HMatrix HMultiply::multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long r
     return product;
 }
 
-void HMultiply::MM(/*QVector<intermBlCl*> &blocksWithMatrixLoad,*/ BlockCluster &factorBlock1, BlockCluster &factorBlock2, intermBlCl* productBlock)
+void HMultiply::MM(/*QVector<intermBlCl*> &blocksWithMatrixLoad,*/ BlockCluster &factorBlock1, BlockCluster &factorBlock2, intermBlCl &productBlock)
 {
     if( !factorBlock1.isLeaf && !factorBlock2.isLeaf) // no factor block is neither full matrix nor reduced-rank matrix
     {
@@ -202,21 +205,27 @@ void HMultiply::MM(/*QVector<intermBlCl*> &blocksWithMatrixLoad,*/ BlockCluster 
             std::cerr<<"Incompatible blocks in MM() call!" << std::endl;
             return;
         }
-        if(productBlock->intSon11 == nullptr) //son pointers shall not be overriden in following MM() call
+        if(productBlock.intSon11 == nullptr) //son pointers shall not be overriden in following MM() call
         {
-            productBlock->intSon11 = new intermBlCl(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son1, productBlock);
+//            productBlock.intSon11 = new intermBlCl(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son1, productBlock);
+            productBlock.intSon11 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son1, productBlock);
 //        }
-//        if(productBlock->son12 == nullptr) //son pointers shall not be overriden in following MM() call
+//        if(productBlock.son12 == nullptr) //son pointers shall not be overriden in following MM() call
 //        {
-            productBlock->intSon12 = new intermBlCl(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son2, productBlock);
+//            productBlock.intSon12 = new intermBlCl(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son2, productBlock);
+            productBlock.intSon12 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son2, productBlock);
+
 //        }
-//        if(productBlock->son21 == nullptr) //son pointers shall not be overriden in following MM() call
+//        if(productBlock.son21 == nullptr) //son pointers shall not be overriden in following MM() call
 //        {
-            productBlock->intSon21 = new intermBlCl(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son1, productBlock);
+//            productBlock.intSon21 = new intermBlCl(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son1, productBlock);
+            productBlock.intSon21 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son1, productBlock);
+
 //        }
-//        if(productBlock->son22 == nullptr) //son pointers shall not be overriden in following MM() call
+//        if(productBlock.son22 == nullptr) //son pointers shall not be overriden in following MM() call
 //        {
-            productBlock->intSon22 = new intermBlCl(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son2, productBlock);
+//            productBlock.intSon22 = new intermBlCl(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son2, productBlock);
+            productBlock.intSon22 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son2, productBlock);
         }
 
 //        #pragma omp parallel
@@ -229,23 +238,23 @@ void HMultiply::MM(/*QVector<intermBlCl*> &blocksWithMatrixLoad,*/ BlockCluster 
             {
 //                #pragma omp section
                 {
-                    MM(* factorBlock1.son11, * factorBlock2.son11, productBlock->intSon11);
-                    MM(* factorBlock1.son12, * factorBlock2.son21, productBlock->intSon11);
+                    MM(*factorBlock1.son11, *factorBlock2.son11, *productBlock.intSon11);
+                    MM(*factorBlock1.son12, *factorBlock2.son21, *productBlock.intSon11);
                 }
 //                #pragma omp section
                 {
-                    MM(* factorBlock1.son11, * factorBlock2.son12, productBlock->intSon12);
-                    MM(* factorBlock1.son12, * factorBlock2.son22, productBlock->intSon12);
+                    MM(*factorBlock1.son11, *factorBlock2.son12, *productBlock.intSon12);
+                    MM(*factorBlock1.son12, *factorBlock2.son22, *productBlock.intSon12);
                 }
 //                #pragma omp section
                 {
-                    MM(* factorBlock1.son21, * factorBlock2.son11, productBlock->intSon21);
-                    MM(* factorBlock1.son22, * factorBlock2.son21, productBlock->intSon21);
+                    MM(*factorBlock1.son21, *factorBlock2.son11, *productBlock.intSon21);
+                    MM(*factorBlock1.son22, *factorBlock2.son21, *productBlock.intSon21);
                 }
 //                #pragma omp section
                 {
-                    MM(* factorBlock1.son21, * factorBlock2.son12, productBlock->intSon22);
-                    MM(* factorBlock1.son22, * factorBlock2.son22, productBlock->intSon22);
+                    MM(*factorBlock1.son21, *factorBlock2.son12, *productBlock.intSon22);
+                    MM(*factorBlock1.son22, *factorBlock2.son22, *productBlock.intSon22);
                 }
             }
         }
@@ -254,52 +263,52 @@ void HMultiply::MM(/*QVector<intermBlCl*> &blocksWithMatrixLoad,*/ BlockCluster 
     {
         if((factorBlock1.isLeaf && factorBlock1.isAdmissible) || (factorBlock2.isLeaf && factorBlock2.isAdmissible)) // maybe change to &&
         { // the factor pair results in a reduced rank matrix
-            productBlock->rKFactorsList.append( std::pair<BlockCluster*, BlockCluster*> {&factorBlock1, &factorBlock2});
-            productBlock->holdsRKInformation = true;
+            productBlock.rKFactorsList.append( std::pair<BlockCluster*, BlockCluster*> {&factorBlock1, &factorBlock2});
+            productBlock.holdsRKInformation = true;
         }
         else // the factor pair results in a full matrix
         {
-            productBlock->fullFactorsList.append( std::pair<BlockCluster*, BlockCluster*> {&factorBlock1, &factorBlock2});
-            if(!productBlock->isAdmissible)
+            productBlock.fullFactorsList.append( std::pair<BlockCluster*, BlockCluster*> {&factorBlock1, &factorBlock2});
+            if(!productBlock.isAdmissible)
             {
-                productBlock->holdsFullInformation = true;
+                productBlock.holdsFullInformation = true;
             }
             else
             {
-                productBlock->holdsRKInformation = true;
+                productBlock.holdsRKInformation = true;
             }
         }
     }
 }
 
-void HMultiply::findFullFlushTargets(intermBlCl* block, QVector<intermBlCl*> fullTransitBlocks)
+void HMultiply::findFullFlushTargets(intermBlCl &block, QVector<intermBlCl*> fullTransitBlocks)
 {
-    if(block->isEventualLeaf)
+    if(block.isEventualLeaf)
     {
         for(int i = 0; i < fullTransitBlocks.length(); i++)
         {
-            fullTransitBlocks[i]->fullFlushMergeTargets.append(block);
+            fullTransitBlocks[i]->fullFlushMergeTargets.append(&block);
         }
-        if(block->intSon11 != nullptr) //block has information below, that has to be transported up
+        if(block.intSon11 != nullptr) //block has information below, that has to be transported up
         {
-            setFullMergeTarget(block, block->intSon11);
-            setFullMergeTarget(block, block->intSon12);
-            setFullMergeTarget(block, block->intSon21);
-            setFullMergeTarget(block, block->intSon22);
+            setFullMergeTarget(block, *block.intSon11);
+            setFullMergeTarget(block, *block.intSon12);
+            setFullMergeTarget(block, *block.intSon21);
+            setFullMergeTarget(block, *block.intSon22);
         }
     }
     else
     {
-        if(block->holdsFullInformation) //block holds information
+        if(block.holdsFullInformation) //block holds information
         {
-            fullTransitBlocks.append(block); //the block also needs a target block
+            fullTransitBlocks.append(&block); //the block also needs a target block
         }
-        if(block->intSon11 != nullptr)
+        if(block.intSon11 != nullptr)
         {
-            findFullFlushTargets(block->intSon11, fullTransitBlocks);
-            findFullFlushTargets(block->intSon12, fullTransitBlocks);
-            findFullFlushTargets(block->intSon21, fullTransitBlocks);
-            findFullFlushTargets(block->intSon22, fullTransitBlocks);
+            findFullFlushTargets(*block.intSon11, fullTransitBlocks);
+            findFullFlushTargets(*block.intSon12, fullTransitBlocks);
+            findFullFlushTargets(*block.intSon21, fullTransitBlocks);
+            findFullFlushTargets(*block.intSon22, fullTransitBlocks);
         }
         else
         {
@@ -308,112 +317,112 @@ void HMultiply::findFullFlushTargets(intermBlCl* block, QVector<intermBlCl*> ful
     }
 }
 
-void HMultiply::findRkFlushTargets(intermBlCl* block, intermBlCl* transitBlock)
+void HMultiply::findRkFlushTargets(intermBlCl &block, intermBlCl* transitBlock)
 {
     if(transitBlock != nullptr) // there is already information travelling downwards the tree
     {
-        if(block->isEventualLeaf) // the downwards transitioning block information has found it's final target
+        if(block.isEventualLeaf) // the downwards transitioning block information has found it's final target
         {
-            transitBlock->rKFlushTargets.append(block);
+            transitBlock->rKFlushTargets.append(&block);
         }
-        else if(block->holdsRKInformation)
+        else if(block.holdsRKInformation)
         {
-            transitBlock->rKFlushTargets.append(block); // the downwards transitioning block information has found it's intermediate target
-            findRkFlushTargets(block->intSon11, block);    // -> the information of transitBlock will be added to block
-            findRkFlushTargets(block->intSon12, block);    // -> the the result of above operation has to be flushed as well
-            findRkFlushTargets(block->intSon21, block);    // -> block is the new transitBlock
-            findRkFlushTargets(block->intSon22, block);
+            transitBlock->rKFlushTargets.append(&block); // the downwards transitioning block information has found it's intermediate target
+            findRkFlushTargets(*block.intSon11, &block);    // -> the information of transitBlock will be added to block
+            findRkFlushTargets(*block.intSon12, &block);    // -> the the result of above operation has to be flushed as well
+            findRkFlushTargets(*block.intSon21, &block);    // -> block is the new transitBlock
+            findRkFlushTargets(*block.intSon22, &block);
         }
         else // the downwards-travelling information has to go down further
         {
-            findRkFlushTargets(block->intSon11, transitBlock);
-            findRkFlushTargets(block->intSon12, transitBlock);
-            findRkFlushTargets(block->intSon21, transitBlock);
-            findRkFlushTargets(block->intSon22, transitBlock);
+            findRkFlushTargets(*block.intSon11, transitBlock);
+            findRkFlushTargets(*block.intSon12, transitBlock);
+            findRkFlushTargets(*block.intSon21, transitBlock);
+            findRkFlushTargets(*block.intSon22, transitBlock);
         }
     }
     else
     {
-        if(block->isEventualLeaf)
+        if(block.isEventualLeaf)
         {
             return; // one could start organizing the merge operation for a possible subtree of the block here
         }
         else
         {
-            if(block->holdsRKInformation) // block is not leaf and holds an rk-martix -> block needs to be flushed downwards
+            if(block.holdsRKInformation) // block is not leaf and holds an rk-martix -> block needs to be flushed downwards
             {
-                findRkFlushTargets(block->intSon11, block);
-                findRkFlushTargets(block->intSon12, block);
-                findRkFlushTargets(block->intSon21, block);
-                findRkFlushTargets(block->intSon22, block);
+                findRkFlushTargets(*block.intSon11, &block);
+                findRkFlushTargets(*block.intSon12, &block);
+                findRkFlushTargets(*block.intSon21, &block);
+                findRkFlushTargets(*block.intSon22, &block);
             }
             else // *transitBlock is nullpointer -> had no information; block also has no rK information -> call findRkFlushTargets on subtree without transit block
             {
-                findRkFlushTargets(block->intSon11, nullptr);
-                findRkFlushTargets(block->intSon12, nullptr);
-                findRkFlushTargets(block->intSon21, nullptr);
-                findRkFlushTargets(block->intSon22, nullptr);
+                findRkFlushTargets(*block.intSon11, nullptr);
+                findRkFlushTargets(*block.intSon12, nullptr);
+                findRkFlushTargets(*block.intSon21, nullptr);
+                findRkFlushTargets(*block.intSon22, nullptr);
             }
         }
     }
 }
 
-void HMultiply::setFullMergeTarget(intermBlCl* targetBlock, intermBlCl* transitBlock)
+void HMultiply::setFullMergeTarget(intermBlCl &targetBlock, intermBlCl &transitBlock)
 {
-    if(transitBlock->holdsFullInformation) // transit block holds full matrix information
+    if(transitBlock.holdsFullInformation) // transit block holds full matrix information
     {
-        transitBlock->fullFlushMergeTargets.resize(1);
-        transitBlock->fullFlushMergeTargets[0] = targetBlock;
+        transitBlock.fullFlushMergeTargets.resize(1);
+        transitBlock.fullFlushMergeTargets[0] = &targetBlock;
     }
-    if(transitBlock->intSon11 != nullptr)
+    if(transitBlock.intSon11 != nullptr)
     {
-        setFullMergeTarget(targetBlock, transitBlock->intSon11);
-        setFullMergeTarget(targetBlock, transitBlock->intSon12);
-        setFullMergeTarget(targetBlock, transitBlock->intSon21);
-        setFullMergeTarget(targetBlock, transitBlock->intSon22);
+        setFullMergeTarget(targetBlock, *transitBlock.intSon11);
+        setFullMergeTarget(targetBlock, *transitBlock.intSon12);
+        setFullMergeTarget(targetBlock, *transitBlock.intSon21);
+        setFullMergeTarget(targetBlock, *transitBlock.intSon22);
     }
 }
 
-void HMultiply::findIndependentWorkBlocks(intermBlCl* block, QVector<intermBlCl*> &indepWorkBlocks)
+void HMultiply::findIndependentWorkBlocks(intermBlCl &block, QVector<intermBlCl*> &indepWorkBlocks)
 {
-    if(block->holdsFullInformation || block->holdsRKInformation || block->isEventualLeaf)
+    if(block.holdsFullInformation || block.holdsRKInformation || block.isEventualLeaf)
     {
-        indepWorkBlocks.append(block);
+        indepWorkBlocks.append(&block);
     }
     else
     {
-        if(block->intSon11 != nullptr)
+        if(block.intSon11 != nullptr)
         {
-            findIndependentWorkBlocks(block->intSon11, indepWorkBlocks);
-            findIndependentWorkBlocks(block->intSon12, indepWorkBlocks);
-            findIndependentWorkBlocks(block->intSon21, indepWorkBlocks);
-            findIndependentWorkBlocks(block->intSon22, indepWorkBlocks);
+            findIndependentWorkBlocks(*block.intSon11, indepWorkBlocks);
+            findIndependentWorkBlocks(*block.intSon12, indepWorkBlocks);
+            findIndependentWorkBlocks(*block.intSon21, indepWorkBlocks);
+            findIndependentWorkBlocks(*block.intSon22, indepWorkBlocks);
         }
         else
         {
-            std::cerr << "block->son11 == nullptr && !block->isEventualLeaf in findIndependentWorkBlocks() call." << std::endl;
+            std::cerr << "block.son11 == nullptr && !block.isEventualLeaf in findIndependentWorkBlocks() call." << std::endl;
         }
     }
 }
 
-void HMultiply::recursProdPartition(intermBlCl* productBlock, BlockCluster* factorBlock1, BlockCluster* factorBlock2)
+void HMultiply::recursProdPartition(intermBlCl &productBlock, BlockCluster &factorBlock1, BlockCluster &factorBlock2)
 {
-    if(factorBlock1 -> isLeaf || factorBlock2 -> isLeaf)
+    if(factorBlock1.isLeaf || factorBlock2.isLeaf)
     {
-        productBlock -> isEventualLeaf = true;
+        productBlock.isEventualLeaf = true;
         return;
     }
-    else if(productBlock -> intSon11 == nullptr) // if a block is partitioned, it is cross partitioned -> only one son check neccessary
+    else if(productBlock.intSon11 == nullptr) // if a block is partitioned, it is cross partitioned -> only one son check neccessary
     {
-        productBlock -> isEventualLeaf = true;
+        productBlock.isEventualLeaf = true;
         return;
     }
     else
     {
-        recursProdPartition(productBlock->intSon11, factorBlock1->son11, factorBlock2->son11);
-        recursProdPartition(productBlock->intSon12, factorBlock1->son12, factorBlock2->son12);
-        recursProdPartition(productBlock->intSon21, factorBlock1->son21, factorBlock2->son21);
-        recursProdPartition(productBlock->intSon22, factorBlock1->son22, factorBlock2->son22);
+        recursProdPartition(*productBlock.intSon11, *factorBlock1.son11, *factorBlock2.son11);
+        recursProdPartition(*productBlock.intSon12, *factorBlock1.son12, *factorBlock2.son12);
+        recursProdPartition(*productBlock.intSon21, *factorBlock1.son21, *factorBlock2.son21);
+        recursProdPartition(*productBlock.intSon22, *factorBlock1.son22, *factorBlock2.son22);
     }
 }
 
@@ -423,140 +432,140 @@ void HMultiply::startWorkOnIndependentBlocks(QVector<intermBlCl*> &blocksWithMat
     #pragma omp parallel for
     for(long i = 0; i < blocksWithMatrixLoad.length(); i++)
     {
-        processBlocksDownWardRecursion(blocksWithMatrixLoad[i], rank, relError);
+        processBlocksDownWardRecursion(*blocksWithMatrixLoad[i], rank, relError);
     }
 }
 
-void HMultiply::processBlocksDownWardRecursion(intermBlCl* productBlock, const long rank, const double relError)
+void HMultiply::processBlocksDownWardRecursion(intermBlCl &productBlock, const long rank, const double relError)
 {
-    if(productBlock->holdsFullInformation || productBlock->holdsRKInformation)
+    if(productBlock.holdsFullInformation || productBlock.holdsRKInformation)
     {
         processFactorPairs(productBlock, rank, relError);
     }
-    if(productBlock->isEventualLeaf) // block is in the partition; block is a leaf node in the final product tree
+    if(productBlock.isEventualLeaf) // block is in the partition; block is a leaf node in the final product tree
     {
         // start merge operation
-        if(productBlock->intSon11 != nullptr) // the (eventual) leaf node/block still has a nontrivial subtree
+        if(productBlock.intSon11 != nullptr) // the (eventual) leaf node/block still has a nontrivial subtree
         {
-            mergeSubtree(productBlock->intSon11, rank, relError); // start an agglomeration for the subtree of the sons  of productBlock
-            mergeSubtree(productBlock->intSon12, rank, relError);
-            mergeSubtree(productBlock->intSon21, rank, relError);
-            mergeSubtree(productBlock->intSon22, rank, relError);
+            mergeSubtree(*productBlock.intSon11, rank, relError); // start an agglomeration for the subtree of the sons  of productBlock
+            mergeSubtree(*productBlock.intSon12, rank, relError);
+            mergeSubtree(*productBlock.intSon21, rank, relError);
+            mergeSubtree(*productBlock.intSon22, rank, relError);
 
-            int numberOfSonsWithRkMatrices = productBlock->intSon11->holdsRKInformation + productBlock->intSon12->holdsRKInformation + productBlock->intSon21->holdsRKInformation + productBlock->intSon22->holdsRKInformation;
+            int numberOfSonsWithRkMatrices = productBlock.intSon11->holdsRKInformation + productBlock.intSon12->holdsRKInformation + productBlock.intSon21->holdsRKInformation + productBlock.intSon22->holdsRKInformation;
             if(numberOfSonsWithRkMatrices >= 1)
             {
                 roundedAgglomerateSonsIntoBlock(productBlock, rank, relError); // agglomerates above resuts into the eventual leaf (partition) block
             }
-            productBlock->trimBelow();
-            if(productBlock->intSon11 != nullptr)
+            productBlock.trimBelow();
+            if(productBlock.intSon11 != nullptr)
             {
                 std::cerr << "trimming hasn't worked." << std::endl;
             }
         }
 
-        if(!productBlock->isAdmissible && productBlock->singularValues.size() > 0)
+        if(!productBlock.isAdmissible && productBlock.singularValues.size() > 0)
         {
-            HArithm::addrkMatToFull(productBlock->fullMat, productBlock->UMat, productBlock->singularValues, productBlock->VAdjMat);
+            HArithm::addrkMatToFull(productBlock.fullMat, productBlock.UMat, productBlock.singularValues, productBlock.VAdjMat);
             clearRkMat(productBlock);
         }
 
-        if(productBlock->isAdmissible && productBlock->fullMat.size() > 0)
+        if(productBlock.isAdmissible && productBlock.fullMat.size() > 0)
         {
-            long rows = productBlock->rows();
-            long cols = productBlock->cols();
+            long rows = productBlock.rows();
+            long cols = productBlock.cols();
             if(rows < cols)
             {
-                HMultiply::roundedAddRMatToBlock(productBlock, Eigen::MatrixXcd::Identity(rows, rows), Eigen::VectorXd::Ones(rows), productBlock->fullMat, rank, relError);
+                HMultiply::roundedAddRMatToBlock(productBlock, Eigen::MatrixXcd::Identity(rows, rows), Eigen::VectorXd::Ones(rows), productBlock.fullMat, rank, relError);
             }
             else
             {
-                HMultiply::roundedAddRMatToBlock(productBlock, productBlock->fullMat, Eigen::VectorXd::Ones(cols), Eigen::MatrixXcd::Identity(cols, cols), rank, relError);
+                HMultiply::roundedAddRMatToBlock(productBlock, productBlock.fullMat, Eigen::VectorXd::Ones(cols), Eigen::MatrixXcd::Identity(cols, cols), rank, relError);
             }
 
-            productBlock->fullMat.resize(0,0);
-            productBlock->holdsFullInformation = false;
+            productBlock.fullMat.resize(0,0);
+            productBlock.holdsFullInformation = false;
         }
     }
     else  //flush information downwards
     {
-        if(productBlock->holdsRKInformation)
+        if(productBlock.holdsRKInformation)
         {
-            for(int i = 0; i < productBlock->rKFlushTargets.length(); i++)
+            for(int i = 0; i < productBlock.rKFlushTargets.length(); i++)
             {
-                long rows = productBlock->rKFlushTargets[i]->rows();
-                long cols = productBlock->rKFlushTargets[i]->cols();
-                long rowStartIndex = productBlock->rKFlushTargets[i]->rowStartIndex() - productBlock->rowStartIndex();
-                long colStartIndex = productBlock->rKFlushTargets[i]->colStartIndex() - productBlock->colStartIndex();
+                long rows = productBlock.rKFlushTargets[i]->rows();
+                long cols = productBlock.rKFlushTargets[i]->cols();
+                long rowStartIndex = productBlock.rKFlushTargets[i]->rowStartIndex() - productBlock.rowStartIndex();
+                long colStartIndex = productBlock.rKFlushTargets[i]->colStartIndex() - productBlock.colStartIndex();
 
-                HMultiply::roundedAddRMatToBlock(productBlock->rKFlushTargets[i], productBlock->UMat.middleRows(rowStartIndex, rows), productBlock->singularValues, productBlock->VAdjMat.middleCols(colStartIndex, cols), rank, relError);
-                productBlock->rKFlushTargets[i]->holdsRKInformation = true;
+                HMultiply::roundedAddRMatToBlock(*productBlock.rKFlushTargets[i], productBlock.UMat.middleRows(rowStartIndex, rows), productBlock.singularValues, productBlock.VAdjMat.middleCols(colStartIndex, cols), rank, relError);
+                productBlock.rKFlushTargets[i]->holdsRKInformation = true;
             }
         }
 
-        if(productBlock->holdsFullInformation)
+        if(productBlock.holdsFullInformation)
         {
-            if(productBlock->fullMat.size() != 0)
+            if(productBlock.fullMat.size() != 0)
             {
-                for(int i = 0; i < productBlock->fullFlushMergeTargets.length(); i++)
+                for(int i = 0; i < productBlock.fullFlushMergeTargets.length(); i++)
                 {
-                    long rows = productBlock->fullFlushMergeTargets[i]->rows();
-                    long cols = productBlock->fullFlushMergeTargets[i]->cols();
-                    long rowStartIndex = productBlock->fullFlushMergeTargets[i]->rowStartIndex() - productBlock->rowStartIndex();
-                    long colStartIndex = productBlock->fullFlushMergeTargets[i]->colStartIndex() - productBlock->colStartIndex();
+                    long rows = productBlock.fullFlushMergeTargets[i]->rows();
+                    long cols = productBlock.fullFlushMergeTargets[i]->cols();
+                    long rowStartIndex = productBlock.fullFlushMergeTargets[i]->rowStartIndex() - productBlock.rowStartIndex();
+                    long colStartIndex = productBlock.fullFlushMergeTargets[i]->colStartIndex() - productBlock.colStartIndex();
 
-                    HArithm::addFullMatrixInToFirstOne(productBlock->fullFlushMergeTargets[i]->fullMat, productBlock->fullMat.block(rowStartIndex, colStartIndex, rows, cols));
-                    productBlock->fullFlushMergeTargets[i]->holdsFullInformation = true;
+                    HArithm::addFullMatrixInToFirstOne(productBlock.fullFlushMergeTargets[i]->fullMat, productBlock.fullMat.block(rowStartIndex, colStartIndex, rows, cols));
+                    productBlock.fullFlushMergeTargets[i]->holdsFullInformation = true;
                 }
             }
         }
         clearBlock(productBlock);
 
-        processBlocksDownWardRecursion(productBlock->intSon11, rank, relError);
-        processBlocksDownWardRecursion(productBlock->intSon12, rank, relError);
-        processBlocksDownWardRecursion(productBlock->intSon21, rank, relError);
-        processBlocksDownWardRecursion(productBlock->intSon22, rank, relError);
+        processBlocksDownWardRecursion(*productBlock.intSon11, rank, relError);
+        processBlocksDownWardRecursion(*productBlock.intSon12, rank, relError);
+        processBlocksDownWardRecursion(*productBlock.intSon21, rank, relError);
+        processBlocksDownWardRecursion(*productBlock.intSon22, rank, relError);
     }
 }
 
-void HMultiply::mergeSubtree(intermBlCl* productBlock/*, intermBlCl *nextHighestRkBlock*/, const long rank, const double relError)
+void HMultiply::mergeSubtree(intermBlCl &productBlock/*, intermBlCl *nextHighestRkBlock*/, const long rank, const double relError)
 {
-    if(productBlock->intSon11 != nullptr) // block has non-trivial subtree -> process sons first, so that their results can be agglomerated
+    if(productBlock.intSon11 != nullptr) // block has non-trivial subtree -> process sons first, so that their results can be agglomerated
     {
-        mergeSubtree(productBlock->intSon11, rank, relError);
-        mergeSubtree(productBlock->intSon12, rank, relError);
-        mergeSubtree(productBlock->intSon21, rank, relError);
-        mergeSubtree(productBlock->intSon22, rank, relError);
+        mergeSubtree(*productBlock.intSon11, rank, relError);
+        mergeSubtree(*productBlock.intSon12, rank, relError);
+        mergeSubtree(*productBlock.intSon21, rank, relError);
+        mergeSubtree(*productBlock.intSon22, rank, relError);
     }
-    if(productBlock->holdsFullInformation || productBlock->holdsRKInformation)
+    if(productBlock.holdsFullInformation || productBlock.holdsRKInformation)
     {
         processFactorPairs(productBlock, rank, relError); // calculate the product full matrix and rk-matrix
-        if(productBlock->holdsFullInformation)
+        if(productBlock.holdsFullInformation)
         {
-            intermBlCl *targetForFull = productBlock->fullFlushMergeTargets[0];
+            intermBlCl *targetForFull = productBlock.fullFlushMergeTargets[0];
             if(targetForFull->isAdmissible) // full matrix will need to be rk-matrix eventually -> convert it already here; will be aglomerated later
             {
                 Eigen::MatrixXcd U;
                 Eigen::VectorXd singVals;
                 Eigen::MatrixXcd VAdj;
 
-                if(productBlock->rows() < productBlock->cols())
+                if(productBlock.rows() < productBlock.cols())
                 {
-                    U = Eigen::MatrixXcd::Identity(productBlock->rows(), productBlock->rows());
-                    singVals = Eigen::VectorXd::Ones(productBlock->rows());
-                    VAdj = productBlock->fullMat;
+                    U = Eigen::MatrixXcd::Identity(productBlock.rows(), productBlock.rows());
+                    singVals = Eigen::VectorXd::Ones(productBlock.rows());
+                    VAdj = productBlock.fullMat;
                 }
                 else
                 {
-                    U = productBlock->fullMat;
-                    singVals = Eigen::VectorXd::Ones(productBlock->cols());
-                    VAdj = Eigen::MatrixXcd::Identity(productBlock->cols(), productBlock->cols());
+                    U = productBlock.fullMat;
+                    singVals = Eigen::VectorXd::Ones(productBlock.cols());
+                    VAdj = Eigen::MatrixXcd::Identity(productBlock.cols(), productBlock.cols());
                 }
 
                 HMultiply::roundedAddRMatToBlock(productBlock, U, singVals, VAdj, rank, relError);
-                productBlock->fullMat.resize(0,0);
-                productBlock->holdsFullInformation = false;
-                productBlock->holdsRKInformation = true; // the block has an rk-matrix (now)
+                productBlock.fullMat.resize(0,0);
+                productBlock.holdsFullInformation = false;
+                productBlock.holdsRKInformation = true; // the block has an rk-matrix (now)
             }
             else // target block is inadmissible -> accepts the full matrix directly
             {
@@ -565,20 +574,20 @@ void HMultiply::mergeSubtree(intermBlCl* productBlock/*, intermBlCl *nextHighest
                     targetForFull->fullMat = Eigen::MatrixXcd::Zero(targetForFull->rows(), targetForFull->cols());
                 }
 
-                long rows = productBlock->rows();
-                long cols = productBlock->cols();
-                long rowStartIndex = targetForFull->rowStartIndex() - productBlock->rowStartIndex();
-                long colStartIndex = targetForFull->colStartIndex() - productBlock->colStartIndex();
+                long rows = productBlock.rows();
+                long cols = productBlock.cols();
+                long rowStartIndex = targetForFull->rowStartIndex() - productBlock.rowStartIndex();
+                long colStartIndex = targetForFull->colStartIndex() - productBlock.colStartIndex();
 
-                targetForFull->fullMat.block(rowStartIndex, colStartIndex, rows, cols) += productBlock->fullMat; // add full matrix to target fullmatrix
-                productBlock->fullMat.resize(0,0);
-                productBlock->holdsFullInformation = false;
+                targetForFull->fullMat.block(rowStartIndex, colStartIndex, rows, cols) += productBlock.fullMat; // add full matrix to target fullmatrix
+                productBlock.fullMat.resize(0,0);
+                productBlock.holdsFullInformation = false;
             }
         }
     }
-    if(productBlock->intSon11 != nullptr) // block has non-trivial subtree -> agglomerated sons
+    if(productBlock.intSon11 != nullptr) // block has non-trivial subtree -> agglomerated sons
     {
-        int numberOfSonsWithRkMatrices = productBlock->intSon11->holdsRKInformation + productBlock->intSon12->holdsRKInformation + productBlock->intSon21->holdsRKInformation + productBlock->intSon22->holdsRKInformation;
+        int numberOfSonsWithRkMatrices = productBlock.intSon11->holdsRKInformation + productBlock.intSon12->holdsRKInformation + productBlock.intSon21->holdsRKInformation + productBlock.intSon22->holdsRKInformation;
         if(numberOfSonsWithRkMatrices >= 1)
         {
             roundedAgglomerateSonsIntoBlock(productBlock, rank, relError);
@@ -586,47 +595,47 @@ void HMultiply::mergeSubtree(intermBlCl* productBlock/*, intermBlCl *nextHighest
     }
 }
 
-void HMultiply::processFactorPairs(intermBlCl* productBlock, const long rank, const double relError)
+void HMultiply::processFactorPairs(intermBlCl &productBlock, const long rank, const double relError)
 {
-    if(productBlock->holdsFullInformation && productBlock->fullMat.size() == 0 && !productBlock->isAdmissible)
+    if(productBlock.holdsFullInformation && productBlock.fullMat.size() == 0 && !productBlock.isAdmissible)
     {
-        productBlock->fullMat = Eigen::MatrixXcd::Zero(productBlock->rows(), productBlock->cols());
+        productBlock.fullMat = Eigen::MatrixXcd::Zero(productBlock.rows(), productBlock.cols());
     }
 
-    for(int i = 0; i < productBlock->fullFactorsList.length(); i++) // process factor pairs that result in a full matrix
+    for(int i = 0; i < productBlock.fullFactorsList.length(); i++) // process factor pairs that result in a full matrix
     {
-        factorsToFull(productBlock, productBlock->fullFactorsList[i], rank, relError);
+        factorsToFull(productBlock, productBlock.fullFactorsList[i], rank, relError);
     }    
-    for(int i = 0; i < productBlock->rKFactorsList.length(); i++) // process factor pairs that result in a reduced rank matrix
+    for(int i = 0; i < productBlock.rKFactorsList.length(); i++) // process factor pairs that result in a reduced rank matrix
     {
-        factorsToRK(productBlock, productBlock->rKFactorsList[i], rank, relError);
+        factorsToRK(productBlock, productBlock.rKFactorsList[i], rank, relError);
     }
-    if(productBlock->holdsRKInformation && productBlock->singularValues.size() == 0)
+    if(productBlock.holdsRKInformation && productBlock.singularValues.size() == 0)
     {
-        std::cerr << "productBlock->holdsRKInformation && productBlock->singularValues.size() == 0" << std::endl;
+        std::cerr << "productBlock.holdsRKInformation && productBlock.singularValues.size() == 0" << std::endl;
     }
-    else if(!productBlock->holdsRKInformation && productBlock->rKFactorsList.length() > 0)
+    else if(!productBlock.holdsRKInformation && productBlock.rKFactorsList.length() > 0)
     {
-        std::cerr << "!productBlock->holdsRKInformation && productBlock->rKFactors.length() > 0 " << productBlock->rKFactorsList.length() << std::endl;
+        std::cerr << "!productBlock.holdsRKInformation && productBlock.rKFactors.length() > 0 " << productBlock.rKFactorsList.length() << std::endl;
     }
 }
 
-void HMultiply::factorsToFull(intermBlCl* productBlock, const std::pair<BlockCluster*, BlockCluster*> fullFactors, const long rank, const double relError)
+void HMultiply::factorsToFull(intermBlCl &productBlock, const std::pair<BlockCluster*, BlockCluster*> fullFactors, const long rank, const double relError)
 {
-    if(!productBlock->isAdmissible)
+    if(!productBlock.isAdmissible)
     {
         if(fullFactors.first->isLeaf)  // first block is in the partition -> block holds martix information and is not further subdivided
         {
-            HArithm::matByBlock(fullFactors.first->fullMat, *fullFactors.second, fullFactors.first->colStartIndex(), fullFactors.second->colStartIndex(), productBlock->fullMat);
+            HArithm::matByBlock(fullFactors.first->fullMat, *fullFactors.second, fullFactors.first->colStartIndex(), fullFactors.second->colStartIndex(), productBlock.fullMat);
         }
         else // second factor is leaf
         {
-            HArithm::blockByMat(*fullFactors.first, fullFactors.second->fullMat, fullFactors.first->rowStartIndex(), fullFactors.second->rowStartIndex(), productBlock->fullMat);
+            HArithm::blockByMat(*fullFactors.first, fullFactors.second->fullMat, fullFactors.first->rowStartIndex(), fullFactors.second->rowStartIndex(), productBlock.fullMat);
         }
     }
     else
     {
-        productBlock->holdsRKInformation = true;
+        productBlock.holdsRKInformation = true;
         if(fullFactors.first->isLeaf)  // first block is in the partition -> block holds martix information and is not further subdivided
         {
             Eigen::MatrixXcd productMat = Eigen::MatrixXcd::Zero( fullFactors.first->cols(), fullFactors.second->cols() );
@@ -650,7 +659,7 @@ void HMultiply::factorsToFull(intermBlCl* productBlock, const std::pair<BlockClu
     }
 }
 
-void HMultiply::factorsToRK(intermBlCl* productBlock, const std::pair<BlockCluster*, BlockCluster*> rKFactors, const long rank, const double relError)
+void HMultiply::factorsToRK(intermBlCl &productBlock, const std::pair<BlockCluster*, BlockCluster*> rKFactors, const long rank, const double relError)
 {
     // the factor pair results in a reduced rank matrix
     if(rKFactors.first->isLeaf && rKFactors.first->isAdmissible)
@@ -667,31 +676,31 @@ void HMultiply::factorsToRK(intermBlCl* productBlock, const std::pair<BlockClust
     }
 }
 
-void HMultiply::addRMatToBlock(intermBlCl* block, const Eigen::MatrixXcd &UMat, const Eigen::VectorXcd &singVals, const Eigen::MatrixXcd &VAdjMat)
+void HMultiply::addRMatToBlock(intermBlCl &block, const Eigen::MatrixXcd &UMat, const Eigen::VectorXcd &singVals, const Eigen::MatrixXcd &VAdjMat)
 {
-    HArithm::horizontalJoinMatricesInToFirstOne(block->UMat, UMat);
-    HArithm::joinVectorsInToFirstOne(block->singularValues, singVals);
-    HArithm::verticalJoinMatricesInToFirstOne(block->VAdjMat, VAdjMat);
+    HArithm::horizontalJoinMatricesInToFirstOne(block.UMat, UMat);
+    HArithm::joinVectorsInToFirstOne(block.singularValues, singVals);
+    HArithm::verticalJoinMatricesInToFirstOne(block.VAdjMat, VAdjMat);
 }
 
-void HMultiply::roundedAddRMatToBlock(intermBlCl* block, const Eigen::MatrixXcd &UMat, const Eigen::VectorXcd &singVals, const Eigen::MatrixXcd &VAdjMat, const long maxRank, const double relError)
+void HMultiply::roundedAddRMatToBlock(intermBlCl &block, const Eigen::MatrixXcd &UMat, const Eigen::VectorXcd &singVals, const Eigen::MatrixXcd &VAdjMat, const long maxRank, const double relError)
 {
     addRMatToBlock(block, UMat, singVals, VAdjMat);
-    RkMatRankReduction(block->UMat, block->singularValues, block->VAdjMat, maxRank, relError);
+    RkMatRankReduction(block.UMat, block.singularValues, block.VAdjMat, maxRank, relError);
 }
 
-void HMultiply::clearRkMat(intermBlCl* block)
+void HMultiply::clearRkMat(intermBlCl &block)
 {
-    block->UMat.resize(0,0);
-    block->singularValues.resize(0);
-    block->VAdjMat.resize(0,0);
-    block->holdsRKInformation = false;
+    block.UMat.resize(0,0);
+    block.singularValues.resize(0);
+    block.VAdjMat.resize(0,0);
+    block.holdsRKInformation = false;
 }
 
-void HMultiply::clearBlock(intermBlCl* block)
+void HMultiply::clearBlock(intermBlCl &block)
 {
-    block->fullMat.resize(0,0);
-    block->holdsFullInformation = false;
+    block.fullMat.resize(0,0);
+    block.holdsFullInformation = false;
 
     clearRkMat(block);
 }
@@ -764,83 +773,83 @@ void HMultiply::RkMatRankReduction(Eigen::MatrixXcd &UMat, Eigen::VectorXcd &sin
     }
 }
 
-void HMultiply::roundedAgglomerateSonsIntoBlock(intermBlCl* block, const long rank, const double relError)
+void HMultiply::roundedAgglomerateSonsIntoBlock(intermBlCl &block, const long rank, const double relError)
 {
     std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> agglomeratedRkMatrix = agglomerateSons(block, rank, relError);
     //    HArithm::roundedAddRMatToBlock(*block, std::get<0>(agglomeratedRkMatrix), std::get<1>(agglomeratedRkMatrix), std::get<2>(agglomeratedRkMatrix), rank, relError);
     HMultiply::roundedAddRMatToBlock(block, std::get<0>(agglomeratedRkMatrix), std::get<1>(agglomeratedRkMatrix), std::get<2>(agglomeratedRkMatrix), rank, relError);
 
-    clearRkMat(block->intSon11);
-    clearRkMat(block->intSon12);
-    clearRkMat(block->intSon21);
-    clearRkMat(block->intSon22);
+    clearRkMat(*block.intSon11);
+    clearRkMat(*block.intSon12);
+    clearRkMat(*block.intSon21);
+    clearRkMat(*block.intSon22);
 
-    block->holdsRKInformation = true;
+    block.holdsRKInformation = true;
 }
 
-std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HMultiply::agglomerateSons(intermBlCl* block, const long rank, const double relError) // only call function on block, whose sons hold actual rk information
+std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HMultiply::agglomerateSons(intermBlCl &block, const long rank, const double relError) // only call function on block, whose sons hold actual rk information
 {
-    if(!block->intSon11->holdsRKInformation && block->intSon11->singularValues.size() >= 1)
+    if(!block.intSon11->holdsRKInformation && block.intSon11->singularValues.size() >= 1)
     {
-        std::cerr << "!block->son11->holdsRKInformation && block->son11->singularValues.size() = " << block->intSon11->singularValues.size() << std::endl;
+        std::cerr << "!block.son11->holdsRKInformation && block.son11->singularValues.size() = " << block.intSon11->singularValues.size() << std::endl;
     }
-    if(!block->intSon12->holdsRKInformation && block->intSon12->singularValues.size() >= 1)
+    if(!block.intSon12->holdsRKInformation && block.intSon12->singularValues.size() >= 1)
     {
-        std::cerr << "!block->son12->holdsRKInformation && block->son12->singularValues.size() = " << block->intSon12->singularValues.size() << std::endl;
+        std::cerr << "!block.son12->holdsRKInformation && block.son12->singularValues.size() = " << block.intSon12->singularValues.size() << std::endl;
     }
-    if(!block->intSon21->holdsRKInformation && block->intSon21->singularValues.size() >= 1)
+    if(!block.intSon21->holdsRKInformation && block.intSon21->singularValues.size() >= 1)
     {
-        std::cerr << "!block->son21->holdsRKInformation && block->son21->singularValues.size() = " << block->intSon21->singularValues.size() << std::endl;
+        std::cerr << "!block.son21->holdsRKInformation && block.son21->singularValues.size() = " << block.intSon21->singularValues.size() << std::endl;
     }
-    if(!block->intSon22->holdsRKInformation && block->intSon22->singularValues.size() >= 1)
+    if(!block.intSon22->holdsRKInformation && block.intSon22->singularValues.size() >= 1)
     {
-        std::cerr << "!block->son22->holdsRKInformation && block->son22->singularValues.size() = " << block->intSon22->singularValues.size() << std::endl;
+        std::cerr << "!block.son22->holdsRKInformation && block.son22->singularValues.size() = " << block.intSon22->singularValues.size() << std::endl;
     }
 
     Eigen::MatrixXcd U;
     Eigen::VectorXcd singularValues;
     Eigen::MatrixXcd VAdj;
 
-    if(block->intSon11 != nullptr)
+    if(block.intSon11 != nullptr)
     {
-        long son11Rows = block->intSon11->rows();
-        long son11Cols = block->intSon11->cols();
+        long son11Rows = block.intSon11->rows();
+        long son11Cols = block.intSon11->cols();
 
-        long son22Rows = block->intSon22->rows();
-        long son22Cols = block->intSon22->cols();
+        long son22Rows = block.intSon22->rows();
+        long son22Cols = block.intSon22->cols();
 
         Eigen::MatrixXcd URow1;
         Eigen::VectorXcd singularValuesRow1;
         Eigen::MatrixXcd VAdjRow1;
 
-        if(block->intSon11->holdsRKInformation || block->intSon12->holdsRKInformation) // at least one of the upper sons holds information
+        if(block.intSon11->holdsRKInformation || block.intSon12->holdsRKInformation) // at least one of the upper sons holds information
         {
-            long son12Cols = block->intSon12->cols();
+            long son12Cols = block.intSon12->cols();
 
-            long son11Rank = block->intSon11->singularValues.size();
-            long son12Rank = block->intSon12->singularValues.size();
+            long son11Rank = block.intSon11->singularValues.size();
+            long son12Rank = block.intSon12->singularValues.size();
 
             URow1 = Eigen::MatrixXcd/*::Zero*/(son11Rows, son11Rank + son12Rank);
             singularValuesRow1 = Eigen::VectorXcd/*::Zero*/(son11Rank + son12Rank);
             VAdjRow1 = Eigen::MatrixXcd/*::Zero*/(son11Rank + son12Rank, son11Cols + son12Cols);
 
-            if(block->intSon11->holdsRKInformation)
+            if(block.intSon11->holdsRKInformation)
             {
-                URow1.leftCols(son11Rank) = block->intSon11->UMat;
-                singularValuesRow1.head(son11Rank) = block->intSon11->singularValues;
-                VAdjRow1.topLeftCorner(son11Rank, son11Cols) = block->intSon11->VAdjMat;
+                URow1.leftCols(son11Rank) = block.intSon11->UMat;
+                singularValuesRow1.head(son11Rank) = block.intSon11->singularValues;
+                VAdjRow1.topLeftCorner(son11Rank, son11Cols) = block.intSon11->VAdjMat;
                 VAdjRow1.topRightCorner(son11Rank, son12Cols) = Eigen::MatrixXcd::Zero(son11Rank, son12Cols);
             }
 
-            if(block->intSon12->holdsRKInformation)
+            if(block.intSon12->holdsRKInformation)
             {
-                URow1.rightCols(son12Rank) = block->intSon12->UMat;
-                singularValuesRow1.tail(son12Rank) = block->intSon12->singularValues;
+                URow1.rightCols(son12Rank) = block.intSon12->UMat;
+                singularValuesRow1.tail(son12Rank) = block.intSon12->singularValues;
                 VAdjRow1.bottomLeftCorner(son12Rank, son11Cols) = Eigen::MatrixXcd::Zero(son12Rank, son11Cols);
-                VAdjRow1.bottomRightCorner(son12Rank, son12Cols) = block->intSon12->VAdjMat;
+                VAdjRow1.bottomRightCorner(son12Rank, son12Cols) = block.intSon12->VAdjMat;
             }
 
-            if(block->intSon11->holdsRKInformation && block->intSon12->holdsRKInformation)
+            if(block.intSon11->holdsRKInformation && block.intSon12->holdsRKInformation)
             {
                 RkMatRankReduction(URow1, singularValuesRow1, VAdjRow1, rank, relError);
             }
@@ -850,52 +859,52 @@ std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HMultiply::aggl
         Eigen::VectorXcd singularValuesRow2;
         Eigen::MatrixXcd VAdjRow2;
 
-        if(block->intSon21->holdsRKInformation || block->intSon22->holdsRKInformation) // at least one of the lowir sons holds information
+        if(block.intSon21->holdsRKInformation || block.intSon22->holdsRKInformation) // at least one of the lowir sons holds information
         {
-            long son21Cols = block->intSon21->cols();
+            long son21Cols = block.intSon21->cols();
 
-            long son21Rank = block->intSon21->singularValues.size();
-            long son22Rank = block->intSon22->singularValues.size();
+            long son21Rank = block.intSon21->singularValues.size();
+            long son22Rank = block.intSon22->singularValues.size();
 
             URow2 = Eigen::MatrixXcd/*::Zero*/(son22Rows, son21Rank + son22Rank);
             singularValuesRow2 = Eigen::VectorXcd/*::Zero*/(son21Rank + son22Rank);
             VAdjRow2 = Eigen::MatrixXcd/*::Zero*/(son21Rank + son22Rank, son21Cols + son22Cols);
 
-            if(block->intSon21->holdsRKInformation)
+            if(block.intSon21->holdsRKInformation)
             {
-                URow2.leftCols(son21Rank) = block->intSon21->UMat;
-                singularValuesRow2.head(son21Rank) = block->intSon21->singularValues;
-                VAdjRow2.topLeftCorner(son21Rank, son21Cols) = block->intSon21->VAdjMat;
+                URow2.leftCols(son21Rank) = block.intSon21->UMat;
+                singularValuesRow2.head(son21Rank) = block.intSon21->singularValues;
+                VAdjRow2.topLeftCorner(son21Rank, son21Cols) = block.intSon21->VAdjMat;
                 VAdjRow2.topRightCorner(son21Rank, son22Cols) = Eigen::MatrixXcd::Zero(son21Rank, son22Cols);
             }
-            if(block->intSon22->holdsRKInformation)
+            if(block.intSon22->holdsRKInformation)
             {
-                URow2.rightCols(son22Rank) = block->intSon22->UMat;
-                singularValuesRow2.tail(son22Rank) = block->intSon22->singularValues;
+                URow2.rightCols(son22Rank) = block.intSon22->UMat;
+                singularValuesRow2.tail(son22Rank) = block.intSon22->singularValues;
                 VAdjRow2.bottomLeftCorner(son22Rank, son21Cols) = Eigen::MatrixXcd::Zero(son22Rank, son21Cols);
-                VAdjRow2.bottomRightCorner(son22Rank, son22Cols) = block->intSon22->VAdjMat;
+                VAdjRow2.bottomRightCorner(son22Rank, son22Cols) = block.intSon22->VAdjMat;
             }
 
-            if(block->intSon21->holdsRKInformation && block->intSon22->holdsRKInformation)
+            if(block.intSon21->holdsRKInformation && block.intSon22->holdsRKInformation)
             {
                 RkMatRankReduction(URow2, singularValuesRow2, VAdjRow2, rank, relError);
             }
         }
 
-        if( (block->intSon11->holdsRKInformation || block->intSon12->holdsRKInformation) || (block->intSon21->holdsRKInformation || block->intSon22->holdsRKInformation) ) // merge the upper and the lower sons
+        if( (block.intSon11->holdsRKInformation || block.intSon12->holdsRKInformation) || (block.intSon21->holdsRKInformation || block.intSon22->holdsRKInformation) ) // merge the upper and the lower sons
         {
-            U = Eigen::MatrixXcd/*::Zero*/(block->rows(), singularValuesRow1.size() + singularValuesRow2.size());
+            U = Eigen::MatrixXcd/*::Zero*/(block.rows(), singularValuesRow1.size() + singularValuesRow2.size());
             singularValues = Eigen::VectorXcd/*::Zero*/(singularValuesRow1.size() + singularValuesRow2.size());
-            VAdj = Eigen::MatrixXcd/*::Zero*/(singularValuesRow1.size() + singularValuesRow2.size(), block->cols());
+            VAdj = Eigen::MatrixXcd/*::Zero*/(singularValuesRow1.size() + singularValuesRow2.size(), block.cols());
 
-            if((block->intSon11->holdsRKInformation || block->intSon12->holdsRKInformation))
+            if((block.intSon11->holdsRKInformation || block.intSon12->holdsRKInformation))
             {
                 U.topLeftCorner(son11Rows, singularValuesRow1.size()) = URow1;
                 U.bottomLeftCorner(son22Rows, singularValuesRow1.size()) = Eigen::MatrixXcd::Zero(son22Rows, singularValuesRow1.size());
                 singularValues.head(singularValuesRow1.size()) = singularValuesRow1;
                 VAdj.topRows(singularValuesRow1.size()) = VAdjRow1;
             }
-            if(block->intSon21->holdsRKInformation || block->intSon22->holdsRKInformation)
+            if(block.intSon21->holdsRKInformation || block.intSon22->holdsRKInformation)
             {
                 U.topRightCorner(son11Rows, singularValuesRow2.size()) = Eigen::MatrixXcd::Zero(son11Rows, singularValuesRow2.size());
                 U.bottomRightCorner(son22Rows, singularValuesRow2.size()) = URow2;
@@ -903,14 +912,14 @@ std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HMultiply::aggl
                 VAdj.bottomRows(singularValuesRow2.size()) = VAdjRow2;
             }
 
-            if( (block->intSon11->holdsRKInformation || block->intSon12->holdsRKInformation) && (block->intSon21->holdsRKInformation || block->intSon22->holdsRKInformation) ) // upper and lower sons hold information  -> recompress the sum
+            if( (block.intSon11->holdsRKInformation || block.intSon12->holdsRKInformation) && (block.intSon21->holdsRKInformation || block.intSon22->holdsRKInformation) ) // upper and lower sons hold information  -> recompress the sum
             {
                 RkMatRankReduction(U, singularValues, VAdj, rank, relError);
             }
             return {U, singularValues, VAdj};
         }
     }
-    return {Eigen::MatrixXcd::Zero(block->rows(), 1), Eigen::VectorXcd::Zero(1), Eigen::MatrixXcd::Zero(1, block->cols())};
+    return {Eigen::MatrixXcd::Zero(block.rows(), 1), Eigen::VectorXcd::Zero(1), Eigen::MatrixXcd::Zero(1, block.cols())};
 }
 
 //void HMultiply::intermBlClToBlockCluster(BlockCluster* blockClusterNode, intermBlCl* block)
@@ -955,20 +964,28 @@ std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HMultiply::aggl
 //    }
 //}
 
-BlockCluster* HMultiply::intermBlClToBlockCluster(intermBlCl* block) /*!< Convert the intermediary product blockcluster into a ordinary block cluster. */
+std::unique_ptr<BlockCluster> HMultiply::intermBlClToBlockCluster(std::unique_ptr<intermBlCl> &block) /*!< Convert the intermediary product blockcluster into a ordinary block cluster. */
 {
     if(block->intSon11 != nullptr && !block->isEventualLeaf)
     {
         #pragma omp parallel sections
         {
             #pragma omp section
-            block->son11 = intermBlClToBlockCluster(block->intSon11);
+            {
+                block->son11 = intermBlClToBlockCluster(block->intSon11);
+            }
             #pragma omp section
-            block->son12 = intermBlClToBlockCluster(block->intSon12);
+            {
+                block->son12 = intermBlClToBlockCluster(block->intSon12);
+            }
             #pragma omp section
-            block->son21 = intermBlClToBlockCluster(block->intSon21);
+            {
+                block->son21 = intermBlClToBlockCluster(block->intSon21);
+            }
             #pragma omp section
-            block->son22 = intermBlClToBlockCluster(block->intSon22);
+            {
+                block->son22 = intermBlClToBlockCluster(block->intSon22);
+            }
         }
     }
     if(!block->isEventualLeaf)
@@ -990,13 +1007,13 @@ BlockCluster* HMultiply::intermBlClToBlockCluster(intermBlCl* block) /*!< Conver
     block->intSon21 = nullptr;
     block->intSon22 = nullptr;
 
-    BlockCluster* blockPointer = static_cast<BlockCluster*> (block);
-    if(block->intSon11 != nullptr && !block->isEventualLeaf)
+    std::unique_ptr<BlockCluster> castBlockPointer(static_cast<BlockCluster*> (block.release()));
+    if(castBlockPointer->hasFourChildren() && !castBlockPointer->isLeaf)
     {
-        block->son11->father = blockPointer;
-        block->son12->father = blockPointer;
-        block->son21->father = blockPointer;
-        block->son22->father = blockPointer;
+        castBlockPointer->son11->father = castBlockPointer.get();
+        castBlockPointer->son12->father = castBlockPointer.get();
+        castBlockPointer->son21->father = castBlockPointer.get();
+        castBlockPointer->son22->father = castBlockPointer.get();
     }
-    return blockPointer;
+    return castBlockPointer;
 }

@@ -15,7 +15,8 @@
 class GLS
 {
 public:
-    GLS();
+    GLS(){}
+
     //solves Ax=By+c with alpha(i)*x(i)+beta(i)*y(i)=f(i) for i=0,...,n with A,B n-times-n matrices and x,y and c n-length vectors
     /**
     * \brief Solves Ax=By+c with alpha(i)*x(i)+beta(i)*y(i)=f(i) for i=0,...,n with A,B n-times-n matrices and x,y and c n-length vectors.

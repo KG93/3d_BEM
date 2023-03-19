@@ -58,7 +58,7 @@ void Test::testMatrixVectorProducts()
     // test recursive matrix-vector product
     resultFull = hMatAsFull * x;
     resultHMat = Eigen::VectorXcd::Zero(n);
-    HArithm::recursiveMatrixVectorPoduct(resultHMat, hMatrix.getRootBlock(),x, 0, 0);
+    HArithm::recursiveMatrixVectorPoduct(resultHMat, *hMatrix.getRootBlock(),x, 0, 0);
     relAccuracy =  (resultHMat - resultFull).norm() / resultFull.norm();
     std::cout << "Relative accuracy of recursiveMatrixVectorPoduct: " << relAccuracy << std::endl;
     QVERIFY(relAccuracy < tiny);
@@ -66,7 +66,7 @@ void Test::testMatrixVectorProducts()
     // test parallel subtractive matrix-vector product
     resultFull = - hMatAsFull * x;
     resultHMat = Eigen::VectorXcd::Zero(n);
-    HArithm::subtractiveParallelMatrixVectorPoduct(resultHMat, hMatrix.getRootBlock(), x, 0, 0);
+    HArithm::subtractiveParallelMatrixVectorPoduct(resultHMat, *hMatrix.getRootBlock(), x, 0, 0);
     relAccuracy =  (resultHMat - resultFull).norm() / resultFull.norm();
     std::cout << "Relative accuracy of subtractiveParallelMatrixVectorPoduct: " << relAccuracy << std::endl;
     QVERIFY(relAccuracy < tiny);
@@ -74,7 +74,7 @@ void Test::testMatrixVectorProducts()
     // test parallel recursive matrix-vector product
     resultFull = hMatAsFull * x;
     resultHMat = Eigen::VectorXcd::Zero(n);
-    HArithm::parallelMatrixVectorPoduct(resultHMat, hMatrix.getRootBlock(),x, 0, 0);
+    HArithm::parallelMatrixVectorPoduct(resultHMat, *hMatrix.getRootBlock(),x, 0, 0);
     relAccuracy =  (resultHMat - resultFull).norm() / resultFull.norm();
     std::cout << "Relative accuracy of parallelMatrixVectorPoduct: " << relAccuracy << std::endl;
     QVERIFY(relAccuracy < tiny);
@@ -91,7 +91,7 @@ void Test::testMatrixVectorProducts()
     // test recursive vector-matrix product
     resultFullT = xT * hMatAsFull;
     resultHMatT = Eigen::RowVectorXcd::Zero(n);
-    HArithm::recursiveVectorMatrixPoduct(resultHMatT, xT, hMatrix.getRootBlock(), 0, 0);
+    HArithm::recursiveVectorMatrixPoduct(resultHMatT, xT, *hMatrix.getRootBlock(), 0, 0);
     relAccuracy =  (resultHMatT - resultFullT).norm() / resultFullT.norm();
     std::cout << "Relative accuracy of recursiveVectorMatrixPoduct: " << relAccuracy << std::endl;
     QVERIFY(relAccuracy < tiny);
@@ -99,7 +99,7 @@ void Test::testMatrixVectorProducts()
     // test parallel subtractive vector-matrix product
     resultFullT = -xT * hMatAsFull;
     resultHMatT = Eigen::RowVectorXcd::Zero(n);
-    HArithm::subtractiveParallelVectorMatrixPoduct(resultHMatT, xT, hMatrix.getRootBlock(), 0, 0);
+    HArithm::subtractiveParallelVectorMatrixPoduct(resultHMatT, xT, *hMatrix.getRootBlock(), 0, 0);
     relAccuracy =  (resultHMatT - resultFullT).norm() / resultFullT.norm();
     std::cout << "Relative accuracy of subtractiveParallelVectorMatrixPoduct: " << relAccuracy << std::endl;
     QVERIFY(relAccuracy < tiny);
@@ -132,7 +132,10 @@ void Test::testMatrixSubtraction()
     HMatrix hMatCopy1 = HMatrix(hMatrix);
     HMatrix hMatCopy2 = HMatrix(hMatrix);
     HArithm::multiplyHMatByMinusOne(hMatCopy2);
-    HArithm::recursiveHMatSubstraction(hMatCopy1.getRootBlock(), hMatCopy2.getRootBlock(), 0, subtrRelError);
+    std::cerr << "After multiplyHMatByMinusOne" << std::endl;
+
+    HArithm::recursiveHMatSubstraction(*hMatCopy1.getRootBlock(), *hMatCopy2.getRootBlock(), 0, subtrRelError);
+    std::cerr << "After recursiveHMatSubstraction" << std::endl;
 
     Eigen::MatrixXcd resultF = hMatCopy1.toFullMat();
     double relAccuracy = (resultF - 2*hMatAsFull).norm() / (2*hMatAsFull.norm());
@@ -158,7 +161,7 @@ void Test::testMatValForwardSubstitutions()
     HMatrix X = HArithm::forwSubsMatVal(LUPair.first, Z, 0, relTruncTol); // Solve L * X = Z for X, L is lower triangular H-matrix; X is the return value
     HMatrix deltaHMatrix = HMultiply::multiplyHMat(LUPair.first, X, 0, 0);
     HMatrix hMatSymCopy = HMatrix(hMatSym);
-    HArithm::recursiveHMatSubstraction(hMatSymCopy.getRootBlock(), deltaHMatrix.getRootBlock(), 0, 0); // after the operation hMatSymCopy is the residual hMatSym - L * X
+    HArithm::recursiveHMatSubstraction(*hMatSymCopy.getRootBlock(), *deltaHMatrix.getRootBlock(), 0, 0); // after the operation hMatSymCopy is the residual hMatSym - L * X
     double relAccuracy = hMatSymCopy.norm() / hMatSym.norm();
     std::cout << "Relative accuracy of forwSubsMatVal: " << relAccuracy << ". Rounding accuracy was set to " << relTruncTol << std::endl;
 
@@ -182,7 +185,7 @@ void Test::testMatValForwardSubstitutions()
     X = HArithm::forwSubsMatValTransposed(LUPair.second, Z, 0, relTruncTol); // Solve X * U = Z for X, U is upper triangular H-matrix, Z is destroyed
     deltaHMatrix = HMultiply::multiplyHMat(X, LUPair.second, 0, 0);
     hMatSymCopy = HMatrix(hMatSym);
-    HArithm::recursiveHMatSubstraction(hMatSymCopy.getRootBlock(), deltaHMatrix.getRootBlock(), 0, 0); // after the operation hMatSymCopy is the residual hMatSym - X * U
+    HArithm::recursiveHMatSubstraction(*hMatSymCopy.getRootBlock(), *deltaHMatrix.getRootBlock(), 0, 0); // after the operation hMatSymCopy is the residual hMatSym - X * U
     relAccuracy = hMatSymCopy.norm() / hMatSym.norm();
     std::cout << "Relative accuracy of forwSubsMatValTransposed: " << relAccuracy << ". Rounding accuracy was set to " << relTruncTol << std::endl;
 

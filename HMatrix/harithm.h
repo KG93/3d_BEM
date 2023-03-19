@@ -205,8 +205,8 @@ public:
     * \param rank The rank to which the resulting matrix will be truncated.
     * \param error The maximum error allowed in the truncated matrix.
     */
-    static void reducedRankAgglomerationWithTrimming(BlockCluster &block, const long rank, const double relError); /*!< \brief Agglomerate subtree into the low rank matrix of the block. Then trim subtree below the block. */
-    static void reducedRankAgglomeration(BlockCluster &block, const long rank, const double relError);
+    static void reducedRankAgglomerationWithTrimming(BlockCluster &block, const long rank, const double relError); /** \brief Agglomerate subtree into the low rank matrix of the block. Then trim subtree below the block. */
+    static void reducedRankAgglomeration(BlockCluster &block, const long rank, const double relError); /** \brief Agglomerate subtree into the low rank matrix of the block. */
     static std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> reducedRankAgglomerationRecursion(BlockCluster &block, const long rank, const double relError);
 
     static void blockSplitting(BlockCluster &block, const long rank, const double error);  /*!< \brief Flush the matrices of the block down to the leaf nodes. */
@@ -240,7 +240,7 @@ public:
     static void recursiveMultiplyHMatByMinusOne(BlockCluster &matBlock); /*!< \brief Multiply subtree by -1. */
     static void convertToAdmissibleZeroBlock(BlockCluster &matBlock); /*!< \brief Make block zero block in low rank representation. */
 
-    static BlockCluster* copyBlock(const BlockCluster &matBlock, Cluster* rowCluster, Cluster* colCluster); /*!< \brief Make independent copy of the subtree of matBlock. */
+    static std::unique_ptr<BlockCluster> copyBlock(const BlockCluster &matBlock, Cluster* rowCluster, Cluster* colCluster); /*!< \brief Make independent copy of the subtree of matBlock. */
 
     static Eigen::VectorXcd getRankKBlockDiagonal(const BlockCluster &matBlock, long rank = 0);
     static Eigen::VectorXcd getRankKBlockIndexedElements(BlockCluster &matBlock, QVector<long> &rowIndices, QVector<long> &colIndices, long rank = 0);
