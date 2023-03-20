@@ -5,4 +5,4 @@ Doxygen/latex
 
 build-Tests*/
 Tests/Tests.pro.user
-
+Tests/Makefile
