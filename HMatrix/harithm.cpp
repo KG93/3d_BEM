@@ -1025,7 +1025,7 @@ void HArithm::blockSplitting(BlockCluster &block, const long rank, const double 
 //            {
 //                #pragma omp sections
 //                {
-                    #pragma omp task
+                    #pragma omp task shared(block)
                     {
 //                        long sonRowIndexStart = block.son11->rowStartIndex();
                         long sonNumberOfRows = block.son11->rows();
@@ -1033,7 +1033,7 @@ void HArithm::blockSplitting(BlockCluster &block, const long rank, const double 
                         long sonNumberOfColumns = block.son11->cols();
                         addFullMatrixInToFirstOne(block.son11->fullMat, block.fullMat.topLeftCorner(sonNumberOfRows, sonNumberOfColumns));
                     }
-                    #pragma omp task
+                    #pragma omp task shared(block)
                     {
 //                        long sonRowIndexStart = block.son12->rowStartIndex();
                         long sonNumberOfRows = block.son12->rows();
@@ -1041,7 +1041,7 @@ void HArithm::blockSplitting(BlockCluster &block, const long rank, const double 
                         long sonNumberOfColumns = block.son12->cols();
                         addFullMatrixInToFirstOne(block.son12->fullMat, block.fullMat.topRightCorner(sonNumberOfRows, sonNumberOfColumns));
                     }
-                    #pragma omp task
+                    #pragma omp task shared(block)
                     {
 //                        long sonRowIndexStart = block.son21->rowStartIndex();
                         long sonNumberOfRows = block.son21->rows();
@@ -1072,7 +1072,7 @@ void HArithm::blockSplitting(BlockCluster &block, const long rank, const double 
 //            {
 //                #pragma omp single
 //                {
-                    #pragma omp task
+                    #pragma omp task shared(block)
                     {
 //                        long sonRowIndexStart = block.son11->rowStartIndex();
                         long sonNumberOfRows = block.son11->rows();
@@ -1080,7 +1080,7 @@ void HArithm::blockSplitting(BlockCluster &block, const long rank, const double 
                         long sonNumberOfColumns = block.son11->cols();
                         roundedAddRMatToBlock(*block.son11, block.UMat.topRows(sonNumberOfRows), block.singularValues, block.VAdjMat.leftCols(sonNumberOfColumns), rank, error);
                     }
-                    #pragma omp task
+                    #pragma omp task shared(block)
                     {
 //                         long sonRowIndexStart = block.son12->rowStartIndex();
                          long sonNumberOfRows = block.son12->rows();
@@ -1088,7 +1088,7 @@ void HArithm::blockSplitting(BlockCluster &block, const long rank, const double 
                          long sonNumberOfColumns = block.son12->cols();
                          roundedAddRMatToBlock(*block.son12, block.UMat.topRows(sonNumberOfRows), block.singularValues, block.VAdjMat.rightCols(sonNumberOfColumns), rank, error);
                     }
-                    #pragma omp task
+                    #pragma omp task shared(block)
                     {
 //                        long sonRowIndexStart = block.son21->rowStartIndex();
                         long sonNumberOfRows = block.son21->rows();
@@ -1114,21 +1114,21 @@ void HArithm::blockSplitting(BlockCluster &block, const long rank, const double 
 //        {
 //            #pragma omp single nowait
 //            {
-                #pragma omp task
+                #pragma omp task shared(block)
                 {
-                    blockSplitting(* block.son11, rank, error);
+                    blockSplitting(*block.son11, rank, error);
                 }
-                #pragma omp task
+                #pragma omp task shared(block)
                 {
-                    blockSplitting(* block.son12, rank, error);
+                    blockSplitting(*block.son12, rank, error);
                 }
-                #pragma omp task
+                #pragma omp task shared(block)
                 {
-                    blockSplitting(* block.son21, rank, error);
+                    blockSplitting(*block.son21, rank, error);
                 }
 //                #pragma omp task
                 {
-                    blockSplitting(* block.son22, rank, error);
+                    blockSplitting(*block.son22, rank, error);
                 }
                 #pragma omp taskwait
 
@@ -1881,14 +1881,14 @@ void HArithm::recursiveHMatAddition(BlockCluster &mat1Block, const BlockCluster 
         Cluster *rowCluster =  mat1Block.rowCluster;
         Cluster *colCluster =  mat1Block.columnCluster;
 
-        #pragma omp task
-        mat1Block.son11 = copyBlock(* mat2Block.son11, rowCluster->son1, colCluster->son1); // copy blocks from matrix 2 into matrix 1,
-        #pragma omp task
-        mat1Block.son12 = copyBlock(* mat2Block.son12, rowCluster->son1, colCluster->son2); // direct linking would break independence
-        #pragma omp task
-        mat1Block.son21 = copyBlock(* mat2Block.son21, rowCluster->son2, colCluster->son1);
-//        #pragma omp task
-        mat1Block.son22 = copyBlock(* mat2Block.son22, rowCluster->son2, colCluster->son2);
+        #pragma omp task shared(mat1Block, mat2Block)
+        mat1Block.son11 = copyBlock(*mat2Block.son11, rowCluster->son1, colCluster->son1); // copy blocks from matrix 2 into matrix 1,
+        #pragma omp task shared(mat1Block, mat2Block)
+        mat1Block.son12 = copyBlock(*mat2Block.son12, rowCluster->son1, colCluster->son2); // direct linking would break independence
+        #pragma omp task shared(mat1Block, mat2Block)
+        mat1Block.son21 = copyBlock(*mat2Block.son21, rowCluster->son2, colCluster->son1);
+//        #pragma omp task shared(mat1Block, mat2Block)
+        mat1Block.son22 = copyBlock(*mat2Block.son22, rowCluster->son2, colCluster->son2);
         #pragma omp taskwait
 
 //        if(mat1Block.isAdmissible)
@@ -1919,11 +1919,11 @@ void HArithm::recursiveHMatAddition(BlockCluster &mat1Block, const BlockCluster 
     }
     else
     {
-        #pragma omp task
+        #pragma omp task shared(mat1Block, mat2Block)
         recursiveHMatAddition(* mat1Block.son11, * mat2Block.son11, rank, relError);
-        #pragma omp task
+        #pragma omp task shared(mat1Block, mat2Block)
         recursiveHMatAddition(* mat1Block.son12, * mat2Block.son12, rank, relError);
-        #pragma omp task
+        #pragma omp task shared(mat1Block, mat2Block)
         recursiveHMatAddition(* mat1Block.son21, * mat2Block.son21, rank, relError);
 //        #pragma omp task
         recursiveHMatAddition(* mat1Block.son22, * mat2Block.son22, rank, relError);
@@ -1966,19 +1966,19 @@ void HArithm::recursiveHMatSubstraction(BlockCluster &mat1Block, const BlockClus
 
 //        #pragma omp parallel sections
 //        {
-            #pragma omp task
+            #pragma omp task shared(mat1Block, mat2Block)
             {
                 mat1Block.son11 = copyBlock(*mat2Block.son11, rowCluster->son1, colCluster->son1); // copy blocks from matrix 2 into matrix 1,
                 mat1Block.son11->father = &mat1Block;
                 recursiveMultiplyHMatByMinusOne(*mat1Block.son11);
             }
-            #pragma omp task
+            #pragma omp task shared(mat1Block, mat2Block)
             {
                 mat1Block.son12 = copyBlock(*mat2Block.son12, rowCluster->son1, colCluster->son2); // direct linking would break independence
                 mat1Block.son12->father = &mat1Block;
                 recursiveMultiplyHMatByMinusOne(*mat1Block.son12);
             }
-            #pragma omp task
+            #pragma omp task shared(mat1Block, mat2Block)
             {
                 mat1Block.son21 = copyBlock(*mat2Block.son21, rowCluster->son2, colCluster->son1);
                 mat1Block.son21->father = &mat1Block;
@@ -2010,11 +2010,11 @@ void HArithm::recursiveHMatSubstraction(BlockCluster &mat1Block, const BlockClus
     {
 //        #pragma omp parallel sections
 //        {
-            #pragma omp task
+            #pragma omp task shared(mat1Block, mat2Block)
             recursiveHMatSubstraction(*mat1Block.son11, *mat2Block.son11, rank, relError);
-            #pragma omp task
+            #pragma omp task shared(mat1Block, mat2Block)
             recursiveHMatSubstraction(*mat1Block.son12, *mat2Block.son12, rank, relError);
-            #pragma omp task
+            #pragma omp task shared(mat1Block, mat2Block)
             recursiveHMatSubstraction(*mat1Block.son21, *mat2Block.son21, rank, relError);
 
             recursiveHMatSubstraction(*mat1Block.son22, *mat2Block.son22, rank, relError);
@@ -2071,7 +2071,22 @@ std::unique_ptr<BlockCluster> HArithm::copyBlock(const BlockCluster &matBlock, C
 {
     std::unique_ptr<BlockCluster> returnBlock = std::make_unique<BlockCluster>();;
 //    BlockCluster* returnBlock = new BlockCluster();
-    *returnBlock = matBlock;
+
+//    *returnBlock = matBlock;
+
+    //////////////
+    returnBlock->isAdmissible = matBlock.isAdmissible;
+    returnBlock->isRoot = matBlock.isRoot;
+    returnBlock->isLeaf = matBlock.isLeaf;
+
+    returnBlock->frobeniusNorm = matBlock.frobeniusNorm;
+
+    returnBlock->fullMat = matBlock.fullMat;
+    returnBlock->UMat = matBlock.UMat;
+    returnBlock->singularValues = matBlock.singularValues;
+    returnBlock->VAdjMat = matBlock.VAdjMat;
+    //////////////
+
     returnBlock->rowCluster = rowCluster;
     returnBlock->columnCluster = colCluster;
     if(!returnBlock->isLeaf)

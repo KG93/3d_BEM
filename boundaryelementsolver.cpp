@@ -978,7 +978,7 @@ void BoundaryElementSolver::hMatrixSolve()
 
     if(LUPair.first.hasNan() || LUPair.second.hasNan() || usePreconditioner == false) // LU decomposition has NaN; -> don't use the preconditioner
     {
-        std::cerr << "GMRES start" << std::endl;
+        std::cout << "GMRES start" << std::endl;
         if(usePreconditioner == true)
         {
             std::cerr << " There are NaNs in the LU decomposition. Continuing without preconditioner." << std::endl;
@@ -1004,6 +1004,7 @@ void BoundaryElementSolver::hMatrixSolve()
     }
     else
     {
+        std::cout << "GMRES start" << std::endl;
         Eigen::VectorXcd gmresGuess = HArithm::LUSubstitutionSolve(LUPair.first, LUPair.second, rightHandsideCopy);
         timer.start();
         LUPrecondidionedHMatrixWrapper dPhiHMatForLUPreconditionedGMRES(&dPhiHMat, &LUPair.first, &LUPair.second);
@@ -3218,7 +3219,10 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
         {
             #pragma omp task
             {
-                BlockCluster block = *partition.at(i);
+//                BlockCluster block = *partition.at(i);
+                BlockCluster block;
+                block.rowCluster = partition.at(i)->rowCluster;
+                block.columnCluster = partition.at(i)->columnCluster;
 
                 long rowStartIndex = block.rowStartIndex();
                 long numberOfRows = block.rows();
@@ -3275,7 +3279,11 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
             {
                 #pragma omp task
                 {
-                    BlockCluster block = *partition.at(i);
+//                    BlockCluster block = *partition.at(i);
+
+                    BlockCluster block;
+                    block.rowCluster = partition.at(i)->rowCluster;
+                    block.columnCluster = partition.at(i)->columnCluster;
 
                     long rowStartIndex = block.rowStartIndex();
                     long numberOfRows = block.rows();

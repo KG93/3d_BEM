@@ -259,8 +259,24 @@ std::unique_ptr<BlockCluster> BlockCluster::returnCopy(BlockCluster* father, lon
 {
     std::unique_ptr<BlockCluster> returnCluster = std::make_unique<BlockCluster>();
 //    BlockCluster* returnCluster = new BlockCluster;
-    *returnCluster = *this;
+//    *returnCluster = *this;
 
+    //////////////
+    returnCluster->isAdmissible = this->isAdmissible;
+    returnCluster->isRoot = this->isRoot;
+    returnCluster->isLeaf = this->isLeaf;
+
+    returnCluster->rowCluster = this->rowCluster;
+    returnCluster->columnCluster = this->columnCluster;
+
+    returnCluster->frobeniusNorm = this->frobeniusNorm;
+
+    returnCluster->fullMat = this->fullMat;
+    returnCluster->UMat = this->UMat;
+    returnCluster->singularValues = this->singularValues;
+    returnCluster->VAdjMat = this->VAdjMat;
+    //////////////
+    ///
     if(returnCluster->isAdmissible && returnCluster->singularValues.size() > 0)
     {
         if(originalIsInSVDFormat)

@@ -132,11 +132,7 @@ void Test::testMatrixSubtraction()
     HMatrix hMatCopy1 = HMatrix(hMatrix);
     HMatrix hMatCopy2 = HMatrix(hMatrix);
     HArithm::multiplyHMatByMinusOne(hMatCopy2);
-    std::cerr << "After multiplyHMatByMinusOne" << std::endl;
-
     HArithm::recursiveHMatSubstraction(*hMatCopy1.getRootBlock(), *hMatCopy2.getRootBlock(), 0, subtrRelError);
-    std::cerr << "After recursiveHMatSubstraction" << std::endl;
-
     Eigen::MatrixXcd resultF = hMatCopy1.toFullMat();
     double relAccuracy = (resultF - 2*hMatAsFull).norm() / (2*hMatAsFull.norm());
 

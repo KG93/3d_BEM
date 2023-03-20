@@ -37,51 +37,51 @@ class BlockCluster
         this->father = father;
     }
 
-    BlockCluster(const BlockCluster &block)
-    {
-        this->son11 = nullptr;
-        this->son12 = nullptr;
-        this->son21 = nullptr;
-        this->son22 = nullptr;
+//    BlockCluster(const BlockCluster &block)
+//    {
+//        this->son11 = nullptr;
+//        this->son12 = nullptr;
+//        this->son21 = nullptr;
+//        this->son22 = nullptr;
 
-        this->isAdmissible = block.isAdmissible;
-        this->isRoot = block.isRoot;
-        this->isLeaf = block.isLeaf;
+//        this->isAdmissible = block.isAdmissible;
+//        this->isRoot = block.isRoot;
+//        this->isLeaf = block.isLeaf;
 
-        this->rowCluster = block.rowCluster;
-        this->columnCluster = block.columnCluster;
+//        this->rowCluster = block.rowCluster;
+//        this->columnCluster = block.columnCluster;
 
-        this->frobeniusNorm = block.frobeniusNorm;
+//        this->frobeniusNorm = block.frobeniusNorm;
 
-        this->fullMat = block.fullMat;
-        this->UMat = block.UMat;
-        this->singularValues = block.singularValues;
-        this->VAdjMat = block.VAdjMat;
-    }
+//        this->fullMat = block.fullMat;
+//        this->UMat = block.UMat;
+//        this->singularValues = block.singularValues;
+//        this->VAdjMat = block.VAdjMat;
+//    }
 
-    BlockCluster& operator=(const BlockCluster &block) /*!< \brief The copy assignment operator */
-    {
-        this->son11 = nullptr;
-        this->son12 = nullptr;
-        this->son21 = nullptr;
-        this->son22 = nullptr;
+//    BlockCluster& operator=(const BlockCluster &block) /*!< \brief The copy assignment operator */
+//    {
+//        this->son11 = nullptr;
+//        this->son12 = nullptr;
+//        this->son21 = nullptr;
+//        this->son22 = nullptr;
 
-        this->isAdmissible = block.isAdmissible;
-        this->isRoot = block.isRoot;
-        this->isLeaf = block.isLeaf;
+//        this->isAdmissible = block.isAdmissible;
+//        this->isRoot = block.isRoot;
+//        this->isLeaf = block.isLeaf;
 
-        this->rowCluster = block.rowCluster;
-        this->columnCluster = block.columnCluster;
+//        this->rowCluster = block.rowCluster;
+//        this->columnCluster = block.columnCluster;
 
-        this->frobeniusNorm = block.frobeniusNorm;
+//        this->frobeniusNorm = block.frobeniusNorm;
 
-        this->fullMat = block.fullMat;
-        this->UMat = block.UMat;
-        this->singularValues = block.singularValues;
-        this->VAdjMat = block.VAdjMat;
+//        this->fullMat = block.fullMat;
+//        this->UMat = block.UMat;
+//        this->singularValues = block.singularValues;
+//        this->VAdjMat = block.VAdjMat;
 
-        return *this;
-    }
+//        return *this;
+//    }
 
     long rows() const; /*!< \brief Get number of rows of the block. */
     long cols() const; /*!< \brief Get number of colums of the block. */
@@ -221,27 +221,19 @@ public:
 
     HMatrix(const HMatrix &original, long rank = 0, double error = 0, bool originalIsInSVDFormat = false); /*!< \brief Construct a truncated copy of the original HMatrix. If originalIsInSVDFormat the copy truncation is a lot faster. */
 
-    ~HMatrix(){
-        minPartition.clear();
-    }
+//    ~HMatrix(){
+//        minPartition.clear();
+//    }
 
-//    HMatrix& operator=(const HMatrix &hMat) = default; // use default copy assignment operator
     HMatrix& operator=(const HMatrix &hMat) /*!< \brief The copy assignment operator */
     {
-        if(this->rootBlockCluster != nullptr)
-        {
-            this->rootBlockCluster->clear();
-//            std::cout << "clear in copy assign constructor called!" << std::endl;
-        }
-//        this->rootBlockCluster = hMat.rootBlockCluster;
         this->rootBlockCluster = hMat.rootBlockCluster->returnCopy();
-        this->minPartition = hMat.minPartition;
         this->nearFieldBlocks = hMat.nearFieldBlocks;
         this->farFieldBlocks = hMat.farFieldBlocks;
         this->rowClustertree = hMat.rowClustertree;
         this->columnClustertree = hMat.columnClustertree;
         this->frobeniusNorm = hMat.frobeniusNorm;
-
+        updatePartition();
         return *this;
     }
 
