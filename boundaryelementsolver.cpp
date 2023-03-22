@@ -3055,6 +3055,14 @@ void BoundaryElementSolver::calculateFieldSolutionRegular()
     QString message = QString("Calculating field.");
     logStrings::logString.append(message+"\r\n");
     emit updateLog();
+
+    const bool impedancePlane = (boundaryElements.impedancePlanes.length() == 1); // there is an infinite (reflective???) baffle in the simulation
+    BoundaryElements reflectedBoundaryElements;
+    if(impedancePlane)
+    {
+        reflectedBoundaryElements = boundaryElements;
+        reflectedBoundaryElements.reflectGeometry(boundaryElements.impedancePlanes.at(0));
+    }
     std::complex<double> Mk = 0.0;
     std::complex<double> Lk = 0.0;
     for(int i = 0; i < observationFields.size(); i++)
@@ -3064,9 +3072,8 @@ void BoundaryElementSolver::calculateFieldSolutionRegular()
         long numberOfBoundaryElements = boundaryElements.triangles.length();
 
         observationFields[i].phiSolution = Eigen::VectorXcd::Zero(numberOfFieldElements);
-//        observationFields[i].dPhiSolution = Eigen::VectorXcd (numberOfFieldElements);
         #pragma omp parallel for private(Mk,Lk)// parallelizes field calculation
-        for(long fIndex=0; fIndex<numberOfFieldElements;fIndex++) //field point index
+        for(long fIndex = 0; fIndex < numberOfFieldElements; fIndex++) //field point index
         {
             Eigen::Vector3d observationPoint = currentObsField.triangleMidPoints.at(fIndex);
             std::complex<double> phi = 0.0;
@@ -3076,20 +3083,28 @@ void BoundaryElementSolver::calculateFieldSolutionRegular()
                 PointSource currentPointSource = pointSources.at(sourceIndex);
                 sourceObservationValue = sourceObservationValue + sourcePhiTerm(currentPointSource,observationPoint);
             }
+
             phi = sourceObservationValue;
             for(long bIndex = 0; bIndex < numberOfBoundaryElements; bIndex++) // boundary collocation points index
             {
-                BemOperatorField(observationPoint,bIndex,Mk,Lk);
+                BemOperatorField(observationPoint,bIndex,Mk,Lk, boundaryElements);
                 Lk = Lk*boundaryElements.dPhiSolution(bIndex);
                 Mk = Mk*boundaryElements.phiSolution(bIndex);
                 phi += Mk-Lk;
+                if(impedancePlane) // add the terms from the reflection
+                {
+                    BemOperatorField(observationPoint,bIndex,Mk,Lk, reflectedBoundaryElements);
+                    Lk = Lk*boundaryElements.dPhiSolution(bIndex);
+                    Mk = Mk*boundaryElements.phiSolution(bIndex);
+                    phi += Mk-Lk; // += for fully reflectivve plane; -= for fully absorptive plane
+                }
             }
             observationFields[i].phiSolution[fIndex] = phi;
         }
     }
 }
 
-void BoundaryElementSolver::BemOperatorField(const Eigen::Vector3d observationPoint,const int boundaryTriangleIndex,std::complex<double>& Mk, std::complex<double>& Lk)
+void BoundaryElementSolver::BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double>& Mk, std::complex<double>& Lk, const BoundaryElements &boundaryElements)
 {
     Mk = 0.0;
     Lk = 0.0;
@@ -3185,7 +3200,6 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
     boundaryElements.phiSolution = global::getTrianglesPhi(boundaryElements.triangles);
     boundaryElements.dPhiSolution = global::getTrianglesDPhi(boundaryElements.triangles);
 
-//    std::complex<double> storedCouplingParameter = couplingParameter;
     for(int i = 0; i < observationFields.size(); i++)
     {
         ObservationField* currentObsField = &observationFields[i];
@@ -3193,7 +3207,6 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
         std::cout<< "currentObsField->triangles.length(): " << numberOfFieldElements << std::endl;
         currentObsField->phiSolution = Eigen::VectorXcd::Zero(numberOfFieldElements);
 
-//        ClusterTree fieldClusterTree(&(currentObsField->triangles));
         std::shared_ptr<ClusterTree> fieldClusterTree = std::make_shared<ClusterTree>(&(currentObsField->triangles));
         currentObsField->calculateTrianglesMidpoints();
 
@@ -3215,9 +3228,7 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
             currentObsField->phiSolution(fIndex) = sourceObservationValue;
         }
 
-        std::cout << "calculate boundary terms " << std::endl;
         // calculate boundary terms
-//        #pragma omp parallel for shared(boundaryClusterTree, fieldClusterTree, blockClusterTree, partition)
         #pragma omp parallel master
         for(long i = 0; i < partition.length(); i++)  // we dont assemble the matrices; we discard assembled blocks directly after the block-vector product
         {
@@ -3262,7 +3273,6 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
                 }
             }
         }
-        std::cout << "after boundary terms " << std::endl;
 
         // calculate boundary terms for the reflected geometry
         if(boundaryElements.impedancePlanes.length() == 1) // calculate field for a single impedance plane // we dont assemble the matrices; we discard assembled blocks directly after the block-vector product
@@ -3270,15 +3280,13 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
             BoundaryElements reflectedBoundaryElements = boundaryElements;
             reflectedBoundaryElements.reflectGeometry(boundaryElements.impedancePlanes.at(0));
 
-//            ClusterTree reflectedClusterTree(boundaryClusterTree);  //copy the original clustertree
-            std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*boundaryClusterTree);
+            std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*boundaryClusterTree); //copy the original clustertree
 
             reflectedClusterTree->updateMinCuboids(&reflectedBoundaryElements);
 
             HMatrix halfSpaceMat(fieldClusterTree, reflectedClusterTree, true);
 
             QVector<BlockCluster*> partition = halfSpaceMat.getMinPartition();
-            std::cout<< "halfSpaceMat partition.size(): " << partition.size() << std::endl;
 //            #pragma omp parallel for
             #pragma omp parallel master
             for(long i = 0; i < partition.length(); i++)
@@ -3340,7 +3348,6 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
             halfSpaceReflMatPhi.clear();
             halfSpaceReflMatDPhi.clear(true);
         }
-//        currentObsField->phiSolution = fieldPhiSolution;
         fieldClusterTree->clear();
         blockClusterTree.clear();
     }

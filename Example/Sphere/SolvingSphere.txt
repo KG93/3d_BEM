@@ -50,6 +50,6 @@ Nodes   pointSourcePosition
     scale=1m
     1  20 0 0
 
-off Infinite_Baffle  "Wall"
+Infinite_Baffle  "Wall"
     Position = 0,0,-10
     Normal = 0,0,1

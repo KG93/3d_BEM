@@ -434,7 +434,7 @@ private:
     * \param Mk - The value of the BEM operator Mk.
     * \param Lk - The value of the BEM operator Lk.
     */
-    void BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double>& Mk, std::complex<double> &Lk);
+    void BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double>& Mk, std::complex<double> &Lk, const BoundaryElements &boundaryElements);
 
     /**
     * \brief Calculate the phi BEM operators for a field observation point and a boundary element.
