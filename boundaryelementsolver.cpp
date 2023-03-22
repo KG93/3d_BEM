@@ -840,13 +840,13 @@ void BoundaryElementSolver::hMatrixSolve()
     randomGenerator.seed(QRandomGenerator::system()->generate());
     std::cout<<"Number of elements in H-matrix solve: " << boundaryElements.triangles.length() << std::endl;
 
-    ClusterTree clusterTree(&boundaryElements);
+    std::shared_ptr<ClusterTree> clusterTree = std::make_shared<ClusterTree>(&boundaryElements);
 
     prepareBoundaryElements();
     calculateBoundaryConditionAndSourceTermVector();
 
     HMatrix phiHMat;
-    phiHMat.setClusterTrees(&clusterTree, &clusterTree);
+    phiHMat.setClusterTrees(clusterTree, clusterTree);
     phiHMat.populateBlockClusterTree();
 
     timer.start();
@@ -898,7 +898,7 @@ void BoundaryElementSolver::hMatrixSolve()
     HMatRightHandSide = rightHandside;
 
     HMatrix dPhiHMat;
-    dPhiHMat.setClusterTrees(&clusterTree, &clusterTree);
+    dPhiHMat.setClusterTrees(clusterTree, clusterTree);
     dPhiHMat.populateBlockClusterTree();
 
     timer.start();
@@ -1060,11 +1060,11 @@ void BoundaryElementSolver::hMatrixSolve()
         }
     }
     testSol2 = boundaryElements.phiSolution; // for testing
-    clusterTree.clear();
+    clusterTree->clear();
     global::trimMemory();
 }
 
-void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const BoundaryElements &elements, BoundaryElements reflElements, ClusterTree &clusterTree, int lastPlaneIndex)
+void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const BoundaryElements &elements, BoundaryElements reflElements, std::shared_ptr<ClusterTree> clusterTree, int lastPlaneIndex)
 {
     for(int planeIndex=0; planeIndex<elements.impedancePlanes.length() && planeIndex < 2; planeIndex++)
     {
@@ -1075,15 +1075,18 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
         BoundaryElements reflectedBoundaryElements = reflElements;
         reflectedBoundaryElements.reflectGeometry(elements.impedancePlanes.at(planeIndex));
 
-        ClusterTree reflectedClusterTree(clusterTree);  //copy the original clustertree
-        reflectedClusterTree.updateMinCuboids(&reflectedBoundaryElements);
+//        ClusterTree reflectedClusterTree(clusterTree);  //copy the original clustertree
+//        reflectedClusterTree.updateMinCuboids(&reflectedBoundaryElements);
+
+        std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*clusterTree);  //copy the original clustertree
+        reflectedClusterTree->updateMinCuboids(&reflectedBoundaryElements);
 
         HMatrix newReflMatPhi;
-        newReflMatPhi.setClusterTrees(&clusterTree, &reflectedClusterTree);
+        newReflMatPhi.setClusterTrees(clusterTree, reflectedClusterTree);
         newReflMatPhi.populateBlockClusterTree();
 
         HMatrix newReflMatDPhi;
-        newReflMatDPhi.setClusterTrees(&clusterTree, &reflectedClusterTree);
+        newReflMatDPhi.setClusterTrees(clusterTree, reflectedClusterTree);
         newReflMatDPhi.populateBlockClusterTree();
 
         QVector<BlockCluster*> newReflMatPhiPartition = newReflMatPhi.getMinPartition();
@@ -1148,7 +1151,7 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
 
         newReflMatDPhi.clear(); // newReflMatDPhi in not needed anymore
         newReflMatPhi.clear(); // newReflMatPhi in not needed anymore
-        reflectedClusterTree.clear();
+//        reflectedClusterTree->clear();
 
         double reflMatPhiNorm = reflMatPhi.norm();
         double reflMatDPhiNorm = reflMatDPhi.norm();
@@ -3165,7 +3168,7 @@ void BoundaryElementSolver::BemOperatorField(const Eigen::Vector3d observationPo
 //    return std::tie(Mk, (std::complex<double>) 0.0, Lk, (std::complex<double>) 0.0);
 //}
 
-void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, long maxRank)
+void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeError, const long maxRank)
 {
 //    std::cerr<<"Fast field calculation."<<std::endl;
     QString message=QString("Fast field calculation.");
@@ -3175,7 +3178,8 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
     // give each triangle its solution value; otherwise the association would be lost during reordering
     global::setTrianglesPhi(boundaryElements.triangles, boundaryElements.phiSolution);
     global::setTrianglesDPhi(boundaryElements.triangles, boundaryElements.dPhiSolution);
-    ClusterTree boundaryClusterTree(&boundaryElements);
+//    ClusterTree boundaryClusterTree(&boundaryElements);
+    std::shared_ptr<ClusterTree> boundaryClusterTree = std::make_shared<ClusterTree>(&boundaryElements);
 
     // the creation of the clustertree has reordered the triangles -> extract the boundary solution vectors from the triangle vectors
     boundaryElements.phiSolution = global::getTrianglesPhi(boundaryElements.triangles);
@@ -3189,12 +3193,11 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
         std::cout<< "currentObsField->triangles.length(): " << numberOfFieldElements << std::endl;
         currentObsField->phiSolution = Eigen::VectorXcd::Zero(numberOfFieldElements);
 
-        ClusterTree fieldClusterTree(&(currentObsField->triangles));
+//        ClusterTree fieldClusterTree(&(currentObsField->triangles));
+        std::shared_ptr<ClusterTree> fieldClusterTree = std::make_shared<ClusterTree>(&(currentObsField->triangles));
         currentObsField->calculateTrianglesMidpoints();
 
-        HMatrix blockClusterTree;
-        blockClusterTree.setClusterTrees(&fieldClusterTree, &boundaryClusterTree);
-        blockClusterTree.populateBlockClusterTree();
+        HMatrix blockClusterTree(fieldClusterTree, boundaryClusterTree, true);
         QVector<BlockCluster*> partition = blockClusterTree.getMinPartition();
 
         // calculate source terms
@@ -3212,17 +3215,18 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
             currentObsField->phiSolution(fIndex) = sourceObservationValue;
         }
 
+        std::cout << "calculate boundary terms " << std::endl;
         // calculate boundary terms
-//        #pragma omp parallel for
+//        #pragma omp parallel for shared(boundaryClusterTree, fieldClusterTree, blockClusterTree, partition)
         #pragma omp parallel master
         for(long i = 0; i < partition.length(); i++)  // we dont assemble the matrices; we discard assembled blocks directly after the block-vector product
         {
             #pragma omp task
             {
-//                BlockCluster block = *partition.at(i);
                 BlockCluster block;
                 block.rowCluster = partition.at(i)->rowCluster;
                 block.columnCluster = partition.at(i)->columnCluster;
+                block.isAdmissible = partition.at(i)->isAdmissible;
 
                 long rowStartIndex = block.rowStartIndex();
                 long numberOfRows = block.rows();
@@ -3258,18 +3262,20 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
                 }
             }
         }
+        std::cout << "after boundary terms " << std::endl;
+
         // calculate boundary terms for the reflected geometry
         if(boundaryElements.impedancePlanes.length() == 1) // calculate field for a single impedance plane // we dont assemble the matrices; we discard assembled blocks directly after the block-vector product
         {
             BoundaryElements reflectedBoundaryElements = boundaryElements;
             reflectedBoundaryElements.reflectGeometry(boundaryElements.impedancePlanes.at(0));
 
-            ClusterTree reflectedClusterTree(boundaryClusterTree);  //copy the original clustertree
-            reflectedClusterTree.updateMinCuboids(&reflectedBoundaryElements);
+//            ClusterTree reflectedClusterTree(boundaryClusterTree);  //copy the original clustertree
+            std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*boundaryClusterTree);
 
-            HMatrix halfSpaceMat;
-            halfSpaceMat.setClusterTrees(&fieldClusterTree, &reflectedClusterTree);
-            halfSpaceMat.populateBlockClusterTree();
+            reflectedClusterTree->updateMinCuboids(&reflectedBoundaryElements);
+
+            HMatrix halfSpaceMat(fieldClusterTree, reflectedClusterTree, true);
 
             QVector<BlockCluster*> partition = halfSpaceMat.getMinPartition();
             std::cout<< "halfSpaceMat partition.size(): " << partition.size() << std::endl;
@@ -3279,11 +3285,10 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
             {
                 #pragma omp task
                 {
-//                    BlockCluster block = *partition.at(i);
-
                     BlockCluster block;
                     block.rowCluster = partition.at(i)->rowCluster;
                     block.columnCluster = partition.at(i)->columnCluster;
+                    block.isAdmissible = partition.at(i)->isAdmissible;
 
                     long rowStartIndex = block.rowStartIndex();
                     long numberOfRows = block.rows();
@@ -3323,7 +3328,7 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
                 }
             }
             halfSpaceMat.clear(true);
-            reflectedClusterTree.clear();
+            reflectedClusterTree->clear();
         }
         else if(boundaryElements.impedancePlanes.length() >= 2) // calculate field for two parallel impedance planes. Here we actually assemble the reflection matrices.
         {
@@ -3336,10 +3341,10 @@ void BoundaryElementSolver::calculateFieldSolutionFast(double relativeError, lon
             halfSpaceReflMatDPhi.clear(true);
         }
 //        currentObsField->phiSolution = fieldPhiSolution;
-        fieldClusterTree.clear();
+        fieldClusterTree->clear();
         blockClusterTree.clear();
     }
-    boundaryClusterTree.clear();
+    boundaryClusterTree->clear();
 }
 
 void BoundaryElementSolver::hBlockAssemblyField(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &boundaryElements)
@@ -3372,7 +3377,7 @@ void BoundaryElementSolver::hBlockAssemblyField(BlockCluster* phiBlock, BlockClu
     }
 }
 
-void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &elements, ClusterTree &obsClusterTree, ClusterTree &elementsClusterTree, int lastPlaneIndex)
+void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &elements, std::shared_ptr<ClusterTree> obsClusterTree, std::shared_ptr<ClusterTree> elementsClusterTree, int lastPlaneIndex)
 {
     for(int planeIndex=0; planeIndex<elements.impedancePlanes.length() && planeIndex < 2; planeIndex++)
     {
@@ -3385,15 +3390,16 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
 //        reflectedBoundaryElements.calculateTriangleMidPoints();
 
 
-        ClusterTree reflectedClusterTree(elementsClusterTree);  //copy the original clustertree
-        reflectedClusterTree.updateMinCuboids(&reflectedBoundaryElements);
+//        ClusterTree reflectedClusterTree(elementsClusterTree);  //copy the original clustertree
+        std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*elementsClusterTree);
+        reflectedClusterTree->updateMinCuboids(&reflectedBoundaryElements);
 
         HMatrix newReflMatPhi;
-        newReflMatPhi.setClusterTrees(&obsClusterTree, &reflectedClusterTree);
+        newReflMatPhi.setClusterTrees(obsClusterTree, reflectedClusterTree);
         newReflMatPhi.populateBlockClusterTree();
 
         HMatrix newReflMatDPhi;
-        newReflMatDPhi.setClusterTrees(&obsClusterTree, &reflectedClusterTree);
+        newReflMatDPhi.setClusterTrees(obsClusterTree, reflectedClusterTree);
         newReflMatDPhi.populateBlockClusterTree();
 
         QVector<BlockCluster*> newReflMatPhiPartition = newReflMatPhi.getMinPartition();
@@ -3439,7 +3445,7 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
 
         newReflMatDPhi.clear(); // newReflMatDPhi in not needed anymore
         newReflMatPhi.clear(); // newReflMatPhi in not needed anymore
-        reflectedClusterTree.clear();
+        reflectedClusterTree->clear();
 
         double reflMatPhiNorm = reflMatPhi.norm();
         double reflMatDPhiNorm = reflMatDPhi.norm();
@@ -3538,7 +3544,7 @@ std::complex<double> BoundaryElementSolver::implicitDPhiMatrixField(const long r
     return Lk * boundaryElements.trianglesArea(columnIndex);
 }
 
-QVector<std::pair<long,long>> BoundaryElementSolver::getNormalFilteredPivotIndicesForField(BlockCluster* block, double filterAngle)
+QVector<std::pair<long,long>> BoundaryElementSolver::getNormalFilteredPivotIndicesForField(BlockCluster* block, const double filterAngle)
 {
 //    long rowStartIndex = block->rowStartIndex();
     long columnStartIndex = block->colStartIndex();

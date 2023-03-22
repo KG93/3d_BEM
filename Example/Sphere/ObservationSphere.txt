@@ -16,7 +16,7 @@ Nodes "FieldContourNodes"
 
 Field "FieldVertical"
     RefNodes="FieldContourNodes" 
-    MeshFrequency=200Hz
+    MeshFrequency=100Hz
     //EdgeLength=140mm
     //FieldIndex  NodeIndex  NodeIndex  NodeIndex  NodeIndex
     101   1  2  3  4

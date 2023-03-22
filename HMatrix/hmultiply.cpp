@@ -190,7 +190,7 @@ HMatrix HMultiply::multiplyHMat(HMatrix &factor1, HMatrix &factor2, const long r
         std::cerr << "factor2.consistencyCheck() == false" << std::endl;
     }
 
-    HMatrix product = multiplyHMat(* factor1.getRootBlock(), * factor2.getRootBlock(), rank, relError);
+    HMatrix product = multiplyHMat(*factor1.getRootBlock(), *factor2.getRootBlock(), rank, relError);
     product.setClusterTrees(factor1.getRowClustertree(), factor2.getColumnClustertree());
 
     return product;
@@ -208,24 +208,24 @@ void HMultiply::MM(/*QVector<intermBlCl*> &blocksWithMatrixLoad,*/ BlockCluster 
         if(productBlock.intSon11 == nullptr) //son pointers shall not be overriden in following MM() call
         {
 //            productBlock.intSon11 = new intermBlCl(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son1, productBlock);
-            productBlock.intSon11 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son1, productBlock);
+            productBlock.intSon11 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son1.get(), factorBlock2.columnCluster->son1.get(), productBlock);
 //        }
 //        if(productBlock.son12 == nullptr) //son pointers shall not be overriden in following MM() call
 //        {
 //            productBlock.intSon12 = new intermBlCl(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son2, productBlock);
-            productBlock.intSon12 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son1, factorBlock2.columnCluster->son2, productBlock);
+            productBlock.intSon12 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son1.get(), factorBlock2.columnCluster->son2.get(), productBlock);
 
 //        }
 //        if(productBlock.son21 == nullptr) //son pointers shall not be overriden in following MM() call
 //        {
 //            productBlock.intSon21 = new intermBlCl(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son1, productBlock);
-            productBlock.intSon21 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son1, productBlock);
+            productBlock.intSon21 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son2.get(), factorBlock2.columnCluster->son1.get(), productBlock);
 
 //        }
 //        if(productBlock.son22 == nullptr) //son pointers shall not be overriden in following MM() call
 //        {
 //            productBlock.intSon22 = new intermBlCl(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son2, productBlock);
-            productBlock.intSon22 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son2, factorBlock2.columnCluster->son2, productBlock);
+            productBlock.intSon22 = std::make_unique<intermBlCl>(factorBlock1.rowCluster->son2.get(), factorBlock2.columnCluster->son2.get(), productBlock);
         }
 
 //        #pragma omp parallel

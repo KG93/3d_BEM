@@ -10,7 +10,7 @@ Control_Solver
     NumFrequencies=1;  
     Abscissa=log;
     c=344m/s
-    MeshFrequency=1000Hz
+    MeshFrequency=400Hz
 
 Elements Spere
     scale=1m
@@ -50,6 +50,6 @@ Nodes   pointSourcePosition
     scale=1m
     1  20 0 0
 
-Infinite_Baffle  "Wall"
+off Infinite_Baffle  "Wall"
     Position = 0,0,-10
     Normal = 0,0,1
