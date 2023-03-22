@@ -61,7 +61,7 @@ public:
     *
     * \param matrixBlock matrix block to be decomposed
     */
-    static void svdOnBlock(BlockCluster &matrixBlock);
+    static void svdOnBlock(BlockCluster &block);
 
     /**
     * \brief Truncate the low rank matrix of the block.
@@ -70,7 +70,7 @@ public:
     * \param rank rank to compress to
     * \param relError maximum relative error
     */
-    static void RkMatRankReduction(BlockCluster &matrixBlock, const long rank, const double relError);
+    static void RkMatRankReduction(BlockCluster &block, const long rank, const double relError);
 
     /**
     * \brief Convert the full matrix of the block to a truncated low rank matrix.
@@ -80,7 +80,7 @@ public:
     * \param rank The rank to which the matrix will be truncated.
     * \param error The maximum relative error allowed.
     */
-    static void fullMatRankReduction(BlockCluster &matrixBlock, const long rank, const double error);
+    static void fullMatRankReduction(BlockCluster &block, const long rank, const double error);
 
     /**
     * \brief Add two H-matrices with the same partition.
@@ -240,7 +240,7 @@ public:
     static void recursiveMultiplyHMatByMinusOne(BlockCluster &matBlock); /*!< \brief Multiply subtree by -1. */
     static void convertToAdmissibleZeroBlock(BlockCluster &matBlock); /*!< \brief Make block zero block in low rank representation. */
 
-    static std::unique_ptr<BlockCluster> copyBlock(const BlockCluster &matBlock, Cluster* rowCluster, Cluster* colCluster); /*!< \brief Make independent copy of the subtree of matBlock. */
+    static std::unique_ptr<BlockCluster> copyBlock(const BlockCluster &block, Cluster* rowCluster, Cluster* colCluster); /*!< \brief Make independent copy of the subtree of BlockCluster. */
 
     static Eigen::VectorXcd getRankKBlockDiagonal(const BlockCluster &matBlock, long rank = 0);
     static Eigen::VectorXcd getRankKBlockIndexedElements(BlockCluster &matBlock, QVector<long> &rowIndices, QVector<long> &colIndices, long rank = 0);

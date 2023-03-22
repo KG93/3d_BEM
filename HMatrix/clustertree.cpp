@@ -23,14 +23,14 @@ void Cluster::getRandomElementFromEachLeafNode(QVector<long> &rowIndices, const 
     }
 }
 
-Cluster* Cluster::returnCopy(Cluster* father) // returns a pointer to a copy of the entire subtree of this
+std::unique_ptr<Cluster> Cluster::returnCopy(Cluster* father) // returns a pointer to a copy of the entire subtree of this
 {
-    Cluster* returnCluster = new Cluster;
-    *returnCluster = *this;
+    std::unique_ptr<Cluster> returnCluster = std::make_unique<Cluster>();
 
-    returnCluster->indices = indices;
-    returnCluster->clusterTreeDepth = clusterTreeDepth;
-    returnCluster->minCuboid = minCuboid;
+    returnCluster->indices = this->indices;
+    returnCluster->clusterTreeDepth = this->clusterTreeDepth;
+    returnCluster->minCuboid = this->minCuboid;
+    returnCluster->isLeaf = this->isLeaf;
 
 
     if(father != nullptr)
@@ -45,7 +45,7 @@ Cluster* Cluster::returnCopy(Cluster* father) // returns a pointer to a copy of 
     {
         if(this->son1 != nullptr)
         {
-            returnCluster->son1 = this->son1->returnCopy(returnCluster);
+            returnCluster->son1 = this->son1->returnCopy(returnCluster.get());
         }
         else
         {
@@ -53,7 +53,7 @@ Cluster* Cluster::returnCopy(Cluster* father) // returns a pointer to a copy of 
         }
         if(this->son2 != nullptr)
         {
-            returnCluster->son2 = this->son2->returnCopy(returnCluster);
+            returnCluster->son2 = this->son2->returnCopy(returnCluster.get());
         }
         else
         {
@@ -234,22 +234,22 @@ void ClusterTree::assembleDepthFirstClusterVector()
         std::cerr << "cluster is nullpopinter in assembleDepthFirstClusterVector() call" << std::endl;
         return;
     }
-    clusters.append(rootCluster);
-    assembleClusterVectorRecursion(rootCluster);
+    clusters.append(rootCluster.get());
+    assembleClusterVectorRecursion(*rootCluster);
 }
 
-void  ClusterTree::assembleClusterVectorRecursion(Cluster *clusterToAdd)
+void  ClusterTree::assembleClusterVectorRecursion(Cluster& clusterToAdd)
 {
-    if(clusterToAdd->isLeaf == true || clusterToAdd->son1 == nullptr || clusterToAdd->son2 == nullptr)
+    if(clusterToAdd.isLeaf == true || clusterToAdd.son1 == nullptr || clusterToAdd.son2 == nullptr)
     {
         return;
     }
     else
     {
-        clusters.append(clusterToAdd->son1);
-        assembleClusterVectorRecursion(clusterToAdd->son1/*, returnVector*/);
-        clusters.append(clusterToAdd->son2);
-        assembleClusterVectorRecursion(clusterToAdd->son2/*, returnVector*/);
+        clusters.append(clusterToAdd.son1.get());
+        assembleClusterVectorRecursion(*clusterToAdd.son1);
+        clusters.append(clusterToAdd.son2.get());
+        assembleClusterVectorRecursion(*clusterToAdd.son2);
     }
 }
 
@@ -259,93 +259,93 @@ Cluster* ClusterTree::getRootCluster()
     {
         std::cerr<<"getRootCluster called on empty Clustertree."<<std::endl;
     }
-    return rootCluster;
+    return rootCluster.get();
 }
 
-void ClusterTree::recursiveReorder(Cluster* cluster, long &globalTriangleIndex, BoundaryElements* boundaryElements, const BoundaryElements &boundaryElementsCopy)
+void ClusterTree::recursiveReorder(Cluster &cluster, long &globalTriangleIndex, BoundaryElements* boundaryElements, const BoundaryElements &boundaryElementsCopy)
 {
-    if(cluster->isLeaf)
+    if(cluster.isLeaf)
     {
-        long numberOfTriangles = cluster->indices.length();
+        long numberOfTriangles = cluster.indices.length();
         for(int i = 0; i < numberOfTriangles; i++)
         {
-            boundaryElements->triangles[globalTriangleIndex] = boundaryElementsCopy.triangles.at(cluster->indices.at(i));
-            cluster->indices[i] = globalTriangleIndex;
+            boundaryElements->triangles[globalTriangleIndex] = boundaryElementsCopy.triangles.at(cluster.indices.at(i));
+            cluster.indices[i] = globalTriangleIndex;
             globalTriangleIndex++;
         }
     }
     else
     {
-        recursiveReorder(cluster->son1, globalTriangleIndex, boundaryElements, boundaryElementsCopy);
-        recursiveReorder(cluster->son2, globalTriangleIndex, boundaryElements, boundaryElementsCopy);
-        cluster->indices = global::createContiguousIndexVector(cluster->son1->indices.first(), cluster->son2->indices.last());
+        recursiveReorder(*cluster.son1, globalTriangleIndex, boundaryElements, boundaryElementsCopy);
+        recursiveReorder(*cluster.son2, globalTriangleIndex, boundaryElements, boundaryElementsCopy);
+        cluster.indices = global::createContiguousIndexVector(cluster.son1->indices.first(), cluster.son2->indices.last());
     }
 }
 
-void ClusterTree::recursiveReorder(Cluster* cluster, long &globalTriangleIndex, QVector<VectorTriangle>* triangles, const QVector<VectorTriangle> &trianglesCopy)
+void ClusterTree::recursiveReorder(Cluster &cluster, long &globalTriangleIndex, QVector<VectorTriangle>* triangles, const QVector<VectorTriangle> &trianglesCopy)
 {
-    if(cluster->isLeaf)
+    if(cluster.isLeaf)
     {
-        long numberOfTriangles = cluster->indices.length();
+        long numberOfTriangles = cluster.indices.length();
         for(int i = 0; i < numberOfTriangles; i++)
         {
-            (*triangles)[globalTriangleIndex] = trianglesCopy.at(cluster->indices.at(i));
-            cluster->indices[i] = globalTriangleIndex;
+            (*triangles)[globalTriangleIndex] = trianglesCopy.at(cluster.indices.at(i));
+            cluster.indices[i] = globalTriangleIndex;
             globalTriangleIndex++;
         }
     }
     else
     {
-        recursiveReorder(cluster->son1, globalTriangleIndex, triangles, trianglesCopy);
-        recursiveReorder(cluster->son2, globalTriangleIndex, triangles, trianglesCopy);
-        cluster->indices = global::createContiguousIndexVector(cluster->son1->indices.first(), cluster->son2->indices.last());
+        recursiveReorder(*cluster.son1, globalTriangleIndex, triangles, trianglesCopy);
+        recursiveReorder(*cluster.son2, globalTriangleIndex, triangles, trianglesCopy);
+        cluster.indices = global::createContiguousIndexVector(cluster.son1->indices.first(), cluster.son2->indices.last());
     }
 }
 
-void ClusterTree::recursiveReorder(Cluster* cluster, long &globalNodeIndex, LinearBoundaryElements* linearBoundaryElements, const LinearBoundaryElements &boundaryElementsCopy)
+void ClusterTree::recursiveReorder(Cluster &cluster, long &globalNodeIndex, LinearBoundaryElements* linearBoundaryElements, const LinearBoundaryElements &boundaryElementsCopy)
 {
-    if(cluster->isLeaf)
+    if(cluster.isLeaf)
     {
-        long numberOfNodes = cluster->indices.length();
+        long numberOfNodes = cluster.indices.length();
         for(int i = 0; i < numberOfNodes; i++)
         {
-            long oldNodeIndex = cluster->indices.at(i);
+            long oldNodeIndex = cluster.indices.at(i);
             LinearTriangleNode tmpNode = boundaryElementsCopy.nodes.at(oldNodeIndex);
             linearBoundaryElements->nodes[globalNodeIndex] = tmpNode;
             for(int triangleIndex = 0; triangleIndex<tmpNode.associatedTriangles.size(); triangleIndex++)
             {
                 reindexLinearTriangleNodes(linearBoundaryElements->triangles[tmpNode.associatedTriangles.at(triangleIndex)], oldNodeIndex, globalNodeIndex);
             }
-            cluster->indices[i] = globalNodeIndex;
+            cluster.indices[i] = globalNodeIndex;
             globalNodeIndex++;
         }
     }
     else
     {
-        recursiveReorder(cluster->son1, globalNodeIndex, linearBoundaryElements, boundaryElementsCopy);
-        recursiveReorder(cluster->son2, globalNodeIndex, linearBoundaryElements, boundaryElementsCopy);
+        recursiveReorder(*cluster.son1, globalNodeIndex, linearBoundaryElements, boundaryElementsCopy);
+        recursiveReorder(*cluster.son2, globalNodeIndex, linearBoundaryElements, boundaryElementsCopy);
 
-        cluster->indices = global::createContiguousIndexVector(cluster->son1->indices.first(), cluster->son2->indices.last());
+        cluster.indices = global::createContiguousIndexVector(cluster.son1->indices.first(), cluster.son2->indices.last());
     }
 }
 
-void ClusterTree::recursiveReorder(Cluster* cluster, long &globalPointIndex, QVector<Eigen::Vector3d>* points, const QVector<Eigen::Vector3d> &pointsCopy)
+void ClusterTree::recursiveReorder(Cluster &cluster, long &globalPointIndex, QVector<Eigen::Vector3d>* points, const QVector<Eigen::Vector3d> &pointsCopy)
 {
-    if(cluster->isLeaf)
+    if(cluster.isLeaf)
     {
-        long numberOfPoints = cluster->indices.length();
+        long numberOfPoints = cluster.indices.length();
         for(int i = 0; i < numberOfPoints; i++)
         {
-            (*points)[globalPointIndex] = pointsCopy.at(cluster->indices.at(i));
-            cluster->indices[i] = globalPointIndex;
+            (*points)[globalPointIndex] = pointsCopy.at(cluster.indices.at(i));
+            cluster.indices[i] = globalPointIndex;
             globalPointIndex++;
         }
     }
     else
     {
-        recursiveReorder(cluster->son1, globalPointIndex, points, pointsCopy);
-        recursiveReorder(cluster->son2, globalPointIndex, points, pointsCopy);
-        cluster->indices = global::createContiguousIndexVector(cluster->son1->indices.first(), cluster->son2->indices.last());
+        recursiveReorder(*cluster.son1, globalPointIndex, points, pointsCopy);
+        recursiveReorder(*cluster.son2, globalPointIndex, points, pointsCopy);
+        cluster.indices = global::createContiguousIndexVector(cluster.son1->indices.first(), cluster.son2->indices.last());
     }
 }
 
@@ -374,23 +374,23 @@ void ClusterTree::clear()
     clusters.clear();
     if(rootCluster != nullptr)
     {
-        recursiveClear(rootCluster);
+        recursiveClear(*rootCluster);
+        rootCluster = nullptr;
     }
 }
 
-void ClusterTree::recursiveClear(Cluster* cluster)
+void ClusterTree::recursiveClear(Cluster &cluster)
 {
-    if(cluster->son1 != nullptr)
+    if(cluster.son1 != nullptr)
     {
-        recursiveClear(cluster->son1);
+        recursiveClear(*cluster.son1);
+        cluster.son1 = nullptr;
     }
-    if(cluster->son2 != nullptr)
+    if(cluster.son2 != nullptr)
     {
-        recursiveClear(cluster->son2);
+        recursiveClear(*cluster.son2);
+        cluster.son2 = nullptr;
     }
-    cluster -> indices.clear();
-    cluster -> indices.squeeze();
-
-    delete cluster;
-    cluster = nullptr;
+    cluster.indices.clear();
+    cluster.indices.squeeze();
 }

@@ -41,7 +41,7 @@ public:
 
     void getRandomElementFromEachLeafNode(QVector<long> &rowIndices, const long maxNumberOfElements = 0);
 
-    Cluster* returnCopy(Cluster* father); // returns a pointer to a copy of the entire subtree of this
+    std::unique_ptr<Cluster> returnCopy(Cluster* father = nullptr); // returns a pointer to a copy of the entire subtree of this
 
     QVector<long> indices;
     unsigned int clusterTreeDepth;
@@ -61,8 +61,11 @@ public:
     /**
     * \brief The clusters son1 and son2 are a bipartition of the cluster. The cluster is split along its minCuboids' maximum elongation.
     */
-    Cluster* son1 = nullptr;
-    Cluster* son2 = nullptr;
+    std::unique_ptr<Cluster> son1 = nullptr;
+    std::unique_ptr<Cluster> son2 = nullptr;
+//    Cluster* son1 = nullptr;
+//    Cluster* son2 = nullptr;
+
 };
 
 /**
@@ -155,7 +158,7 @@ public:
     /**
     * \brief Recursive node deletion.
     */
-    void recursiveClear(Cluster* cluster);
+    void recursiveClear(Cluster &cluster);
 
     /**
     * \brief Recalculate the minimal cuboids for an existing clustertree. The function is used for the calculation of reflection matrices, where the cluster indices have to correspond to some preexisting partition, but the geometry hos been changed (reflected) and the mincuboids have to be updated accordingly.
@@ -196,18 +199,18 @@ private:
 //    bool cuboidContainsTriangle(VectorTriangle triangle, Cuboid cuboid); /*!< Check whether a triangle (midpoint) is contained in a cuboid. */
 //    bool cuboidContainsCuboid(Cuboid cuboid, Cuboid quboidContainer); /*!< Check whether a cuboid is contained in a second cuboid. */
     void assembleDepthFirstClusterVector(); /*!< Construct a vector of pointers to all clusters in the tree in a depth-first fashion. */
-    void assembleClusterVectorRecursion(Cluster* cluster);
+    void assembleClusterVectorRecursion(Cluster &cluster);
 
     template<class GeometryContainer>  requires isGeometry<GeometryContainer>
     void orderGeometryContiguously(GeometryContainer* container);
 
-    void recursiveReorder(Cluster* cluster, long &globalTriangleIndex, BoundaryElements* boundaryElements, const BoundaryElements &boundaryElementsCopy); /*!< Reindex the triangles in 'BoundaryElements* boundaryElements' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
-    void recursiveReorder(Cluster* cluster, long &globalTriangleIndex, QVector<VectorTriangle>* triangles, const QVector<VectorTriangle> &trianglesCopy); /*!< Reindex the triangles in 'QVector<VectorTriangle>* triangles' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
-    void recursiveReorder(Cluster* cluster, long &globalNodeIndex, LinearBoundaryElements* linearBoundaryElements, const LinearBoundaryElements &boundaryElementsCopy); /*!< Reindex the triangles in 'LinearBoundaryElements* linearBoundaryElements' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
-    void recursiveReorder(Cluster* cluster, long &globalPointIndex, QVector<Eigen::Vector3d>* points, const QVector<Eigen::Vector3d>  &pointsCopy); /*!< Reindex the points in 'QVector<Eigen::Vector3d>* points' so that each cluster contains a contiguous set of point indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
+    void recursiveReorder(Cluster &cluster, long &globalTriangleIndex, BoundaryElements* boundaryElements, const BoundaryElements &boundaryElementsCopy); /*!< Reindex the triangles in 'BoundaryElements* boundaryElements' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
+    void recursiveReorder(Cluster &cluster, long &globalTriangleIndex, QVector<VectorTriangle>* triangles, const QVector<VectorTriangle> &trianglesCopy); /*!< Reindex the triangles in 'QVector<VectorTriangle>* triangles' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
+    void recursiveReorder(Cluster &cluster, long &globalNodeIndex, LinearBoundaryElements* linearBoundaryElements, const LinearBoundaryElements &boundaryElementsCopy); /*!< Reindex the triangles in 'LinearBoundaryElements* linearBoundaryElements' so that each cluster contains a contiguous set of triangle indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
+    void recursiveReorder(Cluster &cluster, long &globalPointIndex, QVector<Eigen::Vector3d>* points, const QVector<Eigen::Vector3d>  &pointsCopy); /*!< Reindex the points in 'QVector<Eigen::Vector3d>* points' so that each cluster contains a contiguous set of point indices; so that a cluster corresponds to a contiguous vector segment and that cluster x cluster corresponds to a matrix block. */
 
 
-    Cluster* rootCluster = nullptr;
+    std::unique_ptr<Cluster> rootCluster = nullptr;
     QVector<Cluster*> clusters;
     void reindexLinearTriangleNodes(LinearTriangle &triangle, const long oldIndex, const long  newIndex);
 };
@@ -238,7 +241,7 @@ void ClusterTree::createRootCluster(GeometryContainer* container)
 {
     if(rootCluster != nullptr)
     {
-        recursiveClear(rootCluster);
+        recursiveClear(*rootCluster);
     }
     clusters.clear();
     if(container == nullptr)
@@ -253,7 +256,8 @@ void ClusterTree::createRootCluster(GeometryContainer* container)
         return;
     }
     QVector<long> triangleIndices = global::createContiguousIndexVector(0, numberOfTriangles-1);
-    rootCluster = new Cluster(triangleIndices, minimalCuboidForIndices(triangleIndices, container), 0);
+//    rootCluster = new Cluster(triangleIndices, minimalCuboidForIndices(triangleIndices, container), 0);
+    rootCluster = std::make_unique<Cluster>(triangleIndices, minimalCuboidForIndices(triangleIndices, container), 0);
     rootCluster->isRoot = true;
 }
 
@@ -290,12 +294,14 @@ void ClusterTree::splitCluster(Cluster &clusterToSplit, GeometryContainer* conta
         {
             son2TriangleIndexes.append(triangleIndex);
         }
-    }
-    clusterToSplit.son1 = new Cluster(son1TriangleIndexes, minimalCuboidForIndices(son1TriangleIndexes, container), clusterToSplit.clusterTreeDepth+1);
+    }    
+//    clusterToSplit.son1 = new Cluster(son1TriangleIndexes, minimalCuboidForIndices(son1TriangleIndexes, container), clusterToSplit.clusterTreeDepth+1);
+    clusterToSplit.son1 = std::make_unique<Cluster>(son1TriangleIndexes, minimalCuboidForIndices(son1TriangleIndexes, container), clusterToSplit.clusterTreeDepth+1);
     clusterToSplit.son1->father = &clusterToSplit;
     splitCluster(*clusterToSplit.son1, container);
 
-    clusterToSplit.son2 = new Cluster(son2TriangleIndexes, minimalCuboidForIndices(son2TriangleIndexes, container), clusterToSplit.clusterTreeDepth+1);
+//    clusterToSplit.son2 = new Cluster(son2TriangleIndexes, minimalCuboidForIndices(son2TriangleIndexes, container), clusterToSplit.clusterTreeDepth+1);
+    clusterToSplit.son2 = std::make_unique<Cluster>(son2TriangleIndexes, minimalCuboidForIndices(son2TriangleIndexes, container), clusterToSplit.clusterTreeDepth+1);
     clusterToSplit.son2->father = &clusterToSplit;
     splitCluster(*clusterToSplit.son2, container);
 
@@ -319,7 +325,7 @@ void ClusterTree::orderGeometryContiguously(GeometryContainer* container)
     if(container != nullptr)
     {
         geometryContainerCopy = *container;
-        recursiveReorder(rootCluster, globalIndex, container, geometryContainerCopy);
+        recursiveReorder(*rootCluster, globalIndex, container, geometryContainerCopy);
     }
 }
 #endif // CLUSTERTREE_H

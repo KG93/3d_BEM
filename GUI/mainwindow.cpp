@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(solvScriptReader, SIGNAL(logMessage(QString)), generalLog, SLOT(writeOutLogString()));
     connect(obsScriptReader, SIGNAL(logMessage(QString)), generalLog, SLOT(writeOutLogString()));
     connect(boundaryElementSolver, SIGNAL(updateLog()), generalLog, SLOT(writeOutLogString()));
-    errorLog= new LogWidget;
+    errorLog = new LogWidget;
     connect(solvScriptReader, SIGNAL(errorMessage(QString)), errorLog, SLOT(writeOutErrorLogString()));
     connect(obsScriptReader, SIGNAL(errorMessage(QString)), errorLog, SLOT(writeOutErrorLogString()));
     connect(boundaryElementSolver, SIGNAL(updateLog()), errorLog, SLOT(writeOutErrorLogString()));
@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
         projFileHandler->readProjectFile(filename);
 
-        solvinScript=QFileInfo(projFileHandler->getSolvingScript());
+        solvinScript = QFileInfo(projFileHandler->getSolvingScript());
         setUpObservationScripts(projFileHandler->getObservScriptList());
         setUpMeshFiles(projFileHandler->getMeshFileList(),projFileHandler->getMeshFileAliasList());
 
@@ -94,9 +94,9 @@ MainWindow::~MainWindow()
 void MainWindow::setUpMenu()
 {
     menuBar2->clear();
-    QMenu *menu = menuBar2->addMenu(tr("Project"));
-    QAction *newProjectAction = new QAction(tr("&New project"), this);
-    QAction *openProjectAction = new QAction(tr("&Open project"), this);
+    QMenu* menu = menuBar2->addMenu(tr("Project"));
+    QAction* newProjectAction = new QAction(tr("&New project"), this);
+    QAction* openProjectAction = new QAction(tr("&Open project"), this);
 
     menu->addAction(newProjectAction);
     connect(newProjectAction, SIGNAL(triggered()), SLOT(newProject()));
@@ -106,22 +106,22 @@ void MainWindow::setUpMenu()
 
     if(showSolutionAndFieldMenu)
     {
-        QMenu *menu1 = menuBar2->addMenu(tr("Viewer"));
-        QAction *showFrequencySelectorAction = new QAction(tr("&Show frequency selector"), this);
-        QAction *showSolutionAction = new QAction(tr("&Show solution on boundary"), this);
-        QAction *hideSolutionAction = new QAction(tr("&Hide solution on boundary"), this);
-        QAction *showFieldAction = new QAction(tr("&Show field"), this);
-        QAction *hideFieldAction = new QAction(tr("&Hide field"), this);
-        QAction *showLegendAction = new QAction(tr("&Show legend"), this);
-        QAction *hideLegendAction = new QAction(tr("&Hide legend"), this);
-        QAction *drawPhaseAction = new QAction(tr("&Show phase"), this);
-        QAction *drawPressureAction = new QAction(tr("&Show pressure"), this);
-        QAction *animatePhaseAction = new QAction(tr("&Animate phase"), this);
-        QAction *stopAnimation = new QAction(tr("&Stop animation"), this);
-        QAction *showGlobalDb = new QAction(tr("&Global extrema for coloring"), this);
-        QAction *showLocalDb = new QAction(tr("&Local extrema for coloring"), this);
+        QMenu* menu1 = menuBar2->addMenu(tr("Viewer"));
+        QAction* showFrequencySelectorAction = new QAction(tr("&Show frequency selector"), this);
+        QAction* showSolutionAction = new QAction(tr("&Show solution on boundary"), this);
+        QAction* hideSolutionAction = new QAction(tr("&Hide solution on boundary"), this);
+        QAction* showFieldAction = new QAction(tr("&Show field"), this);
+        QAction* hideFieldAction = new QAction(tr("&Hide field"), this);
+        QAction* showLegendAction = new QAction(tr("&Show legend"), this);
+        QAction* hideLegendAction = new QAction(tr("&Hide legend"), this);
+        QAction* drawPhaseAction = new QAction(tr("&Show phase"), this);
+        QAction* drawPressureAction = new QAction(tr("&Show pressure"), this);
+        QAction* animatePhaseAction = new QAction(tr("&Animate phase"), this);
+        QAction* stopAnimation = new QAction(tr("&Stop animation"), this);
+        QAction* showGlobalDb = new QAction(tr("&Global extrema for coloring"), this);
+        QAction* showLocalDb = new QAction(tr("&Local extrema for coloring"), this);
 
-        QAction *saveImageAction = new QAction(tr("&Save image"), this);
+        QAction* saveImageAction = new QAction(tr("&Save image"), this);
 
         menu1->addAction(showFrequencySelectorAction);
 
@@ -189,20 +189,20 @@ void MainWindow::setUpMenu()
         connect(showGlobalDb, SIGNAL(triggered()), SLOT(useGlobalPressureMaximaForSolutionColoring()));
         connect(saveImageAction, SIGNAL(triggered()), SLOT(saveImage()));
 
-        QMenu *menu2 = menuBar2->addMenu(tr("Solving"));
-        QAction *calculateSolutionAction = new QAction(tr("&Calculate solution on boundary"), this);
-        QAction *setParametersAction = new QAction(tr("&Set solver parameters"), this);
-//        QAction *hSolvingAction = new QAction(tr("&Switch to H-Solver"), this);
-//        QAction *setACArelError = new QAction(tr("&Set relative ACA  error"), this);
-//        QAction *setPrecondRank = new QAction(tr("&Set local rank of preconditioner"), this);
+        QMenu* menu2 = menuBar2->addMenu(tr("Solving"));
+        QAction* calculateSolutionAction = new QAction(tr("&Calculate solution on boundary"), this);
+        QAction* setParametersAction = new QAction(tr("&Set solver parameters"), this);
+//        QAction* hSolvingAction = new QAction(tr("&Switch to H-Solver"), this);
+//        QAction* setACArelError = new QAction(tr("&Set relative ACA  error"), this);
+//        QAction* setPrecondRank = new QAction(tr("&Set local rank of preconditioner"), this);
 
-//        QAction *regSolvingAction = new QAction(tr("&Switch to regular Solver"), this);
-//        QAction *defaultCouplinAction = new QAction(tr("&No Coupling"), this);
-//        QAction *burtonMillerCouplingAction = new QAction(tr("&Burton and Miller Coupling"), this);
-//        QAction *KirkupCouplingAction = new QAction(tr("&Kirkup Coupling"), this);
-//        QAction *flipCouplingSign = new QAction(tr("&Set sign of coupling parameter negative"), this);
-//        QAction *setRegularQuadratureOrderAction = new QAction(tr("&Set regular quadrature order"), this);
-//        QAction *setHigQuadratureOrderAction = new QAction(tr("&Set precision quadrature order"), this);
+//        QAction* regSolvingAction = new QAction(tr("&Switch to regular Solver"), this);
+//        QAction* defaultCouplinAction = new QAction(tr("&No Coupling"), this);
+//        QAction* burtonMillerCouplingAction = new QAction(tr("&Burton and Miller Coupling"), this);
+//        QAction* KirkupCouplingAction = new QAction(tr("&Kirkup Coupling"), this);
+//        QAction* flipCouplingSign = new QAction(tr("&Set sign of coupling parameter negative"), this);
+//        QAction* setRegularQuadratureOrderAction = new QAction(tr("&Set regular quadrature order"), this);
+//        QAction* setHigQuadratureOrderAction = new QAction(tr("&Set precision quadrature order"), this);
 //        if(!couplingSignPos)
 //        {
 //            flipCouplingSign= new QAction(tr("&Set sign of coupling parameter positive"), this);
@@ -239,17 +239,17 @@ void MainWindow::setUpMenu()
 //        connect(setRegularQuadratureOrderAction, SIGNAL(triggered()),this, SLOT(setRegularQuadrature()));
 //        connect(setHigQuadratureOrderAction, SIGNAL(triggered()),this, SLOT(setHighOrderQuadrature()));
 
-        QMenu *menu3 = menuBar2->addMenu(tr("Field"));        
+        QMenu* menu3 = menuBar2->addMenu(tr("Field"));
         if(showCalculateFieldButton)
         {
-            QAction *calculateFieldAction = new QAction(tr("&Calculate solution on field"), this);
+            QAction* calculateFieldAction = new QAction(tr("&Calculate solution on field"), this);
             menu3->addAction(calculateFieldAction);
             connect(calculateFieldAction, SIGNAL(triggered()), SLOT(calculateSolutionOnField()));
         }       
 
-        QAction *reloadProjectAction = new QAction(tr("&Reload Project"), this);
+        QAction* reloadProjectAction = new QAction(tr("&Reload Project"), this);
         connect(reloadProjectAction, SIGNAL(triggered()), SLOT(reloadProjectQuery()));
-        QAction *reloadObsScript = new QAction(tr("&Reload ObservationScript"), this);
+        QAction* reloadObsScript = new QAction(tr("&Reload ObservationScript"), this);
         connect(reloadObsScript, SIGNAL(triggered()), SLOT(loadObservationScript()));
         menuBar2->addAction(reloadProjectAction);
         menuBar2->addAction(reloadObsScript);
@@ -262,7 +262,7 @@ void MainWindow:: newProject()
                                                                                                     // filter, für nur .abec dateien
       if ( filename.isEmpty() )
       {
-          std::cout <<"Empty filename."<<std::endl;
+          std::cout << "Empty filename." << std::endl;
           return;
       }
       if(!filename.endsWith(".abec",Qt::CaseInsensitive))
@@ -282,18 +282,18 @@ void MainWindow:: openProject()
                                                                                                     // filter, für nur .abec dateien
       if ( filename.isEmpty() )
       {
-          std::cout <<"Empty filename: "<<std::endl;
+          std::cout << "Empty filename: " << std::endl;
           return;
       }
       if(global::activeProgramming)
       {
-          std::cout <<"Project path: " << filename.toStdString() << std::endl;
+          std::cout << "Project path: " << filename.toStdString() << std::endl;
       }
       projFileHandler->readProjectFile(filename);
 
-      solvinScript=QFileInfo(projFileHandler->getSolvingScript());
+      solvinScript = QFileInfo(projFileHandler->getSolvingScript());
       setUpObservationScripts(projFileHandler->getObservScriptList());
-      setUpMeshFiles(projFileHandler->getMeshFileList(),projFileHandler->getMeshFileAliasList());
+      setUpMeshFiles(projFileHandler->getMeshFileList(), projFileHandler->getMeshFileAliasList());
 
       loadProject();
 }
@@ -477,7 +477,7 @@ void MainWindow::calculateSolution()
     openGlWidget->setBoundaryElements(boundaryElementSolver->getBoundaryElements());
 //    openGlWidget->->getBoundaryElements().
 
-    showCalculateFieldButton =true;
+    showCalculateFieldButton = true;
     hasBeenSolved = true;
     openGlWidget->setShowSolutionValue(true);
     setUpMenu();
@@ -735,29 +735,29 @@ void MainWindow::setHighOrderQuadrature()
     }
 }
 
-void MainWindow::setUpObservationScripts(const QStringList& observationFiles)
+void MainWindow::setUpObservationScripts(const QStringList &observationFiles)
 {
     observationScripts.resize(observationFiles.size());
-    for(int i=0;i<observationFiles.size();i++)
+    for(int i=0; i<observationFiles.size(); i++)
     {
-        observationScripts[i]=QFileInfo(observationFiles.at(i));
+        observationScripts[i] = QFileInfo(observationFiles.at(i));
     }
 }
 
-void MainWindow::setUpMeshFiles(const QStringList& MeshFiles,const QStringList& MeshFileAlias)
+void MainWindow::setUpMeshFiles(const QStringList &MeshFiles,const QStringList &MeshFileAlias)
 {
-    if(MeshFiles.size()!=MeshFileAlias.size())
+    if(MeshFiles.size() != MeshFileAlias.size())
     {
         std::cout<<"MeshFiles.size() != meshFileAlias.size() in MainWindow class."<<std::endl;
     }
     else
     {
         meshFiles.resize(MeshFiles.size());
-        for(int i=0;i<meshFiles.size();i++)
+        for(int i=0; i<meshFiles.size(); i++)
         {
-            meshFiles[i]=QFileInfo(MeshFiles.at(i));
+            meshFiles[i] = QFileInfo(MeshFiles.at(i));
         }
-        this->meshFileAlias=MeshFileAlias;
+        this->meshFileAlias = MeshFileAlias;
     }
 }
 
@@ -788,7 +788,7 @@ void MainWindow::readSolvingScript()
 QStringList MainWindow::getMeshFiles()
 {
     QStringList meshfileList;
-    for(int i=0;i<meshFiles.size();i++)
+    for(int i=0; i<meshFiles.size(); i++)
     {
         meshfileList.append(meshFiles.at(i).absoluteFilePath());
     }
@@ -798,7 +798,7 @@ QStringList MainWindow::getMeshFiles()
 QStringList MainWindow::getObservationscripts()
 {
     QStringList obsScriptList;
-    for(int i=0;i<observationScripts.size();i++)
+    for(int i=0; i<observationScripts.size(); i++)
     {
         obsScriptList.append(observationScripts.at(i).absoluteFilePath());
     }
@@ -815,10 +815,6 @@ void MainWindow::reloadProjectQuery()
         {
             loadProject();
         }
-        else
-        {
-
-        }
     }
     else
     {
@@ -828,9 +824,9 @@ void MainWindow::reloadProjectQuery()
 
 void MainWindow::preventSliderCrossingMax()
 {
-    if(maxSlider->value()<=minSlider->value())
+    if(maxSlider->value() <= minSlider->value())
     {
-        if(minSlider->value()==minSlider->minimum())
+        if(minSlider->value() == minSlider->minimum())
         {
             maxSlider->setValue(minSlider->value()+1);
         }
@@ -839,14 +835,14 @@ void MainWindow::preventSliderCrossingMax()
             minSlider->setValue(maxSlider->value()-1);
         }
     }
-    emit slidersChanged(minSlider->value(),maxSlider->value());
+    emit slidersChanged(minSlider->value(), maxSlider->value());
 }
 
 void MainWindow::preventSliderCrossingMin()
 {
-    if(maxSlider->value()<=minSlider->value())
+    if(maxSlider->value() <= minSlider->value())
     {
-        if(maxSlider->value()==maxSlider->maximum())
+        if(maxSlider->value() == maxSlider->maximum())
         {
             minSlider->setValue(maxSlider->value()-1);
         }
@@ -855,18 +851,18 @@ void MainWindow::preventSliderCrossingMin()
             maxSlider->setValue(minSlider->value()+1);
         }
     }
-     emit slidersChanged(minSlider->value(),maxSlider->value());
+     emit slidersChanged(minSlider->value(), maxSlider->value());
 }
 
 void MainWindow::flipCouplingSign()
 {
     if(couplingSignPos)
     {
-        couplingSignPos=false;
+        couplingSignPos = false;
     }
     else
     {
-        couplingSignPos=true;
+        couplingSignPos = true;
     }
     setUpMenu();
     boundaryElementSolver->flipCouplingSign();

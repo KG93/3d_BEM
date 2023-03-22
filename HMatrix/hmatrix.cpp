@@ -70,31 +70,7 @@ void BlockCluster::clearMatrixInfo()
 void BlockCluster::clear()
 {
     clearMatrixInfo();
-
-    if(son11 != nullptr)
-    {
-        son11->clear();
-//        delete son11;
-        son11 = nullptr;
-    }
-    if(son12 != nullptr)
-    {
-        son12->clear();
-//        delete son12;
-        son12 = nullptr;
-    }
-    if(son21 != nullptr)
-    {
-        son21->clear();
-//        delete son21;
-        son21 = nullptr;
-    }
-    if(son22 != nullptr)
-    {
-        son22->clear();
-//        delete son22;
-        son22 = nullptr;
-    }
+    trimBelow();
 }
 
 void BlockCluster::trimBelow()
@@ -103,25 +79,21 @@ void BlockCluster::trimBelow()
     if(son11 != nullptr)
     {
         son11->clear();
-//        delete son11;
         son11 = nullptr;
     }
     if(son12 != nullptr)
     {
         son12->clear();
-//        delete son12;
         son12 = nullptr;
     }
     if(son21 != nullptr)
     {
         son21->clear();
-//        delete son21;
         son21 = nullptr;
     }
     if(son22 != nullptr)
     {
         son22->clear();
-//        delete son22;
         son22 = nullptr;
     }
 }
@@ -258,10 +230,7 @@ void BlockCluster::getPartition(const BlockCluster &block, QVector<const BlockCl
 std::unique_ptr<BlockCluster> BlockCluster::returnCopy(BlockCluster* father, long rank, double error, bool originalIsInSVDFormat) // returns a pointer to a copy of the entire subtree of this
 {
     std::unique_ptr<BlockCluster> returnCluster = std::make_unique<BlockCluster>();
-//    BlockCluster* returnCluster = new BlockCluster;
-//    *returnCluster = *this;
 
-    //////////////
     returnCluster->isAdmissible = this->isAdmissible;
     returnCluster->isRoot = this->isRoot;
     returnCluster->isLeaf = this->isLeaf;
@@ -275,8 +244,7 @@ std::unique_ptr<BlockCluster> BlockCluster::returnCopy(BlockCluster* father, lon
     returnCluster->UMat = this->UMat;
     returnCluster->singularValues = this->singularValues;
     returnCluster->VAdjMat = this->VAdjMat;
-    //////////////
-    ///
+
     if(returnCluster->isAdmissible && returnCluster->singularValues.size() > 0)
     {
         if(originalIsInSVDFormat)
@@ -302,7 +270,6 @@ std::unique_ptr<BlockCluster> BlockCluster::returnCopy(BlockCluster* father, lon
         if(this->son11 != nullptr)
         {
             returnCluster->son11 = this->son11->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
-//            returnCluster->son11 = this->son11->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else
         {
@@ -311,7 +278,6 @@ std::unique_ptr<BlockCluster> BlockCluster::returnCopy(BlockCluster* father, lon
         if(this->son12 != nullptr)
         {
             returnCluster->son12 = this->son12->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
-//            returnCluster->son12 = this->son12->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else
         {
@@ -320,7 +286,6 @@ std::unique_ptr<BlockCluster> BlockCluster::returnCopy(BlockCluster* father, lon
         if(this->son21 != nullptr)
         {
             returnCluster->son21 = this->son21->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
-//            returnCluster->son21 = this->son21->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else
         {
@@ -329,16 +294,11 @@ std::unique_ptr<BlockCluster> BlockCluster::returnCopy(BlockCluster* father, lon
         if(this->son22 != nullptr)
         {
             returnCluster->son22 = this->son22->returnCopy(returnCluster.get(), rank, error, originalIsInSVDFormat);
-//            returnCluster->son22 = this->son22->returnCopy(returnCluster, rank, error, originalIsInSVDFormat);
         }
         else
         {
             std::cerr << "!this->isLeaf && this->son22 == nullptr in returnCopy() call!" << std::endl;
         }
-    }
-    else
-    {
-        returnCluster->isLeaf = true;
     }
     return returnCluster;
 }
@@ -811,11 +771,11 @@ HMatrix::HMatrix(const HMatrix &original, long rank, double error, bool original
 {
     this->rowClustertree = original.rowClustertree;
     this->columnClustertree = original.columnClustertree;
-    this->rootBlockCluster = original.getRootBlock()->returnCopy(nullptr, rank, error, originalIsInSVDFormat);
+    this->rootBlock = original.getRootBlock()->returnCopy(nullptr, rank, error, originalIsInSVDFormat);
     this->updatePartition();
 }
 
-void HMatrix::setClusterTrees(ClusterTree* rowClustertree, ClusterTree* columnClustertree)
+void HMatrix::setClusterTrees(std::shared_ptr<ClusterTree> rowClustertree, std::shared_ptr<ClusterTree> columnClustertree)
 {
     this->rowClustertree = rowClustertree;
     this->columnClustertree = columnClustertree;
@@ -823,7 +783,7 @@ void HMatrix::setClusterTrees(ClusterTree* rowClustertree, ClusterTree* columnCl
 
 QVector<BlockCluster*> HMatrix::getMinPartition()
 {
-    if(rootBlockCluster == nullptr)
+    if(rootBlock == nullptr)
     {
         minPartition.clear();
     }
@@ -888,20 +848,19 @@ void HMatrix::assembleBlocksExtra(const long rank, double relativeError, /*std::
 QVector<BlockCluster*> HMatrix::getDiagonalBlocks() const
 {
     QVector<BlockCluster*> diagonalBlocks;
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        recursiveAppendDiagonalBlock(*rootBlockCluster, diagonalBlocks);
+        recursiveAppendDiagonalBlock(*rootBlock, diagonalBlocks);
     }
     return diagonalBlocks;
 }
 
 void HMatrix::clear(bool callMalloc_trim)
 {
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        rootBlockCluster->clear();
-//        delete rootBlockCluster;
-        rootBlockCluster = nullptr;
+        rootBlock->clear();
+        rootBlock = nullptr;
         minPartition.clear();
     }
     if(callMalloc_trim)
@@ -942,16 +901,16 @@ void HMatrix::recursiveClear(BlockCluster &blockClusterNode)
 
 void HMatrix::setRootBlock(std::unique_ptr<BlockCluster> &root)
 {
-    rootBlockCluster = std::move(root);
+    rootBlock = std::move(root);
 }
 
 BlockCluster* HMatrix::getRootBlock() const
 {
-    if(rootBlockCluster == nullptr)
+    if(rootBlock == nullptr)
     {
         std::cerr << "getRootBlock() called on empty BlockClusterTree" << std::endl;
     }
-    return rootBlockCluster.get();
+    return rootBlock.get();
 }
 
 //void HMatrix::setRootBlock(BlockCluster* rootBlockCluster)
@@ -964,12 +923,12 @@ void HMatrix::populateBlockClusterTree(bool randBlocks)
 {
 //    std::cout<<"populateBlockClusterTree called!"<<std::endl;
 //    delete rootBlockCluster;
-    rootBlockCluster = nullptr;
+    rootBlock = nullptr;
 
     createRootNode();
 //    std::cout<<"RootBlockClusterNode created!"<<std::endl;
 
-    createBlockClusterChildren(*rootBlockCluster);
+    createBlockClusterChildren(*rootBlock);
 //    std::cout<<"BlockClusterTree populated!"<<std::endl;
 
     if(randBlocks)
@@ -986,66 +945,62 @@ void HMatrix::createRootNode()
     if(rowClustertree->getRootCluster() == nullptr || columnClustertree->getRootCluster() == nullptr)
     {
         std::cerr << "nullptr returned by getRootCluster() in createRootNode call. rootBlockCluster set to nullptr." << std::endl;
-        rootBlockCluster = nullptr;
+        rootBlock = nullptr;
         return;
     }
     Cluster* rootCluster1 = rowClustertree->getRootCluster();
     Cluster* rootCluster2 = columnClustertree->getRootCluster();
 //    rootBlockCluster = new BlockCluster(rootCluster1, rootCluster2);
-    rootBlockCluster = std::make_unique<BlockCluster>(rootCluster1, rootCluster2);
-    rootBlockCluster->isRoot = true;
+    rootBlock = std::make_unique<BlockCluster>(rootCluster1, rootCluster2);
+    rootBlock->isRoot = true;
 }
 
-void HMatrix::createBlockClusterChildren(BlockCluster &blockClusterNode)
+void HMatrix::createBlockClusterChildren(BlockCluster &block)
 {
-    if(isBlockAdmissible(blockClusterNode) /*&& (!blockClusterNode->rowCluster->isLeaf && !blockClusterNode->columnCluster->isLeaf)*/)
+    if(isBlockAdmissible(block) /*&& (!blockClusterNode->rowCluster->isLeaf && !blockClusterNode->columnCluster->isLeaf)*/)
     {
-        blockClusterNode.isAdmissible = true;
-        blockClusterNode.isLeaf = true;
+        block.isAdmissible = true;
+        block.isLeaf = true;
 
-        blockClusterNode.son11 = nullptr;
-        blockClusterNode.son12 = nullptr;
-        blockClusterNode.son21 = nullptr;
-        blockClusterNode.son22 = nullptr;
+        block.son11 = nullptr;
+        block.son12 = nullptr;
+        block.son21 = nullptr;
+        block.son22 = nullptr;
 
-        minPartition.append(&blockClusterNode);  //TreeLeaves constitute the Blockpartition
+        minPartition.append(&block);  //TreeLeaves constitute the Blockpartition
 
         return;
     }
-    else if(blockClusterNode.rowCluster->isLeaf || blockClusterNode.columnCluster->isLeaf)
+    else if(block.rowCluster->isLeaf || block.columnCluster->isLeaf)
     {
-        blockClusterNode.isAdmissible = false;
-        blockClusterNode.isLeaf = true;
+        block.isAdmissible = false;
+        block.isLeaf = true;
 
-        blockClusterNode.son11 = nullptr;
-        blockClusterNode.son12 = nullptr;
-        blockClusterNode.son21 = nullptr;
-        blockClusterNode.son22 = nullptr;
+        block.son11 = nullptr;
+        block.son12 = nullptr;
+        block.son21 = nullptr;
+        block.son22 = nullptr;
 
-        minPartition.append(&blockClusterNode);  //TreeLeaves constitute the Blockpartition
+        minPartition.append(&block);  //TreeLeaves constitute the Blockpartition
 
         return;
     }
     else
     {
-        blockClusterNode.isAdmissible = false;
-        blockClusterNode.isLeaf = false;
+        block.isAdmissible = false;
+        block.isLeaf = false;
 
-//        blockClusterNode->son11 = new BlockCluster(blockClusterNode.rowCluster->son1, blockClusterNode.columnCluster->son1, blockClusterNode);
-        blockClusterNode.son11 = std::make_unique<BlockCluster>(blockClusterNode.rowCluster->son1, blockClusterNode.columnCluster->son1, &blockClusterNode);
-        createBlockClusterChildren(*blockClusterNode.son11);
+        block.son11 = std::make_unique<BlockCluster>(block.rowCluster->son1.get(), block.columnCluster->son1.get(), &block);
+        createBlockClusterChildren(*block.son11);
 
-//        blockClusterNode.son12 = new BlockCluster(blockClusterNode.rowCluster->son1, blockClusterNode.columnCluster->son2, blockClusterNode);
-        blockClusterNode.son12 = std::make_unique<BlockCluster>(blockClusterNode.rowCluster->son1, blockClusterNode.columnCluster->son2, &blockClusterNode);
-        createBlockClusterChildren(*blockClusterNode.son12);
+        block.son12 = std::make_unique<BlockCluster>(block.rowCluster->son1.get(), block.columnCluster->son2.get(), &block);
+        createBlockClusterChildren(*block.son12);
 
-//        blockClusterNode.son21 = new BlockCluster(blockClusterNode.rowCluster->son2, blockClusterNode.columnCluster->son1, blockClusterNode);
-        blockClusterNode.son21 = std::make_unique<BlockCluster>(blockClusterNode.rowCluster->son2, blockClusterNode.columnCluster->son1, &blockClusterNode);
-        createBlockClusterChildren(*blockClusterNode.son21);
+        block.son21 = std::make_unique<BlockCluster>(block.rowCluster->son2.get(), block.columnCluster->son1.get(), &block);
+        createBlockClusterChildren(*block.son21);
 
-//        blockClusterNode.son22 = new BlockCluster(blockClusterNode.rowCluster->son2, blockClusterNode.columnCluster->son2, blockClusterNode);
-        blockClusterNode.son22 = std::make_unique<BlockCluster>(blockClusterNode.rowCluster->son2, blockClusterNode.columnCluster->son2, &blockClusterNode);
-        createBlockClusterChildren(*blockClusterNode.son22);
+        block.son22 = std::make_unique<BlockCluster>(block.rowCluster->son2.get(), block.columnCluster->son2.get(), &block);
+        createBlockClusterChildren(*block.son22);
 
         return;
     }
@@ -1094,14 +1049,14 @@ void HMatrix::setUpRandomMatrices(long maxRank)
     }
 }
 
-bool HMatrix::isBlockAdmissible(const BlockCluster &blockCluster)
+bool HMatrix::isBlockAdmissible(const BlockCluster &block)
 {
-    double clusterDist = clusterDistance(blockCluster.rowCluster, blockCluster.columnCluster);
+    double clusterDist = clusterDistance(block.rowCluster, block.columnCluster);
     if(clusterDist == 0)
     {
         return false;
     }
-    else if(std::min(clusterSize(blockCluster.rowCluster), clusterSize(blockCluster.columnCluster)) / clusterDist < admissibilityConstant)
+    else if(std::min(clusterSize(block.rowCluster), clusterSize(block.columnCluster)) / clusterDist < admissibilityConstant)
 //    else if(std::max(clusterSize(blockCluster->rowCluster), clusterSize(blockCluster->columnCluster)) / clusterDist < admissibilityConstant)
     {
         return true;
@@ -1183,11 +1138,11 @@ bool HMatrix::isCrossPartitioned() const
 {
     bool onlyCrossPartitions = true; // bool value returned true if all non leaf blocks have four sons
 
-    checkBlockPartition(*rootBlockCluster, onlyCrossPartitions);
+    checkBlockPartition(*rootBlock, onlyCrossPartitions);
     return onlyCrossPartitions;
 }
 
-void HMatrix::checkBlockPartition(BlockCluster &blockCluster, bool &onlyCrossPartitions) const
+void HMatrix::checkBlockPartition(BlockCluster &block, bool &onlyCrossPartitions) const
 {
     if(onlyCrossPartitions == false)
     {
@@ -1195,16 +1150,16 @@ void HMatrix::checkBlockPartition(BlockCluster &blockCluster, bool &onlyCrossPar
     }
     else
     {
-        if(blockCluster.isLeaf == true) //block is not partitioned ->Y break
+        if(block.isLeaf == true) //block is not partitioned ->Y break
         {
             return;
         }
-        else if(blockCluster.son11 != nullptr && blockCluster.son12 != nullptr && blockCluster.son21 != nullptr && blockCluster.son22 != nullptr)
+        else if(block.son11 != nullptr && block.son12 != nullptr && block.son21 != nullptr && block.son22 != nullptr)
         {  //block is cross partitioned -> check partition of all sons
-            checkBlockPartition(*blockCluster.son11, onlyCrossPartitions);
-            checkBlockPartition(*blockCluster.son12, onlyCrossPartitions);
-            checkBlockPartition(*blockCluster.son21, onlyCrossPartitions);
-            checkBlockPartition(*blockCluster.son22, onlyCrossPartitions);
+            checkBlockPartition(*block.son11, onlyCrossPartitions);
+            checkBlockPartition(*block.son12, onlyCrossPartitions);
+            checkBlockPartition(*block.son21, onlyCrossPartitions);
+            checkBlockPartition(*block.son22, onlyCrossPartitions);
             return;
         }
         else // block is not cross partitioned
@@ -1220,9 +1175,9 @@ void HMatrix::updatePartition()
     minPartition.clear();
     farFieldBlocks = 0;
     nearFieldBlocks = 0;
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        recursiveAppendPartitionBlock(*rootBlockCluster);
+        recursiveAppendPartitionBlock(*rootBlock);
     }
     else
     {
@@ -1230,12 +1185,12 @@ void HMatrix::updatePartition()
     }
 }
 
-void HMatrix::recursiveAppendPartitionBlock(BlockCluster &blockCluster)
+void HMatrix::recursiveAppendPartitionBlock(BlockCluster &block)
 {
-    if(blockCluster.isLeaf)
+    if(block.isLeaf)
     {
-        minPartition.append(&blockCluster);
-        if(blockCluster.isAdmissible)
+        minPartition.append(&block);
+        if(block.isAdmissible)
         {
             farFieldBlocks++;
         }
@@ -1244,17 +1199,17 @@ void HMatrix::recursiveAppendPartitionBlock(BlockCluster &blockCluster)
             nearFieldBlocks++;
         }
     }
-    else if(blockCluster.son11 != nullptr)
+    else if(block.son11 != nullptr)
     {
-        recursiveAppendPartitionBlock(*blockCluster.son11);
-        recursiveAppendPartitionBlock(*blockCluster.son12);
-        recursiveAppendPartitionBlock(*blockCluster.son21);
-        recursiveAppendPartitionBlock(*blockCluster.son22);
+        recursiveAppendPartitionBlock(*block.son11);
+        recursiveAppendPartitionBlock(*block.son12);
+        recursiveAppendPartitionBlock(*block.son21);
+        recursiveAppendPartitionBlock(*block.son22);
     }
     else
     {
         std::cerr << "Block with non-leaf designation but without children in recursiveAppendPartitionBlock() call. " << std::endl;
-        blockCluster.isLeaf = true;
+        block.isLeaf = true;
     }
 }
 
@@ -1264,9 +1219,9 @@ void HMatrix::updatePartitionWithNullptrCheck()
     farFieldBlocks = 0;
     nearFieldBlocks = 0;
     int depth = 0;
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        recAppendPartitionBlockNullptrCheck(*rootBlockCluster, depth);
+        recAppendPartitionBlockNullptrCheck(*rootBlock, depth);
     }
     else
     {
@@ -1274,16 +1229,16 @@ void HMatrix::updatePartitionWithNullptrCheck()
     }
 }
 
-void HMatrix::recAppendPartitionBlockNullptrCheck(BlockCluster &blockCluster, int depth)
+void HMatrix::recAppendPartitionBlockNullptrCheck(BlockCluster &block, int depth)
 {
     ++depth;
 //    std::cout<<"depth: "<<depth<<std::endl;
-    if(blockCluster.isLeaf)
+    if(block.isLeaf)
     {
-        minPartition.append(&blockCluster);
-        if(blockCluster.son11 == nullptr)
+        minPartition.append(&block);
+        if(block.son11 == nullptr)
         {
-            if(blockCluster.isAdmissible)
+            if(block.isAdmissible)
             {
                 farFieldBlocks++;
             }
@@ -1293,12 +1248,12 @@ void HMatrix::recAppendPartitionBlockNullptrCheck(BlockCluster &blockCluster, in
             }
         }
     }
-    if(blockCluster.son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-        recAppendPartitionBlockNullptrCheck(*blockCluster.son11, depth);
-        recAppendPartitionBlockNullptrCheck(*blockCluster.son12, depth);
-        recAppendPartitionBlockNullptrCheck(*blockCluster.son21, depth);
-        recAppendPartitionBlockNullptrCheck(*blockCluster.son22, depth);
+        recAppendPartitionBlockNullptrCheck(*block.son11, depth);
+        recAppendPartitionBlockNullptrCheck(*block.son12, depth);
+        recAppendPartitionBlockNullptrCheck(*block.son21, depth);
+        recAppendPartitionBlockNullptrCheck(*block.son22, depth);
     }
 }
 
@@ -1307,10 +1262,10 @@ void HMatrix::updatePartitionWithMatrixInfo()
     minPartition.clear();
     farFieldBlocks = 0;
     nearFieldBlocks = 0;
-    if(rootBlockCluster!=nullptr)
+    if(rootBlock!=nullptr)
     {
         QVector<BlockCluster*> partition;
-        recAppendPartitionBlockMatInfo(*rootBlockCluster, partition);
+        recAppendPartitionBlockMatInfo(*rootBlock, partition);
         minPartition = partition;
     }
     else
@@ -1319,66 +1274,66 @@ void HMatrix::updatePartitionWithMatrixInfo()
     }
 }
 
-void HMatrix::recAppendPartitionBlockMatInfo(BlockCluster &blockCluster, QVector<BlockCluster*> &subBlocksWithInformation)
+void HMatrix::recAppendPartitionBlockMatInfo(BlockCluster &block, QVector<BlockCluster*> &subBlocksWithInformation)
 {
-    if(blockCluster.UMat.cols() != 0)
+    if(block.UMat.cols() != 0)
     {
-        if(blockCluster.fullMat.cols() != 0)
+        if(block.fullMat.cols() != 0)
         {
             std::cout << "blockCluster.AMat.cols() != 0 && blockCluster.fullMat.cols() != 0" << std::endl;
         }
 
-        blockCluster.isAdmissible = true;
-        blockCluster.isLeaf = true;
-        subBlocksWithInformation.append(&blockCluster);
+        block.isAdmissible = true;
+        block.isLeaf = true;
+        subBlocksWithInformation.append(&block);
 //        ++farFieldBlocks;
     }
-    else if(blockCluster.fullMat.cols() != 0)
+    else if(block.fullMat.cols() != 0)
     {
-        blockCluster.isAdmissible = false;
-        blockCluster.isLeaf = true;
-        subBlocksWithInformation.append(&blockCluster);
+        block.isAdmissible = false;
+        block.isLeaf = true;
+        subBlocksWithInformation.append(&block);
 //        ++nearFieldBlocks;
     }
-    else if(blockCluster.hasFourChildren())
+    else if(block.hasFourChildren())
     {
-        blockCluster.isLeaf = false;
+        block.isLeaf = false;
     }
     else
     {
-        blockCluster.isLeaf = true;
+        block.isLeaf = true;
     }
 
-    if(blockCluster.son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son11, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son11, subBlocksWithInformation);
     }
-    if(blockCluster.son12 != nullptr)
+    if(block.son12 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son12, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son12, subBlocksWithInformation);
     }
-    if(blockCluster.son21 != nullptr)
+    if(block.son21 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son21, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son21, subBlocksWithInformation);
     }
-    if(blockCluster.son22 != nullptr)
+    if(block.son22 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son22, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son22, subBlocksWithInformation);
     }
 }
 
-void HMatrix::recursiveAppendDiagonalBlock(BlockCluster &blockCluster, QVector<BlockCluster*> &diagonalBlocks) const
+void HMatrix::recursiveAppendDiagonalBlock(BlockCluster &block, QVector<BlockCluster*> &diagonalBlocks) const
 {
-    if(blockCluster.son11 != nullptr && blockCluster.son22 != nullptr)
+    if(block.son11 != nullptr && block.son22 != nullptr)
     {
-        HMatrix::recursiveAppendDiagonalBlock(*blockCluster.son11, diagonalBlocks);
-        HMatrix::recursiveAppendDiagonalBlock(*blockCluster.son22, diagonalBlocks);
+        HMatrix::recursiveAppendDiagonalBlock(*block.son11, diagonalBlocks);
+        HMatrix::recursiveAppendDiagonalBlock(*block.son22, diagonalBlocks);
     }
     else
     {
-        if(blockCluster.isLeaf == true)
+        if(block.isLeaf == true)
         {
-            diagonalBlocks.append(&blockCluster);
+            diagonalBlocks.append(&block);
         }
         else
         {
@@ -1388,34 +1343,34 @@ void HMatrix::recursiveAppendDiagonalBlock(BlockCluster &blockCluster, QVector<B
 }
 
 
-QVector<BlockCluster*> HMatrix::getSubBlocksWithMatrixInformation(BlockCluster &blockCluster)
+QVector<BlockCluster*> HMatrix::getSubBlocksWithMatrixInformation(BlockCluster &block)
 {
     QVector<BlockCluster*> subBlocksWithInformation;
 
-    if(blockCluster.son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son11, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son11, subBlocksWithInformation);
     }
-    if(blockCluster.son12 != nullptr)
+    if(block.son12 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son12, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son12, subBlocksWithInformation);
     }
-    if(blockCluster.son21 != nullptr)
+    if(block.son21 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son21, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son21, subBlocksWithInformation);
     }
-    if(blockCluster.son22 != nullptr)
+    if(block.son22 != nullptr)
     {
-        recAppendPartitionBlockMatInfo(*blockCluster.son22, subBlocksWithInformation);
+        recAppendPartitionBlockMatInfo(*block.son22, subBlocksWithInformation);
     }
     return subBlocksWithInformation;
 }
 
 long HMatrix::rows() const
 {
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        return rootBlockCluster->rows();
+        return rootBlock->rows();
     }
     else
     {
@@ -1425,9 +1380,9 @@ long HMatrix::rows() const
 
 long HMatrix::cols() const
 {
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        return rootBlockCluster->cols();
+        return rootBlock->cols();
     }
     else
     {
@@ -1442,9 +1397,9 @@ long HMatrix::size() const
 
 long HMatrix::rowStartIndex() const
 {
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        return rootBlockCluster->rowStartIndex();
+        return rootBlock->rowStartIndex();
     }
     else
     {
@@ -1454,9 +1409,9 @@ long HMatrix::rowStartIndex() const
 
 long HMatrix::colStartIndex() const
 {
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        return rootBlockCluster->colStartIndex();
+        return rootBlock->colStartIndex();
     }
     else
     {
@@ -1488,9 +1443,9 @@ double HMatrix::getCompressionRatio()
 
 bool HMatrix::consistencyCheck() const
 {
-    if(rootBlockCluster != nullptr)
+    if(rootBlock != nullptr)
     {
-        return recursiveConsistencyCheck(*rootBlockCluster);
+        return recursiveConsistencyCheck(*rootBlock);
     }
     else
     {
@@ -1498,14 +1453,14 @@ bool HMatrix::consistencyCheck() const
     }
 }
 
-bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
+bool HMatrix::recursiveConsistencyCheck(BlockCluster &block) const
 {
     bool useCerr = true;
-    if(blockCluster.isLeaf)
+    if(block.isLeaf)
     {
-        if(blockCluster.isAdmissible)
+        if(block.isAdmissible)
         {
-            if(blockCluster.fullMat.size() > 0 || blockCluster.UMat.size() <= 0)
+            if(block.fullMat.size() > 0 || block.UMat.size() <= 0)
             {
                 if(useCerr)
                 {
@@ -1513,7 +1468,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
                 }
                 return false;
             }
-            if(blockCluster.UMat.rows() != blockCluster.rows() || blockCluster.VAdjMat.cols() != blockCluster.cols())
+            if(block.UMat.rows() != block.rows() || block.VAdjMat.cols() != block.cols())
             {
                 if(useCerr)
                 {
@@ -1521,7 +1476,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
                 }
                 return false;
             }
-            if(blockCluster.UMat.cols() != blockCluster.singularValues.size() || blockCluster.VAdjMat.rows() != blockCluster.singularValues.size())
+            if(block.UMat.cols() != block.singularValues.size() || block.VAdjMat.rows() != block.singularValues.size())
             {
                 if(useCerr)
                 {
@@ -1532,7 +1487,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
         }
         else    // !blockCluster.isAdmissible
         {
-            if(blockCluster.fullMat.size() <= 0 || blockCluster.UMat.size() > 0)
+            if(block.fullMat.size() <= 0 || block.UMat.size() > 0)
             {
                 if(useCerr)
                 {
@@ -1540,7 +1495,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
                 }
                 return false;
             }
-            if(blockCluster.fullMat.cols() != blockCluster.cols() || blockCluster.fullMat.rows() != blockCluster.rows())
+            if(block.fullMat.cols() != block.cols() || block.fullMat.rows() != block.rows())
             {
                 if(useCerr)
                 {
@@ -1549,7 +1504,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
                 return false;
             }
         }
-        if(blockCluster.son11 != nullptr || blockCluster.son12 != nullptr || blockCluster.son21 != nullptr || blockCluster.son22 != nullptr)
+        if(block.son11 != nullptr || block.son12 != nullptr || block.son21 != nullptr || block.son22 != nullptr)
         {
             if(useCerr)
             {
@@ -1560,7 +1515,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
     }
     else // !blockCluster.isLeaf
     {
-        if( !(blockCluster.son11 != nullptr && blockCluster.son12 != nullptr && blockCluster.son21 != nullptr && blockCluster.son22 != nullptr) )
+        if( !(block.son11 != nullptr && block.son12 != nullptr && block.son21 != nullptr && block.son22 != nullptr) )
         {
             if(useCerr)
             {
@@ -1568,7 +1523,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
             }
             return false;
         }
-        if(blockCluster.fullMat.size() > 0 || blockCluster.UMat.size() > 0)
+        if(block.fullMat.size() > 0 || block.UMat.size() > 0)
         {
             if(useCerr)
             {
@@ -1576,7 +1531,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
             }
             return false;
         }
-        if(blockCluster.rowStartIndex() != blockCluster.son11->rowStartIndex() || blockCluster.colStartIndex() != blockCluster.son11->colStartIndex())
+        if(block.rowStartIndex() != block.son11->rowStartIndex() || block.colStartIndex() != block.son11->colStartIndex())
         {
             if(useCerr)
             {
@@ -1584,7 +1539,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
             }
             return false;
         }
-        if((blockCluster.rowStartIndex() + blockCluster.son11->rows()) != blockCluster.son21->rowStartIndex() || (blockCluster.colStartIndex() + blockCluster.son11->cols()) != blockCluster.son12->colStartIndex())
+        if((block.rowStartIndex() + block.son11->rows()) != block.son21->rowStartIndex() || (block.colStartIndex() + block.son11->cols()) != block.son12->colStartIndex())
         {
             if(useCerr)
             {
@@ -1592,7 +1547,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
             }
             return false;
         }
-        if((blockCluster.rowStartIndex() + blockCluster.son12->rows()) != blockCluster.son22->rowStartIndex() || (blockCluster.colStartIndex() + blockCluster.son21->cols()) != blockCluster.son22->colStartIndex())
+        if((block.rowStartIndex() + block.son12->rows()) != block.son22->rowStartIndex() || (block.colStartIndex() + block.son21->cols()) != block.son22->colStartIndex())
         {
             if(useCerr)
             {
@@ -1600,7 +1555,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
             }
             return false;
         }
-        if(blockCluster.rows() != blockCluster.son11->rows() + blockCluster.son21->rows() || blockCluster.rows() != blockCluster.son12->rows() + blockCluster.son22->rows())
+        if(block.rows() != block.son11->rows() + block.son21->rows() || block.rows() != block.son12->rows() + block.son22->rows())
         {
             if(useCerr)
             {
@@ -1608,7 +1563,7 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
             }
             return false;
         }
-        if(blockCluster.cols() != blockCluster.son11->cols() + blockCluster.son12->cols() || blockCluster.cols() != blockCluster.son21->cols() + blockCluster.son22->cols())
+        if(block.cols() != block.son11->cols() + block.son12->cols() || block.cols() != block.son21->cols() + block.son22->cols())
         {
             if(useCerr)
             {
@@ -1618,32 +1573,32 @@ bool HMatrix::recursiveConsistencyCheck(BlockCluster &blockCluster) const
         }
     }
 
-    if(blockCluster.son11 != nullptr)
+    if(block.son11 != nullptr)
     {
-        if(recursiveConsistencyCheck(*blockCluster.son11) == false)
+        if(recursiveConsistencyCheck(*block.son11) == false)
         {
             return false;
         }
     }
 
-    if(blockCluster.son12 != nullptr)
+    if(block.son12 != nullptr)
     {
-        if(recursiveConsistencyCheck(*blockCluster.son12) == false)
+        if(recursiveConsistencyCheck(*block.son12) == false)
         {
             return false;
         }
     }
 
-    if(blockCluster.son21 != nullptr)
+    if(block.son21 != nullptr)
     {
-        if(recursiveConsistencyCheck(*blockCluster.son21) == false)
+        if(recursiveConsistencyCheck(*block.son21) == false)
         {
             return false;
         }
     }
-    if(blockCluster.son22 != nullptr)
+    if(block.son22 != nullptr)
     {
-        if(recursiveConsistencyCheck(*blockCluster.son22) == false)
+        if(recursiveConsistencyCheck(*block.son22) == false)
         {
             return false;
         }

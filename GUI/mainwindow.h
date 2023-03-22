@@ -54,18 +54,18 @@ private:
     QWidget* widget;
     QMenuBar* menuBar2;
     RegisterScriptsTab* registerScriptsTab/*= new RegisterScriptsTab(this)*/;
-    QVBoxLayout *mainLayout /*= new QVBoxLayout*/;
-    openglWidget *openGlWidget /*= new openglWidget(this)*/;
-    QHBoxLayout *openGlTabLayout;
-    QSlider *maxSlider;
-    QSlider *minSlider;
-    ParameterDialog *parameterDialog;
+    QVBoxLayout* mainLayout /*= new QVBoxLayout*/;
+    openglWidget* openGlWidget /*= new openglWidget(this)*/;
+    QHBoxLayout* openGlTabLayout;
+    QSlider* maxSlider;
+    QSlider* minSlider;
+    ParameterDialog* parameterDialog;
     ProjectFileHandler* projFileHandler = new ProjectFileHandler;
     SolvingScriptReader* solvScriptReader;
     ObservationScriptReader* obsScriptReader;
     BoundaryElementSolver* boundaryElementSolver = new BoundaryElementSolver;
 
-    FreqListWidget *freqWidget;
+    FreqListWidget* freqWidget;
     QVector<double> freq;
     QVector<BoundaryElements> boundaryElementsFreq;
 
@@ -73,7 +73,7 @@ private:
 
     void setUpMenu(); /*!< Set up the GUI menu */
     void setUpObservationScripts(const QStringList &observationFiles); /*!< Set the list of observation scripts. */
-    void setUpMeshFiles(const QStringList& meshFiles,const QStringList& meshFileAlias); /*!< Set the list of registered meshfiles. */
+    void setUpMeshFiles(const QStringList &meshFiles,const QStringList &meshFileAlias); /*!< Set the list of registered meshfiles. */
     QStringList getMeshFiles(); /*!< Get the list of observation scripts. */
     QStringList getObservationscripts(); /*!< Get the list of registered meshfiles. */
     bool solutionMenuAlreadySetup = false;

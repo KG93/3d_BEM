@@ -6,6 +6,10 @@
 #include <iostream>
 #include <eigen3/Eigen/Geometry>
 
+/**
+* \class FreqListWidget
+* \brief This class provides a frequency selector widget and also stores the frequency-dependent BEM solutions.
+*/
 class FreqListWidget : public QListWidget
 {
     Q_OBJECT
@@ -94,7 +98,7 @@ private:
     double globalMinSoundPressureOnField;
 
 signals:
-    void signalNewSelection(double frequency);
+//    void signalNewSelection(double frequency);
     void signalNewSelection(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure);
     void signalNewSelection(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField);
 

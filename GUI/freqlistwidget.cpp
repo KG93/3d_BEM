@@ -21,7 +21,7 @@ void FreqListWidget::setFrequencies(QVector<double> frequenciesARg)
 
     for(int i=0; i<frequencies.length(); i++)
     {
-        QListWidgetItem * frequency = new QListWidgetItem(QString::number(frequencies.at(i)/*, 'g', 15*/));
+        QListWidgetItem* frequency = new QListWidgetItem(QString::number(frequencies.at(i)/*, 'g', 15*/));
         addItem(frequency);
     }
     currentSelected = currentRow();

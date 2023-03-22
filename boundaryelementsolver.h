@@ -263,7 +263,7 @@ public:
     * \param clusterTree The cluster tree.
     * \param lastPlaneIndex The last plane index. Default is -1.
     */
-    void calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const BoundaryElements &elements, BoundaryElements reflElements, ClusterTree &clusterTree, int lastPlaneIndex = -1);
+    void calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const BoundaryElements &elements, BoundaryElements reflElements, std::shared_ptr<ClusterTree> clusterTree, int lastPlaneIndex = -1);
 
     /**
     * \brief Assemble the matrices of the two H-matrix blocks.
@@ -400,7 +400,7 @@ private:
     * \param relativeError The relative error used for the H-matrix compression.
     * \param maxRank The maximum rank used for the H-matrix compression.
     */
-    void calculateFieldSolutionFast(double relativeError, long maxRank);
+    void calculateFieldSolutionFast(const double relativeError, const long maxRank);
 
     /**
     * \brief Assemble the matrices of the two h-matrix blocks for the reflection matrices.
@@ -425,7 +425,7 @@ private:
     * \param elementsClusterTree the cluster tree for the boundary elements
     * \param lastPlaneIndex the index of the last reflection plane (default -1, i.e. no plane)
     */
-    void calcReflectionMatricesField(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &elements, ClusterTree &obsClusterTree, ClusterTree &elementsClusterTree, int lastPlaneIndex = -1);
+    void calcReflectionMatricesField(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &elements, std::shared_ptr<ClusterTree> obsClusterTree, std::shared_ptr<ClusterTree> elementsClusterTree, int lastPlaneIndex = -1);
 
     /**
     * \brief Calculate the BEM operators for a field observation point and a boundary element.
@@ -434,7 +434,7 @@ private:
     * \param Mk - The value of the BEM operator Mk.
     * \param Lk - The value of the BEM operator Lk.
     */
-    void BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double>& Mk, std::complex<double> &Lk);
+    void BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double>& Mk, std::complex<double> &Lk, const BoundaryElements &boundaryElements);
 
     /**
     * \brief Calculate the phi BEM operators for a field observation point and a boundary element.
@@ -462,7 +462,7 @@ private:
     * \param filterConeAngle The angle of the filter cone used to filter the pivot indices
     * \return QVector<std::pair<long,long>> A vector of pivot indices for the given block
     */
-    QVector<std::pair<long,long>> getNormalFilteredPivotIndicesForField(BlockCluster* block, double filterConeAngle = 0.44);
+    QVector<std::pair<long,long>> getNormalFilteredPivotIndicesForField(BlockCluster* block, const double filterConeAngle = 0.44);
 
     /**
     * \brief Set up the gauss-puadrature weights and abscissas for the prescribed quadrature orders.
