@@ -109,7 +109,7 @@ void Test::testMatrixMatrixProduct()
 {
     // test matrix-matrix multiplication
     double multiplyRelTolerance = 0.001;
-    HMatrix hMatFromLeft = HMatrix(&columnClustertree, &rowClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
+    HMatrix hMatFromLeft = HMatrix(columnClustertree, rowClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
     Eigen::MatrixXcd hMatAsFull = hMatrix.toFullMat();
     Eigen::MatrixXcd hMatFromLeftAsFull = hMatFromLeft.toFullMat();
     HMatrix pruductHMat = HMultiply::multiplyHMat(hMatFromLeft, hMatrix, 0, multiplyRelTolerance);
@@ -147,7 +147,7 @@ void Test::testMatValForwardSubstitutions()
     // test matrix-valued forward substitution
     double relTruncTol = 0; // relative truncation tolerance
     // hMatSymmetricClusterTrees has the same ClusterTrees for the rows and the columns and is therefore amenable for H-LU-factorization
-    HMatrix hMatSym = HMatrix(&rowClustertree, &rowClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
+    HMatrix hMatSym = HMatrix(rowClustertree, rowClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
     const Eigen::MatrixXcd hMatSymFull = hMatSym.toFullMat(); // for accuracy comparison
 
     HMatrix Z = HMatrix(hMatSym); // copy the hMatSym matrix for the forwSubsMatVal operation
@@ -201,7 +201,7 @@ void Test::normApproximations()
     // test matrix-valued forward substitution
     double relTruncTol = 0; // relative truncation tolerance
     // hMatSymmetricClusterTrees has the same ClusterTrees for the rows and the columns and is therefore amenable for H-LU-factorization
-    HMatrix hMatSym = HMatrix(&rowClustertree, &rowClustertree, 0, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
+    HMatrix hMatSym = HMatrix(rowClustertree, rowClustertree, 0, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
     const Eigen::MatrixXcd hMatSymFull = hMatSym.toFullMat(); // for accuracy comparison
 
     double fullNorm = hMatSymFull.norm();
@@ -239,7 +239,7 @@ void Test::testLUFactorization()
     // test LU-factorization
     double relTruncTol = 0; // relative truncation tolerance
     // hMatSymmetricClusterTrees has the same ClusterTrees for the rows and the columns and is therefore amenable for H-LU-factorization
-    HMatrix hMatSym = HMatrix(&rowClustertree, &rowClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
+    HMatrix hMatSym = HMatrix(rowClustertree, rowClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
 
     const Eigen::MatrixXcd fullCopy = hMatSym.toFullMat();
     std::pair<HMatrix,HMatrix> LUPair = HArithm::LUDecomposition(hMatSym, 0, relTruncTol); // calculate the LU decomposition of hMatSymmetricClusterTrees

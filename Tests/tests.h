@@ -45,12 +45,12 @@ private:
         return helholtzGreensf(points.at(row), points2.at(col));
     }
 
-    ClusterTree rowClustertree = ClusterTree(&pointsForRows);
-    ClusterTree columnClustertree = ClusterTree(&pointsForCols);
+    std::shared_ptr<ClusterTree> rowClustertree = std::make_shared<ClusterTree>(&pointsForRows);
+    std::shared_ptr<ClusterTree> columnClustertree = std::make_shared<ClusterTree>(&pointsForCols);
     const long maxRank = 0;
     const double relError = 0.001;
 //    HMatrix hMatrix = HMatrix(&rowClustertree, &columnClustertree, true);
-    HMatrix hMatrix = HMatrix(&rowClustertree, &columnClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
+    HMatrix hMatrix = HMatrix(rowClustertree, columnClustertree, maxRank, relError, std::bind(&Test::implicitMatrix, this, std::placeholders::_1, std::placeholders::_2, std::ref(pointsForRows), std::ref(pointsForCols)));
 
 private slots:
     void testHMatrixTransposition();

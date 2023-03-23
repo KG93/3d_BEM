@@ -36,8 +36,8 @@ To compile 3d_BEM, follow these steps:
 Alternatively just open the .pro file with the QtCreator and compile from there.
 
 ## How to use 3d_BEM
-Some example 3d_BEM projects are provided with the source code in the *Examples* folder.
-To be continued...
+Some example 3d_BEM projects are provided with the source code in the *Examples* folder. Just click the *Load project* button in the *Project* tab and load an example *.abec* file.
+To be continued...*
 
 ## Literature
 Exhaustive background information on the Boundary Element Method and its acceleration via H-matrices can be found in the *Literature* folder.
