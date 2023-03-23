@@ -25,6 +25,7 @@ void FreqListWidget::setFrequencies(QVector<double> frequenciesARg)
         addItem(frequency);
     }
     currentSelected = currentRow();
+    frequencySolved = QVector<bool>(frequencies.length(), false);
     phiSolutionFreq.clear();
     dPhiSolutionFreq.clear();
     soundPressureFreq.clear();
@@ -172,6 +173,11 @@ std::pair<double, double> FreqListWidget::getMinAndMaxSoundPressureOnField(long 
     {
         return {0,0};
     }
+}
+
+bool FreqListWidget::allContainersSameSize()
+{
+    return phiSolutionFreq.size() == frequencies.size() && dPhiSolutionFreq.size() == frequencies.size() && soundPressureFreq.size() == frequencies.size() && frequencySolved.size() == frequencies.size();
 }
 
 void FreqListWidget::emitNewSelectionSignal(int row)

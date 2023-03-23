@@ -82,6 +82,7 @@ class BlockCluster
 
 //        return *this;
 //    }
+    virtual ~BlockCluster(){}
 
     long rows() const; /*!< \brief Get number of rows of the block. */
     long cols() const; /*!< \brief Get number of colums of the block. */

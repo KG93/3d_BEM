@@ -52,7 +52,7 @@ public:
             this->isAdmissible = true;
         }
     }
-    ~intermBlCl(){
+    virtual ~intermBlCl(){
     //        delete son11;
     //        delete son12;
     //        delete son21;
@@ -142,7 +142,7 @@ private:
     static std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> agglomerateSons(intermBlCl &block, const long rank, const double relError); /*!< \brief Return the agglomeration low rank matrix of the sub tree. */
 
 //    static void intermBlClToBlockCluster(BlockCluster* factorBlock1, intermBlCl* block); /*!< \brief Convert the intermediary product blockcluster into a ordinary block cluster. */
-    static std::unique_ptr<BlockCluster> intermBlClToBlockCluster(std::unique_ptr<intermBlCl> &block); /*!< \brief Convert the intermediary product blockcluster into a ordinary block cluster. */
+    static std::unique_ptr<BlockCluster> intermBlClToBlockCluster(std::unique_ptr<intermBlCl> &block); /*!< \brief Convert the intermediary product blockcluster into an ordinary block cluster. */
 };
 
 #endif // HMULTIPLY_H

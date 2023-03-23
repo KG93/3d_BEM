@@ -964,7 +964,7 @@ std::tuple<Eigen::MatrixXcd, Eigen::VectorXcd, Eigen::MatrixXcd> HMultiply::aggl
 //    }
 //}
 
-std::unique_ptr<BlockCluster> HMultiply::intermBlClToBlockCluster(std::unique_ptr<intermBlCl> &block) /*!< Convert the intermediary product blockcluster into a ordinary block cluster. */
+std::unique_ptr<BlockCluster> HMultiply::intermBlClToBlockCluster(std::unique_ptr<intermBlCl> &block) // Convert the intermediary product blockcluster into an ordinary block cluster.
 {
     if(block->intSon11 != nullptr && !block->isEventualLeaf)
     {

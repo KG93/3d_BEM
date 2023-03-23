@@ -19,8 +19,9 @@ public:
 
     void setFrequencies(QVector<double> frequenciesARg);
     void setSolutions(long i, Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure){
-        if(phiSolutionFreq.size() != frequencies.size() || dPhiSolution.size() != frequencies.size() || soundPressure.size() != frequencies.size())
+        if(!allContainersSameSize())
         {
+            frequencySolved = QVector<bool>(frequencies.size(), false);
             phiSolutionFreq.resize(frequencies.size());
             dPhiSolutionFreq.resize(frequencies.size());
             soundPressureFreq.resize(frequencies.size());
@@ -29,6 +30,7 @@ public:
         }
         if(i >= 0 && i < phiSolutionFreq.length() && i < dPhiSolutionFreq.length() && i < soundPressureFreq.length())
         {
+            this->frequencySolved[i] = true;
             this->phiSolutionFreq[i] = phiSolution;
             this->dPhiSolutionFreq[i] = dPhiSolution;
             this->soundPressureFreq[i] = soundPressure;
@@ -37,16 +39,19 @@ public:
     }
 
     void setSolutions(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure){
-        if(phiSolutionFreq.size() != frequencies.size() || dPhiSolution.size() != frequencies.size() || soundPressure.size() != frequencies.size())
+        if(!allContainersSameSize())
         {
+            frequencySolved = QVector<bool>(frequencies.size(), false);
             phiSolutionFreq.resize(frequencies.size());
             dPhiSolutionFreq.resize(frequencies.size());
             soundPressureFreq.resize(frequencies.size());
+            frequencySolved.resize(frequencies.size());
             minSoundPressureOnBoundary.resize(0);
             maxSoundPressureOnBoundary.resize(0);
         }
         if(currentSelected >= 0 && currentSelected < phiSolutionFreq.length() && currentSelected < dPhiSolutionFreq.length() && currentSelected < soundPressureFreq.length())
         {
+            this->frequencySolved[currentSelected] = true;
             this->phiSolutionFreq[currentSelected] = phiSolution;
             this->dPhiSolutionFreq[currentSelected] = dPhiSolution;
             this->soundPressureFreq[currentSelected] = soundPressure;
@@ -55,8 +60,9 @@ public:
     }
 
     void setSolutionsField(long i, QVector<Eigen::VectorXcd> phiSolutionFieldArg, QVector<Eigen::VectorXcd> soundPressureFieldArg){
-        if(phiSolutionField.size() != frequencies.size() || soundPressureField.size() != frequencies.size())
+        if(phiSolutionField.size() != frequencies.size() || soundPressureField.size() != frequencies.size() || frequencyFieldSolved.size() != frequencies.size())
         {
+            frequencyFieldSolved = QVector<bool>(frequencies.size(), false);
             phiSolutionField.resize(frequencies.size());
             soundPressureField.resize(frequencies.size());
             minSoundPressureOnField.resize(0);
@@ -64,6 +70,7 @@ public:
         }
         if(i >= 0 && i < phiSolutionField.length() && i < soundPressureField.length())
         {
+            this->frequencyFieldSolved[i] = true;
             this->phiSolutionField[i] = phiSolutionFieldArg;
             this->soundPressureField[i] = soundPressureFieldArg;
         }
@@ -77,11 +84,13 @@ public:
     std::pair<double, double> getMinAndMaxSoundPressureOnField(long index = -1);
 
 private:
+    bool allContainersSameSize();
     bool fieldSolved = false;
     int currentSelected = -1;
     QVector<double> frequencies;
 
 //    QVector<QVector<Eigen::Vector4d>> triangleColors;
+    QVector<bool> frequencySolved;
     QVector<Eigen::VectorXcd> phiSolutionFreq;
     QVector<Eigen::VectorXcd> dPhiSolutionFreq;
     QVector<Eigen::VectorXcd> soundPressureFreq;
@@ -90,6 +99,7 @@ private:
     Eigen::VectorXd minSoundPressureOnBoundary;
     double globalMinSoundPressureOnBoundary;
 
+    QVector<bool> frequencyFieldSolved;
     QVector<QVector<Eigen::VectorXcd> > phiSolutionField;
     QVector<QVector<Eigen::VectorXcd> > soundPressureField;
     Eigen::VectorXd maxSoundPressureOnField;
