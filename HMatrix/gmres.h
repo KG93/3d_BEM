@@ -60,7 +60,7 @@ namespace Eigen {
             typedef typename Product<HMatrixWrapper,Rhs>::Scalar Scalar;
 
             template<typename Dest>
-            static void scaleAndAddTo(Dest& dst, const HMatrixWrapper& lhs, const Rhs& rhs, const Scalar& alpha)
+            static void scaleAndAddTo(Dest &dst, const HMatrixWrapper &lhs, const Rhs &rhs, const Scalar &alpha)
             {
                 assert(alpha==Scalar(1) && "scaling is not implemented");
                 EIGEN_ONLY_USED_FOR_DEBUG(alpha);
@@ -104,7 +104,7 @@ public:
     Eigen::Index cols() const { return hMatrix->cols(); }
 
     template<typename Rhs>
-    Eigen::Product<LUPrecondidionedHMatrixWrapper,Rhs,Eigen::AliasFreeProduct> operator*(const Eigen::MatrixBase<Rhs>& x) const {
+    Eigen::Product<LUPrecondidionedHMatrixWrapper,Rhs,Eigen::AliasFreeProduct> operator*(const Eigen::MatrixBase<Rhs> &x) const {
       return Eigen::Product<LUPrecondidionedHMatrixWrapper,Rhs,Eigen::AliasFreeProduct>(*this, x.derived());
     } /*!< Implements the preconditioned matrix vector product for the matrix free GMRES api. */
 
@@ -131,9 +131,9 @@ namespace Eigen
             typedef typename Product<LUPrecondidionedHMatrixWrapper,Rhs>::Scalar Scalar;
 
             template<typename Dest>
-            static void scaleAndAddTo(Dest& dst, const LUPrecondidionedHMatrixWrapper& lhs, const Rhs& rhs, const Scalar& alpha)
+            static void scaleAndAddTo(Dest &dst, const LUPrecondidionedHMatrixWrapper &lhs, const Rhs &rhs, const Scalar &alpha)
             {
-                assert(alpha==Scalar(1) && "scaling is not implemented");
+                assert(alpha == Scalar(1) && "scaling is not implemented");
                 EIGEN_ONLY_USED_FOR_DEBUG(alpha);
 
                 Eigen::VectorXcd copy = dst;
@@ -167,7 +167,7 @@ public:
     * \param iterations The number of iterations to perform before restarting the GMRES algorithm
     * \return The solution vector to the linear system Ax = b
     */
-    static Eigen::VectorXcd gmresSolve(const HMatrixWrapper &A, Eigen::VectorXcd xGuess, const Eigen::VectorXcd b, double tolerance = 0.01, long iterations = 300)
+    static Eigen::VectorXcd gmresSolve(const HMatrixWrapper &A, const Eigen::VectorXcd &xGuess, const Eigen::VectorXcd &b, const double tolerance = 0.01, const long iterations = 300)
     {
         Eigen::GMRES<HMatrixWrapper, Eigen::IdentityPreconditioner> gmres(A);
         gmres.setTolerance(tolerance);
@@ -188,7 +188,7 @@ public:
     * \param iterations The number of iterations to perform before restarting the GMRES algorithm
     * \return The solution vector to the linear system Ax = b
     */
-    static Eigen::VectorXcd gmresLUPreconditionedSolve(const LUPrecondidionedHMatrixWrapper &AwithLU, Eigen::VectorXcd xGuess, const Eigen::VectorXcd b, double tolerance = 0.01, long iterations = 300)
+    static Eigen::VectorXcd gmresLUPreconditionedSolve(const LUPrecondidionedHMatrixWrapper &AwithLU, const Eigen::VectorXcd &xGuess, const Eigen::VectorXcd &b, const double tolerance = 0.01, const long iterations = 300)
     {
         Eigen::GMRES<LUPrecondidionedHMatrixWrapper, Eigen::IdentityPreconditioner> gmres(AwithLU);
         gmres.setTolerance(tolerance); // sets the relative tolerance for the residual
@@ -215,7 +215,7 @@ public:
     * \param iterations The number of iterations to perform before restarting the GMRES algorithm
     * \return The solution vector to the linear system Ax = b
     */
-    static Eigen::VectorXcd gmresSolve(Eigen::MatrixXcd A, Eigen::VectorXcd xGuess, const Eigen::VectorXcd b, double tolerance = 0.01, long iterations = 300)
+    static Eigen::VectorXcd gmresSolve(const Eigen::MatrixXcd &A, const Eigen::VectorXcd &xGuess, const Eigen::VectorXcd &b, const double tolerance = 0.01, const long iterations = 300)
     {
         Eigen::GMRES<Eigen::MatrixXcd, Eigen::IdentityPreconditioner> gmres(A);
         gmres.setTolerance(tolerance); // sets the relative tolerance for the residual

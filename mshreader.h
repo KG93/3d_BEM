@@ -34,7 +34,7 @@ public:
     \brief Constructor for the mshReader class.
     \param[in] parent The parent QObject.
     */
-    explicit mshReader(QObject *parent = 0);
+    explicit mshReader(QObject* parent = 0);
 
     /**
     * \brief Read the .msh file specified by the given filename.
@@ -47,7 +47,7 @@ public:
     * \param[in] include The physical and geometrical group numbers to include in the mesh.
     * \param[in] exclude The physical and geometrical group numbers to exclude from the mesh.
     */
-    void readMsh(const QString& filename, qint64 elementIndex,  bool includeAll,const  QStringList& include,const  QStringList& exclude);
+    void readMsh(const QString &filename, qint64 elementIndex, bool includeAll,const  QStringList &include, const  QStringList &exclude);
 
     /**
      * \brief Reads the sections of the msh file.

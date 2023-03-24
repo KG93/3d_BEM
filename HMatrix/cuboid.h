@@ -14,8 +14,8 @@ class Cuboid
 public:
 
     Cuboid(){
-        minPoint={inf,inf,inf};
-        maxPoint={-inf,-inf,-inf};
+        minPoint = {inf,inf,inf};
+        maxPoint = {-inf,-inf,-inf};
     }
 
     Cuboid(Eigen::Vector3d minPoint, Eigen::Vector3d maxPoint){

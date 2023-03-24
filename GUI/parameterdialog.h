@@ -76,7 +76,7 @@ public:
     * \brief Returns whether the user has chosen to calculate the matrix norm and condition number.
     * \return True if the matrix norm and condition number should be calculated, false otherwise.
     */
-    double getCalculeteNormAndConditionNumber();
+    double getCalculateNormAndConditionNumber();
 
     /**
     * \brief Returns whether the H-Field solver is enabled.

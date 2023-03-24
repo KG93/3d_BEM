@@ -33,7 +33,7 @@ public:
     * \param[in] MeshFiles The list of MeshFiles for the NodesSection.
     * \param[in] MeshFileAlias The list of MeshFileAliases for the NodesSection.
     */
-    NodesSection(QString name, const QStringList& MeshFiles, const QStringList& MeshFileAlias){
+    NodesSection(QString name, const QStringList &MeshFiles, const QStringList &MeshFileAlias){
         this->name = name;
         meshFiles = MeshFiles;
         meshFileAlias = MeshFileAlias;
@@ -45,7 +45,7 @@ public:
     * \param[in] line The line of script to handle.
     * \return `true` if the line was handled successfully, `false` otherwise.
     */
-    bool handleScriptLine(const QString& line);
+    bool handleScriptLine(const QString &line);
 //    bool checkIdentifiersAllUnique(QVector<Node> nodes);
     /**
     * \brief Handle a line of script for the NodesSection.
@@ -94,14 +94,14 @@ public:
 //    QVector<Node> nodes;
     QMultiHash<quint64,Node> nodes;
 
-//    static  bool lessThan( const Node & node1, const Node & node2 )
+//    static  bool lessThan( const Node  &node1, const Node  &node2 )
 //     {
 //         if(node1.index<node2.index)
 //         {return true;}
 //         return false;
 //     }
 
-static  bool lessThan( const int & node1, const int & node2 )
+static  bool lessThan( const int  &node1, const int  &node2 )
     {
         if(node1<node2)
         {return true;}
@@ -117,8 +117,8 @@ void sortNodeNames(){std::sort( nodeNames.begin(), nodeNames.end(), lessThan );
 
 private:
 
-    bool handleNodesListLine(const QString& line);
-    bool handleParameterSectionLine(const QString& line);
+    bool handleNodesListLine(const QString &line);
+    bool handleParameterSectionLine(const QString &line);
     bool validLine;
     bool readingNodesList = false;
     QStringList meshFiles;

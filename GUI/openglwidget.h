@@ -33,7 +33,7 @@ class openglWidget : public QOpenGLWidget
 {
     Q_OBJECT
 public:
-    explicit openglWidget(QWidget *parent = nullptr);
+    explicit openglWidget(QWidget* parent = nullptr);
 
     /**
     * \brief initializeGL initializes the OpenGL rendering context.
@@ -58,7 +58,7 @@ public:
     *
     * \param newBoundaryElements the boundary elements to be drawn.
     */
-    void setBoundaryElements(const BoundaryElements& newBoundaryElements);
+    void setBoundaryElements(const BoundaryElements &newBoundaryElements);
 
     /**
     * \brief getBoundaryElements get the boundary elements to be drawn.
@@ -70,28 +70,28 @@ public:
     *
     * \param elementsSections the element sections to be drawn.
     */
-    void setElementSections(const QList<ElementSection>& elementsSections);
+    void setElementSections(const QList<ElementSection> &elementsSections);
 
     /**
     * \brief setPointSources sets the point sources to be drawn.
     *
     * \param newPointSources the point sources to be drawn.
     */
-    void setPointSources(QVector<PointSource> newPointSources){this->pointSources = newPointSources;}
+    void setPointSources(const QVector<PointSource> &newPointSources){this->pointSources = newPointSources;}
 
     /**
     * \brief setObservationPoints sets the observation points to be drawn.
     *
     * \param observationPoints the observation points to be drawn.
     */
-    void setObservationPoints(QVector<ObservationPoint> observationPoints){this->observationPoints = observationPoints;}
+    void setObservationPoints(const QVector<ObservationPoint> &observationPoints){this->observationPoints = observationPoints;}
 
     /**
     * \brief setObservationFields sets the observation fields to be drawn.
     *
     * \param observationFields the observation fields to be drawn.
     */
-    void setObservationFields(QVector<ObservationField> observationFields);
+    void setObservationFields(const QVector<ObservationField> &observationFields);
 
     /**
     * \brief setCenterOfMass sets the center of mass of the geometry. The camera rotates around the center of mass.
@@ -170,13 +170,13 @@ public:
     * \brief Gets the value of whether to use the global (frequency-wise) or local sound pressure extrema for the triangle colouring
     * \return useGlobalMinMaxDB Whether to use the global (frequency-wise) or local sound pressure extrema for the triangle colouring
     */
-    bool getUseGlobalMinMaxDb(){return useGlobalMinMaxDB;};
+    bool getUseGlobalMinMaxDb(){return useGlobalMinMaxDB;}
 
     /**
     * \brief Sets the value of whether to use the global (frequency-wise) or local sound pressure extrema for the triangle colouring
     * \param arg The value to set whether to use the global (frequency-wise) or local sound pressure extrema for the triangle colouring
     */
-    void setUseGlobalMinMaxDb(bool arg){this->useGlobalMinMaxDB = arg; solutionColoring(); update();};
+    void setUseGlobalMinMaxDb(bool arg){this->useGlobalMinMaxDB = arg; solutionColoring(); update();}
     void setGlobalMaxDbOnBoundary(double maxSoundPressure){ this->maxGlobalDbOnBoundary = std::log10(std::abs((maxSoundPressure/referenceSoundpressure)))*20; }
     void setGlobalMinDbOnBoundary(double minSoundPressure){ this->minGlobalDbOnBoundary = std::log10(std::abs((minSoundPressure/referenceSoundpressure)))*20; }
     void setGlobalMaxDbOnField(double maxSoundPressure){ this->maxGlobalDbOnField = std::log10(std::abs((maxSoundPressure/referenceSoundpressure)))*20; }
@@ -286,11 +286,11 @@ public slots:
     void getNewSolutionField(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField);
 
 private slots:
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
-    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
     void animatePhase();
 };
 

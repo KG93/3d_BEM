@@ -7,10 +7,10 @@
 
 
 Control_Solver // Controlling parameters of the solver
-    f1=400;   f2=30000
+    f1=400;   f2=10000
     NumFrequencies=1;  
     Abscissa=log;
-    //MeshFrequency= 400  
+    MeshFrequency= 30000  
 
 Elements Enclosure-Exterior
     scale=mm

@@ -178,7 +178,7 @@ double ParameterDialog::getPreconditionerMaxRank()
     return precRankQSpinBox->value();
 }
 
-double ParameterDialog::getCalculeteNormAndConditionNumber()
+double ParameterDialog::getCalculateNormAndConditionNumber()
 {
     return calculateNormCheckBox->isChecked();
 }

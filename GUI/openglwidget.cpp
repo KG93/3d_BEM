@@ -24,29 +24,29 @@ void openglWidget::initializeGL()
     initialized = true;
 }
 
-void openglWidget::setBoundaryElements(const BoundaryElements& newBoundaryElements)
+void openglWidget::setBoundaryElements(const BoundaryElements &newBoundaryElements)
 {
     boundaryElements = newBoundaryElements;
     drawFieldSolution = false;
-    if(boundaryElements.soundPressure.size()!= 0)
+    if(boundaryElements.soundPressure.size() != 0)
     {
-        maxDbOnBoundary=std::log10(std::abs((boundaryElements.soundPressure(0)/referenceSoundpressure)))*20;
-        minDbOnBoundary=std::log10(std::abs((boundaryElements.soundPressure(0)/referenceSoundpressure)))*20;
+        maxDbOnBoundary = std::log10(std::abs((boundaryElements.soundPressure(0)/referenceSoundpressure)))*20;
+        minDbOnBoundary = std::log10(std::abs((boundaryElements.soundPressure(0)/referenceSoundpressure)))*20;
         for(int i=0;i<boundaryElements.soundPressure.size();i++)
         {
-            if(abs(boundaryElements.soundPressure(i))<referenceSoundpressure)
+            if(abs(boundaryElements.soundPressure(i)) < referenceSoundpressure)
             {
-                boundaryElements.soundPressure(i)=referenceSoundpressure;
+                boundaryElements.soundPressure(i) = referenceSoundpressure;
             }
 //            double tmp=std::abs((boundaryElements.phiSolution(i)));
-            double tmp=std::log10(std::abs((boundaryElements.soundPressure(i)/referenceSoundpressure)))*20;
+            double tmp = std::log10(std::abs((boundaryElements.soundPressure(i)/referenceSoundpressure)))*20;
             if(tmp>maxDbOnBoundary)
             {
-                maxDbOnBoundary=tmp;
+                maxDbOnBoundary = tmp;
             }
             if(tmp<minDbOnBoundary)
             {
-                minDbOnBoundary=tmp;
+                minDbOnBoundary = tmp;
             }
         }
 //        std::cout<<"Max soundpressure on element: "<<maxDbOnBoundary<<std::endl;
@@ -55,7 +55,7 @@ void openglWidget::setBoundaryElements(const BoundaryElements& newBoundaryElemen
     solutionColoring();
 }
 
-void openglWidget::setObservationFields(QVector<ObservationField> obsFields)
+void openglWidget::setObservationFields(const QVector<ObservationField> &obsFields)
 {
     int index = -1; // the value stays -1 if no field with solution exists
     this->observationFields = obsFields;
@@ -64,25 +64,20 @@ void openglWidget::setObservationFields(QVector<ObservationField> obsFields)
     {
         if(observationFields.at(i).soundPressure.size() == observationFields.at(i).triangles.size() && observationFields.at(i).triangles.size() != 0)
         {
-//            std::cout<<"draw field solution"<<std::endl;
             index = i; // --> observationFields.at(index).phiSolution.size()>0
             drawFieldSolution = true;
-            break;
+            continue;
         }
         else if(observationFields.at(i).triangleMidPoints.size() != observationFields.at(i).triangles.size() && observationFields.at(i).triangles.size() != 0)
         {
-//            std::cout<<"draw field solution"<<std::endl;
-            drawFieldSolution=false;
+            drawFieldSolution = false;
             return;
         }
     }
     if(drawFieldSolution)
     {
-        if(index != -1)
-        {
-            maxDbOnField = std::log10(std::abs((observationFields.at(index).soundPressure(0)/referenceSoundpressure)))*20;
-            minDbOnField = std::log10(std::abs((observationFields.at(index).soundPressure(0)/referenceSoundpressure)))*20;
-        }
+        maxDbOnField = std::log10(std::abs((observationFields.at(index).soundPressure(0)/referenceSoundpressure)))*20;
+        minDbOnField = std::log10(std::abs((observationFields.at(index).soundPressure(0)/referenceSoundpressure)))*20;
 
         for(int j=0; j<observationFields.size(); j++)
         {
@@ -90,23 +85,21 @@ void openglWidget::setObservationFields(QVector<ObservationField> obsFields)
             {
                 break;
             }
-//            std::cout<<"Max soundpressure on field: "<<max<<std::endl;
             observationFields[j].triangleColors.resize(observationFields.at(j).triangleMidPoints.size());
-            for(int i=0;i<observationFields.at(j).phiSolution.rows();i++)
+            for(int i=0; i<observationFields.at(j).phiSolution.rows(); i++)
             {
-                if(abs(observationFields.at(j).soundPressure(i))<referenceSoundpressure)
+                if(abs(observationFields.at(j).soundPressure(i)) < referenceSoundpressure)
                 {
-                    observationFields[j].soundPressure(i)=referenceSoundpressure;
+                    observationFields[j].soundPressure(i)  =referenceSoundpressure;
                 }
-//                double tmp=std::abs((observationFields.at(j).phiSolution(i)));
-                double tmp=std::log10(std::abs((observationFields.at(j).soundPressure(i)/referenceSoundpressure)))*20;
-                if(tmp>maxDbOnField)
+                double tmp = std::log10(std::abs((observationFields.at(j).soundPressure(i)/referenceSoundpressure)))*20;
+                if(tmp > maxDbOnField)
                 {
-                    maxDbOnField=tmp;
+                    maxDbOnField = tmp;
                 }
-                if(tmp<minDbOnField)
+                if(tmp < minDbOnField)
                 {
-                    minDbOnField=tmp;
+                    minDbOnField = tmp;
                 }
             }
         }

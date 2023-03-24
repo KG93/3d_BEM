@@ -20,7 +20,7 @@ class ProjectFileHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit ProjectFileHandler(QObject *parent = 0);
+    explicit ProjectFileHandler(QObject* parent = 0);
 
     /**
     * \brief Read a project file with the given file name.

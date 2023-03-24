@@ -1,12 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "../mshreader.h"
+//#include "../mshreader.h"
 #include "../projectfilehandler.h"
 #include "openglwidget.h"
 #include "../SolvingScript/solvingscriptreader.h"
 #include "../ObservationScript/observationscriptreader.h"
-#include "../boundaryelements.h"
+//#include "../boundaryelements.h"
 #include "../boundaryelementsolver.h"
 #include "registerscriptstab.h"
 #include "logwidget.h"
@@ -22,6 +22,8 @@
 #include <QFileInfo>
 #include<QMessageBox>
 #include<QSlider>
+#include <QThread>
+
 
 /**
 * \class MainWindow
@@ -40,15 +42,15 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
 protected:
 //        void resizeEvent(QResizeEvent *event) override;
 
 private:
-    Ui::MainWindow *ui;
-    QTabWidget *tabWidget;
+    Ui::MainWindow* ui;
+    QTabWidget* tabWidget;
     LogWidget* generalLog;
     LogWidget* errorLog;
     QWidget* widget;
@@ -64,6 +66,7 @@ private:
     SolvingScriptReader* solvScriptReader;
     ObservationScriptReader* obsScriptReader;
     BoundaryElementSolver* boundaryElementSolver = new BoundaryElementSolver;
+    QThread workerThread;
 
     FreqListWidget* freqWidget;
     QVector<double> freq;
@@ -97,6 +100,8 @@ private slots:
     void loadProject(); /*!< Handles the actual work of (re-)loading a project. */
     void loadObservationScript(); /*!< (Re-)load the observation script. */
     void calculateSolution(); /*!< Use the boundary element solver to calculate the solution. */
+    void prepareBemSolverThread();
+    void startBemSolverInThread(); /*!< Start the boundary element solver in a worker thread. */
     void showSolverParameterDialog(); /*!< Set the parameters for the solver. */
     void showFreqSelector(); /*!< Open the frequency selector widget. */
     void showSolutionOnBoundaryElements(); /*!< Signal the opengl widget to show the solution on the boundary. */

@@ -7,7 +7,6 @@
 
 #include "boundaryelements.h"
 #include "LinearElements/linearboundaryelements.h"
-#include "SolvingScript/solvingscriptreader.h"
 #include "trianglequadraturerules.h"
 #include "linequadraturerules.h"
 #include "gls.h"
@@ -367,16 +366,12 @@ public:
     BoundaryElements* getBoundaryElementsReference() {return &boundaryElements;}
 
     /**
-    * \brief Start the boundary element solver.
-    * The function will either call regularSolve(), regularSolveWithGMRES() or hMatrixSolve().
-    */
-    void solve();
-
-    /**
     * \brief Start the solver for the field calculation.
     * The function will either call calculateFieldSolutionRegular() or calculateFieldSolutionFast() (with H-matrix acceleration).
     */
     void calculateFieldSolution();
+
+    void phiSolutionToSoundPressure(); /*!< \brief Calculate the sound pressure from the acoustic potential (phi). */
 
     Eigen::VectorXcd directRightHandSide;
     Eigen::VectorXcd HMatRightHandSide;
@@ -434,7 +429,7 @@ private:
     * \param Mk - The value of the BEM operator Mk.
     * \param Lk - The value of the BEM operator Lk.
     */
-    void BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double>& Mk, std::complex<double> &Lk, const BoundaryElements &boundaryElements);
+    void BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double> &Mk, std::complex<double> &Lk, const BoundaryElements &boundaryElements);
 
     /**
     * \brief Calculate the phi BEM operators for a field observation point and a boundary element.
@@ -545,7 +540,7 @@ private:
     * \param Mtk The resulting Mtk operator \f$ \frac{\partial G(\mathbf{p},\mathbf{q}) }{\partial n_q} \f$ will be stored in this variable.
     * \param Nk The resulting Nk \frac{\partial^2 G(\mathbf{p},\mathbf{q}) }{\partial n_q \partial n_p} operator will be stored in this variable.
     */
-    inline void BemOperatorsConst(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk);
+    inline void BemOperatorsConst(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk);
 
     /**
     * Calculate the singular collocation BEM operators for constant triangles. Used in the ordinary (non-accalerated) BEM and the full matrices of the H-BEM. Singularities are treated by a polar integration method.
@@ -555,7 +550,7 @@ private:
     * \param Mtk The resulting Mtk operator \f$ \frac{\partial G(\mathbf{p},\mathbf{q}) }{\partial n_q} \f$ will be stored in this variable.
     * \param Nk The resulting Nk \frac{\partial^2 G(\mathbf{p},\mathbf{q}) }{\partial n_q \partial n_p} operator will be stored in this variable.
     */
-    inline void BemOperatorsSingularPolarInt(const long triangleIndex, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk);
+    inline void BemOperatorsSingularPolarInt(const long triangleIndex, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk);
 
     /**
     * Calculate the singular collocation BEM operators for constant triangles. Used in the ordinary (non-accalerated) BEM and the full matrices of the H-BEM. Singularities are treated by sigularity subtraction.
@@ -566,7 +561,7 @@ private:
     * \param Mtk The resulting Mtk operator \f$ \frac{\partial G(\mathbf{p},\mathbf{q}) }{\partial n_q} \f$ will be stored in this variable.
     * \param Nk The resulting Nk \frac{\partial^2 G(\mathbf{p},\mathbf{q}) }{\partial n_q \partial n_p} operator will be stored in this variable.
     */
-    inline void BemOperatorsSingularitySubtraction(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk);
+    inline void BemOperatorsSingularitySubtraction(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk);
 
     /**
     * \brief Calculates the nearly-singular BEM operators for collocation points near the singularity for constant triangles.
@@ -579,7 +574,7 @@ private:
     * \param Mtk The resulting Mtk operator will be stored in this variable.
     * \param Nk The resulting Nk operator will be stored in this variable.
     */
-    inline void BemOperatorsNearSingSinh(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk);
+    inline void BemOperatorsNearSingSinh(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk);
 
     /**
     * \brief Calculates the nearly-singular BEM operators for collocation points near the singularity for constant triangles.
@@ -591,7 +586,7 @@ private:
     * \param Mtk The resulting M^T_k operator will be written to this variable.
     * \param Nk The resulting N_k operator will be written to this variable.
     */
-    inline void BemOperatorsNearSing(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk);
+    inline void BemOperatorsNearSing(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk);
 
     /**
     * \brief Calculate the collocation BEM operators for a reflected geometry. No special singularity treatment.
@@ -605,7 +600,7 @@ private:
     * \param boundaryElements The boundary elements.
     * \param reflectedElements The reflected boundary elements.
     */
-    inline void BemOperatorsReflected(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk, const BoundaryElements &boundaryElements, const BoundaryElements &reflectedElements);
+    inline void BemOperatorsReflected(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk, const BoundaryElements &boundaryElements, const BoundaryElements &reflectedElements);
 
     /**
     *  \brief Calculates the non-singular BEM operators for the reflection phi-matrix. Used in the ACA method.
@@ -686,10 +681,10 @@ private:
 //    * \param Mtk The resulting Mtk operator \f$ \frac{\partial G(\mathbf{p},\mathbf{q}) }{\partial n_q} \f$ will be stored in this variable.
 //    * \param Nk The resulting Nk \frac{\partial^2 G(\mathbf{p},\mathbf{q}) }{\partial n_q \partial n_p} operator will be stored in this variable.
 //    */
-//    void BemOperatorsLinear(const long collocationPointIndex, const long domainIndex, Eigen::Vector3d shapeFuncNodeWeights, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk, const LinearBoundaryElements &elements, const bool singularity);
-//    inline void BemOperatorsLinearNode1(const long collocationPointIndex, const long domainIndex, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk, const LinearBoundaryElements &elements, const bool singularity);
-//    inline void BemOperatorsLinearNode2(const long collocationPointIndex, const long domainIndex, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk, const LinearBoundaryElements &elements, const bool singularity);
-//    inline void BemOperatorsLinearNode3(const long collocationPointIndex, const long domainIndex, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk, const LinearBoundaryElements &elements, const bool singularity);
+//    void BemOperatorsLinear(const long collocationPointIndex, const long domainIndex, Eigen::Vector3d shapeFuncNodeWeights, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk, const LinearBoundaryElements &elements, const bool singularity);
+//    inline void BemOperatorsLinearNode1(const long collocationPointIndex, const long domainIndex, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk, const LinearBoundaryElements &elements, const bool singularity);
+//    inline void BemOperatorsLinearNode2(const long collocationPointIndex, const long domainIndex, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk, const LinearBoundaryElements &elements, const bool singularity);
+//    inline void BemOperatorsLinearNode3(const long collocationPointIndex, const long domainIndex, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk, const LinearBoundaryElements &elements, const bool singularity);
 
 
     void calculateBoundaryConditionAndSourceTermVector(); /*!< Set up the boundary conditions and the resulting implicit substitutions. Also calculate the source term vector. */
@@ -742,6 +737,11 @@ signals:
     void updateLog(); /*!< Update the GUI log. */
 
 public slots:
+    /**
+    * \brief Start the boundary element solver.
+    * The function will either call regularSolve(), regularSolveWithGMRES() or hMatrixSolve().
+    */
+    void solve();
     void setNoCoupling(){burtonMillerCoupling = false; kirkupCoupling = false;} /*!< Turn off the coupling for the boundary element method. */
     void setBurtonMillerCoupling(){burtonMillerCoupling = true; kirkupCoupling = false;} /*!< Use the coupling parameter of the classic bourton-miller BEM. */
     void setKirkupCoupling(){burtonMillerCoupling = false; kirkupCoupling = true;} /*!< Use the coupling parameter recommended by Stephen Kirkup. */

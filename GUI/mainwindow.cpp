@@ -483,6 +483,20 @@ void MainWindow::calculateSolution()
     setUpMenu();
     openGlWidget->update();
     freqWidget->show();
+//    startBemSolverInThread();
+}
+
+void MainWindow::prepareBemSolverThread()
+{
+
+}
+
+void MainWindow::startBemSolverInThread()
+{
+    boundaryElementSolver->moveToThread(&workerThread);
+//    connect(this, &Controller::operate, boundaryElementSolver, boundaryElementSolver->solve());
+    connect(&workerThread, SIGNAL(started()), boundaryElementSolver, SLOT(solve())/*, Qt::UniqueConnection*/);
+    workerThread.start();
 }
 
 void MainWindow::showSolverParameterDialog() // Set the parameters for the solver.
@@ -544,6 +558,8 @@ void MainWindow::calculateSolutionOnField()
             phiSolutionField[j] = obsFields.at(j).phiSolution;
             soundPressureField[j] = obsFields.at(j).soundPressure;
         }
+        boundaryElementSolver->phiSolutionToSoundPressure();
+        freqWidget->setSolutions(i, boundaryElementSolver->getBoundaryElements().phiSolution, boundaryElementSolver->getBoundaryElements().dPhiSolution, boundaryElementSolver->getBoundaryElements().soundPressure);
         freqWidget->setSolutionsField(i, phiSolutionField, soundPressureField);
     }
     openGlWidget->setBoundaryElements(boundaryElementSolver->getBoundaryElements());
@@ -893,7 +909,7 @@ void MainWindow::setSolverParameters()
     boundaryElementSolver->setPreconditionerRelativeError(parameterDialog->getPreconditionerRelError());
     boundaryElementSolver->setPreconditionerRank(parameterDialog->getPreconditionerMaxRank());
 
-    boundaryElementSolver->setCalculateNormAndConditionNumber(parameterDialog->getCalculeteNormAndConditionNumber());
+    boundaryElementSolver->setCalculateNormAndConditionNumber(parameterDialog->getCalculateNormAndConditionNumber());
 
     boundaryElementSolver->setHFieldSolving(parameterDialog->getUseHFieldSolver());
     boundaryElementSolver->setFieldACARelError(parameterDialog->getHFieldSolverRelError());

@@ -7,7 +7,7 @@ void global::trimMemory() /*!< Call malloc_trim on Linux. */
     #endif
 }
 
-double global::stringWithUnitsToDouble(QString input, const QString units, bool& validLine)
+double global::stringWithUnitsToDouble(QString input, const QString units, bool &validLine)
 {
     input.remove("\\s");
     QRegularExpression removeChars(units+"$");
@@ -54,7 +54,7 @@ double global::stringWithUnitsToDouble(QString input, const QString units, bool&
     return value;
 }
 
-int global::stringWithUnitsToInt(QString input, const QString units, bool& validLine)
+int global::stringWithUnitsToInt(QString input, const QString units, bool &validLine)
 {
     input.remove("\\s");
 //    QRegularExpression removeChars("\\s*"+units+"\\s*$");
@@ -98,7 +98,7 @@ int global::stringWithUnitsToInt(QString input, const QString units, bool& valid
     return value;
 }
 
-quint64 global::stringWithUnitsToUInt(QString input, const QString units, bool& validLine)
+quint64 global::stringWithUnitsToUInt(QString input, const QString units, bool &validLine)
 {
     input.remove("\\s");
 //    QRegularExpression removeChars("\\s*"+units+"\\s*$");
@@ -144,30 +144,30 @@ quint64 global::stringWithUnitsToUInt(QString input, const QString units, bool& 
     return value;
 }
 
-QRegularExpression global::regExWithOneValue(const QString& identifier)
+QRegularExpression global::regExWithOneValue(const QString &identifier)
 {
 //    return QRegularExpression("^\\s*"+identifier+"\\s*={1}\\s*([\"\'][\\w\\s]+[\"\']|\\w+)", QRegularExpression::CaseInsensitiveOption);
     return QRegularExpression("^\\s*"+identifier+"\\s*={1}\\s*([\"\'][^\"\']+[\"\']|.+$)", QRegularExpression::CaseInsensitiveOption);
 }
 
-QRegularExpression global::regExWithOptionalValue(const QString& identifier)
+QRegularExpression global::regExWithOptionalValue(const QString &identifier)
 {
     return QRegularExpression("^\\s*"+identifier+"\\s*={1}\\s*([\"\'][^\"\']+[\"\']|.+$)?", QRegularExpression::CaseInsensitiveOption);
 }
 
-void global::removeQuotesAndWhitespace(QString& line)
+void global::removeQuotesAndWhitespace(QString &line)
 {
     QRegularExpression removeChars("[\"\'\\s]");
     line.remove(removeChars);
 }
 
-void global::removeQuotes(QString& line)
+void global::removeQuotes(QString &line)
 {
     QRegularExpression removeChars("[\"\']");
     line.remove(removeChars);
 }
 
-QStringList global::stringToStringListQuotesIntact(const QString& currentLine)
+QStringList global::stringToStringListQuotesIntact(const QString &currentLine)
 {
     QStringList list;
     QRegularExpression strings( "[\"\']([^\"\']*)[\"\']|(\\S+)"); //identify any string between "or'-quotes or any string which isn't whitespace
@@ -184,7 +184,7 @@ bool global::smallerFirst(QPair<quint64,quint64> a, QPair<quint64,quint64> b)
     return a.first > b.first;
 }
 
-void global::mergeIntervals(QVector<QPair<quint64,quint64>>& intervalList)
+void global::mergeIntervals(QVector<QPair<quint64,quint64>> &intervalList)
 {
     for(int i=0;i<intervalList.length();i++)
     {
@@ -243,7 +243,7 @@ void global::mergeIntervals(QVector<QPair<quint64,quint64>>& intervalList)
     printIntervalList(intervalList);
 }
 
-QVector<quint64> global::pairListToSinglesVec(const QVector<QPair<quint64,quint64>>& pairVec)
+QVector<quint64> global::pairListToSinglesVec(const QVector<QPair<quint64,quint64>> &pairVec)
 {
     QVector<quint64>singlesVector;
     singlesVector.reserve(pairVec.length() * 2);
@@ -366,7 +366,7 @@ QVector<QPair<quint64,quint64>> global::diffIntervals(QVector<QPair<quint64,quin
     return diffVector;
 }
 
-void global::printIntervalList(const QVector<QPair<quint64,quint64>>& intervalList)
+void global::printIntervalList(const QVector<QPair<quint64,quint64>> &intervalList)
 {
     for(int i=0; i<intervalList.length(); i++)
     {
@@ -380,7 +380,7 @@ bool global::upperBoundCompare(QPair<quint64,quint64> a, QPair<quint64,quint64> 
     return a.second < b.second;
 }
 
-bool global::valueIsInInterval(quint64 value,const QVector<QPair<quint64,quint64>>& intervalVector)
+bool global::valueIsInInterval(quint64 value,const QVector<QPair<quint64,quint64>> &intervalVector)
 {
 //    auto interval=std::lower_bound(intervalVector.begin(), intervalVector.end(), qMakePair(value,value), upperBoundCompare);
     for(int i=0;i<intervalVector.size();i++)
@@ -432,7 +432,7 @@ QVector<long> global::createRandomPermutationVector(const long startIndex, const
     return indexes;
 }
 
-Eigen::VectorXcd global::getTrianglesPhi(const QVector<VectorTriangle>& triangleVector)
+Eigen::VectorXcd global::getTrianglesPhi(const QVector<VectorTriangle> &triangleVector)
 {
     long numberOfTriangles = triangleVector.size();
     Eigen::VectorXcd phiVector(numberOfTriangles);
@@ -443,7 +443,7 @@ Eigen::VectorXcd global::getTrianglesPhi(const QVector<VectorTriangle>& triangle
     return phiVector;
 }
 
-Eigen::VectorXcd global::getTrianglesDPhi(const QVector<VectorTriangle>& triangleVector)
+Eigen::VectorXcd global::getTrianglesDPhi(const QVector<VectorTriangle> &triangleVector)
 {
     long numberOfTriangles = triangleVector.size();
     Eigen::VectorXcd dPhiVector(numberOfTriangles);
@@ -454,7 +454,7 @@ Eigen::VectorXcd global::getTrianglesDPhi(const QVector<VectorTriangle>& triangl
     return dPhiVector;
 }
 
-void global::setTrianglesPhi(QVector<VectorTriangle>& triangleVector, const Eigen::VectorXcd& phiVector)
+void global::setTrianglesPhi(QVector<VectorTriangle> &triangleVector, const Eigen::VectorXcd &phiVector)
 {
     if(triangleVector.size() != phiVector.size())
     {
@@ -469,7 +469,7 @@ void global::setTrianglesPhi(QVector<VectorTriangle>& triangleVector, const Eige
     }
 }
 
-void global::setTrianglesDPhi(QVector<VectorTriangle>& triangleVector, const Eigen::VectorXcd& dPhiVector)
+void global::setTrianglesDPhi(QVector<VectorTriangle> &triangleVector, const Eigen::VectorXcd &dPhiVector)
 {
     if(triangleVector.size() != dPhiVector.size())
     {
@@ -580,7 +580,7 @@ Eigen::Vector3d global::triangleCompWiseMinNorm(const VectorTriangle &triangle)
 
 
 
-Eigen::Vector3d global::calculateMinNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/)
+Eigen::Vector3d global::calculateMinNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral> &quadrilateralVector*/)
 {
     Eigen::MatrixXd coordinates(3, 3 * triangleVector.length());
     for(int i = 0; i < triangleVector.length(); i++)

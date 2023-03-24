@@ -19,7 +19,7 @@ class triangleQuadratureRules
 {
 public:
     triangleQuadratureRules();
-    static Eigen::MatrixX3d weightsandAbscissa(int order); /*!< \brief Get weights and abscissas that correspond to the order. Implemented up to order 15. */
+    static Eigen::MatrixX3d weightsandAbscissa(unsigned int order); /*!< \brief Get weights and abscissas that correspond to the order. Implemented up to order 15. */
 };
 
 #endif // TRIANGLEQUADRATURERULES_H

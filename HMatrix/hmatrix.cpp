@@ -115,7 +115,7 @@ void BlockCluster::compressAdmissibleBlock(const long rank, const double relErro
         long localARank = std::min(localRank, UMat.rows());
         long localBRank = std::min(localRank, VAdjMat.cols());
 
-        Eigen::HouseholderQR<Eigen::MatrixXcd> qrA(UMat /** matrixBlock.singularValues.asDiagonal()*/);
+        Eigen::HouseholderQR<Eigen::MatrixXcd> qrA(UMat);
         Eigen::HouseholderQR<Eigen::MatrixXcd> qrB_T(VAdjMat.transpose());
         Eigen::MatrixXcd R_A = qrA.matrixQR().triangularView<Eigen::Upper>().toDenseMatrix().topRows(localARank);
         Eigen::MatrixXcd R_B_Transpose = qrB_T.matrixQR().triangularView<Eigen::Upper>().transpose().toDenseMatrix().leftCols(localBRank);

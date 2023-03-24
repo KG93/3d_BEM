@@ -29,7 +29,7 @@ public:
     * \param beta n-length vector
     * \param f n-length vector
     */
-    static void calculateGLS(Eigen::MatrixXcd& A, Eigen::VectorXcd& x, Eigen::MatrixXcd& B, Eigen::VectorXcd& y, Eigen::VectorXcd& c, Eigen::VectorXcd& alpha, Eigen::VectorXcd& beta, Eigen::VectorXcd& f);
+    static void calculateGLS(Eigen::MatrixXcd &A, Eigen::VectorXcd &x, Eigen::MatrixXcd &B, Eigen::VectorXcd &y, Eigen::VectorXcd &c, Eigen::VectorXcd &alpha, Eigen::VectorXcd &beta, Eigen::VectorXcd &f);
 };
 
 #endif // GLS_H

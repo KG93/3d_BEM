@@ -14,10 +14,10 @@ class FreqListWidget : public QListWidget
 {
     Q_OBJECT
 public:
-    FreqListWidget(QWidget *parent = nullptr);
+    FreqListWidget(QWidget* parent = nullptr);
     ~FreqListWidget();
 
-    void setFrequencies(QVector<double> frequenciesARg);
+    void setFrequencies(QVector<double> frequenciesArg);
     void setSolutions(long i, Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure){
         if(phiSolutionFreq.size() != frequencies.size() || dPhiSolution.size() != frequencies.size() || soundPressure.size() != frequencies.size())
         {
