@@ -9,7 +9,7 @@ BoundaryElementSolver::BoundaryElementSolver()
 
 }
 
-void BoundaryElementSolver::solve()
+void BoundaryElementSolver::calculateBoundarySolution()
 {
     /////// for generating images /////////////
 //    std::shuffle(boundaryElements.triangles.begin(), boundaryElements.triangles.end(), std::random_device());
@@ -32,38 +32,32 @@ void BoundaryElementSolver::solve()
     wavenumberSquaredHalf = wavenumberSquared / 2.0;
     iWavenumber = wavenumber * imaginaryUnit;
     setUpQuadratureRules();
-    if(burtonMillerCoupling == true)
+
+    switch(bemSolverParameters.coupling)
     {
+    case NoCoupling:
+        couplingParameter = 0.0;
+        message = QString("No coupling. Coupling parameter: "+QString::number(std::real(couplingParameter))+" "+QString::number(std::imag(couplingParameter)));
+        std::cout<<"No coupling. Coupling parameter: "<<couplingParameter<<std::endl;
+        break;
+    case BurtonMillerCoupling:
         couplingParameter = imaginaryUnit / wavenumber;
         if(std::abs(wavenumber) < global::global::tiny)
         {
             couplingParameter = imaginaryUnit;
         }
-        std::cout<<"Burton and Miller coupling with parameter: "<<couplingParameter<<std::endl;
+        std::cout << "Burton and Miller coupling with parameter: " << couplingParameter << std::endl;
         message = QString("Burton and Miller coupling with parameter: "+QString::number(std::real(couplingParameter))+" "+QString::number(std::imag(couplingParameter)));
-    }
-    else if(kirkupCoupling == true)
-    {
+        break;
+    case KirkupCoupling:
         couplingParameter = imaginaryUnit / (wavenumber + 1.0);
-        std::cout<<"Kirkup coupling with parameter: "<<couplingParameter<<std::endl;
+        std::cout << "Kirkup coupling with parameter: " << couplingParameter << std::endl;
         message = QString("Kirkup coupling with parameter: "+QString::number(std::real(couplingParameter))+" "+QString::number(std::imag(couplingParameter)));
-    }
-    else
-    {
-        couplingParameter = 0.0;
-        message = QString("No coupling. Coupling parameter: "+QString::number(std::real(couplingParameter))+" "+QString::number(std::imag(couplingParameter)));
-        std::cout<<"No coupling. Coupling parameter: "<<couplingParameter<<std::endl;
+        break;
     }
     logStrings::logString.append("\r\n" + message + "\r\n");
-
     couplingParameterHalf = couplingParameter / 2.0;
-    if(negativeCoupling)
-    {
-        message = QString("Coupling parameter sign set to negative.");
-        std::cout << "Coupling parameter sign set to negative." << std::endl;
-        logStrings::logString.append("\r\n" + message + "\r\n");
-        setCouplingParameterNegative();
-    }
+
     std::cout << "Number of point sources: "<<pointSources.size() << std::endl;
     message = QString("Number of point sources: "+QString::number(pointSources.size()));
     logStrings::logString.append(message + "\r\n");
@@ -71,16 +65,14 @@ void BoundaryElementSolver::solve()
     std::cout << "Wavenumber: " << wavenumber << std::endl;
     message = QString("Wavenumber: "+QString::number(std::real(wavenumber))+" "+QString::number(std::imag(wavenumber)));
     logStrings::logString.append(message+"\r\n");
-    std::cout<<"Frequency: "<<frequency<<std::endl;
-    message=QString("Frequency: "+QString::number(frequency));
+    std::cout << "Frequency: " << frequency << std::endl;
+    message = QString("Frequency: "+QString::number(frequency));
     logStrings::logString.append(message+"\r\n");
 //    std::cout<<"NumberOfRegularWeightsAndAbscissa: "<<numberOfRegularWeightsAndAbscissa<<std::endl;
 
-    if(hMatSolving == true) // use H-matrix solver
+    if(bemSolverParameters.hMatSolving == true) // use H-matrix solver
     {
         Timer timer;
-
-
         timer.start();
         hMatrixSolve();
         timer.stop();
@@ -140,14 +132,9 @@ void BoundaryElementSolver::solve()
     {
         regularSolveWithLU();
     }
-    if(frequency != 0) // calculate sound pressure from acoustic potential
-    {
-        boundaryElements.soundPressure = (imaginaryUnit*airDensity * PI2 * frequency) * boundaryElements.phiSolution;
-    }
-    else // laplace equation
-    {
-        boundaryElements.soundPressure = (imaginaryUnit*airDensity * PI2) * boundaryElements.phiSolution;
-    }
+
+    phiSolutionToSoundPressure();
+
     emit updateLog();
 }
 
@@ -156,8 +143,8 @@ void BoundaryElementSolver::regularSolveWithLU()
     int numberOfElements = boundaryElements.triangles.length();
     if(numberOfElements == 0)
     {
-        std::cout<<"No elements!"<<std::endl;
-        QString message=QString("No elements!");
+        std::cout << "No elements!" << std::endl;
+        QString message = QString("No elements!");
         logStrings::logString.append(message+"\r\n");
         return;
     }
@@ -167,20 +154,20 @@ void BoundaryElementSolver::regularSolveWithLU()
 
     if(polarIntegOfSingOps && frequency != 0)
     {
-        std::cout<<"Number of elements in solver with polar integration: "<<numberOfElements<<std::endl;
-        QString message=QString("Number of elements in solver with polar integration: "+QString::number(numberOfElements));
+        std::cout << "Number of elements in solver with polar integration: " << numberOfElements << std::endl;
+        QString message = QString("Number of elements in solver with polar integration: "+QString::number(numberOfElements));
         logStrings::logString.append(message+"\r\n");
     }
     else
     {
-        std::cout<<"Number of elements in solver with singularity substraction: "<<numberOfElements<<std::endl;
-        QString message=QString("Number of elements in solver with singularity substraction: "+QString::number(numberOfElements));
+        std::cout << "Number of elements in solver with singularity substraction: " << numberOfElements << std::endl;
+        QString message = QString("Number of elements in solver with singularity substraction: "+QString::number(numberOfElements));
         logStrings::logString.append(message+"\r\n");
     }
     Timer timer;
     timer.start();
-    std::cout<<"Start of matrix initialization."<<std::endl;
-    QString message=QString("Start of matrix initialization.");
+    std::cout << "Start of matrix initialization." << std::endl;
+    QString message = QString("Start of matrix initialization.");
     logStrings::logString.append(message+"\r\n");
     emit updateLog();
     Eigen::MatrixXcd matrixPhi(numberOfElements,numberOfElements);
@@ -238,11 +225,11 @@ void BoundaryElementSolver::regularSolveWithLU()
     else // treat the singularitias with singularity subtraction instead of polar integration (which isn't implemented for f=0)
     {
         #pragma omp parallel for private(Mk,Nk,Lk,Mtk,onPanel)// parallelizes matrix initialization
-        for(int column=0;column<numberOfElements;column++)
+        for(int column=0; column<numberOfElements; column++)
         {
-            for(int row=0;row<numberOfElements;row++)
+            for(int row=0; row<numberOfElements; row++)
             {
-                if(row==column)
+                if(row == column)
                 {
                     BemOperatorsSingularitySubtraction(row,column,Lk,Mk,Mtk,Nk);
                 }
@@ -261,7 +248,7 @@ void BoundaryElementSolver::regularSolveWithLU()
 
     timer.stop();
     std::cout << "Runtime of matrix initialization: " << timer.secs() << " seconds" << std::endl;
-    message=QString("Runtime of matrix initialization: " + QString::number(timer.secs())+" seconds.");
+    message = QString("Runtime of matrix initialization: " + QString::number(timer.secs())+" seconds.");
     logStrings::logString.append(message + "\r\n");
     emit updateLog();
     timer.reset();
@@ -321,7 +308,7 @@ void BoundaryElementSolver::regularSolveWithLU()
     }
     timer.stop();
     std::cout << "Runtime of gls solver: " << timer.secs() << " seconds" << std::endl;
-    message=QString("Runtime of gls solver: " + QString::number(timer.secs()) + " seconds.");
+    message = QString("Runtime of gls solver: " + QString::number(timer.secs()) + " seconds.");
     logStrings::logString.append(message+"\r\n");
     emit updateLog();
 
@@ -357,14 +344,14 @@ void BoundaryElementSolver::regularSolveWithGMRES(double error)
         return;
     }
 
-    std::cout<<"Number of elements in regularSolveWithGMRES: "<<numberOfElements<<std::endl;
-    QString message=QString("Number of elements in regularSolveWithGMRES: "+QString::number(numberOfElements));
+    std::cout << "Number of elements in regularSolveWithGMRES: " << numberOfElements << std::endl;
+    QString message = QString("Number of elements in regularSolveWithGMRES: "+QString::number(numberOfElements));
     logStrings::logString.append(message+"\r\n");
 
     Timer timer;
     timer.start();
     std::cout<<"Start of matrix initialization."<<std::endl;
-    message=QString("Start of matrix initialization.");
+    message = QString("Start of matrix initialization.");
     logStrings::logString.append(message+"\r\n");
     emit updateLog();
 
@@ -836,6 +823,13 @@ void BoundaryElementSolver::regularSolveWithGMRES(double error)
 
 void BoundaryElementSolver::hMatrixSolve()
 {
+    const double acaRelativeError = bemSolverParameters.acaRelativeError; // Controls the approximation error for the adaptive cross approximation.
+    const unsigned long acaMaxRank = bemSolverParameters.acaMaxRank; // Controls the maximum rank for the adaptive cross approximation.
+    const bool usePreconditioner = bemSolverParameters.usePreconditioner; //Use HLU preconditioning for the H-matrix solver.
+    const unsigned long preconditionerRank = bemSolverParameters.preconditionerRank; // Sets the (maximum) local rank of the H-LU preconditioner for the GMRES. If set to zero, the acaRelativeError tolerance is used.
+    const double preconditionerRelError = bemSolverParameters.preconditionerRelError; // Controls the accuracy during the preconditioner calculation.
+    const bool calculateNormAndCond = bemSolverParameters.calculateNormAndCond; // Controls whether to estimate the norm and condition number of the dphi bem matrix.
+
     Timer timer;
     randomGenerator.seed(QRandomGenerator::system()->generate());
     std::cout<<"Number of elements in H-matrix solve: " << boundaryElements.triangles.length() << std::endl;
@@ -1050,7 +1044,7 @@ void BoundaryElementSolver::hMatrixSolve()
     boundaryElements.phiSolution = boundaryElements.dPhiSolution;
     for(long i = 0; i < substituteDPhiWithPhi.size(); i++)
     {
-        if (substituteDPhiWithPhi(i))
+        if(substituteDPhiWithPhi(i))
         {
             boundaryElements.dPhiSolution(i) = (f(i) - alpha(i) * boundaryElements.phiSolution(i)) / beta(i);
         }
@@ -1140,9 +1134,9 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
         #pragma omp parallel sections
         {
             #pragma omp section
-            HArithm::recursiveHMatAddition(* reflMatPhi.getRootBlock(), * newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError); // for reflective planes
+            HArithm::recursiveHMatAddition(*reflMatPhi.getRootBlock(), *newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError); // for reflective planes
             #pragma omp section
-            HArithm::recursiveHMatAddition(* reflMatDPhi.getRootBlock(), * newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
+            HArithm::recursiveHMatAddition(*reflMatDPhi.getRootBlock(), *newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
         }
         omp_set_max_active_levels(1);
 
@@ -1270,102 +1264,6 @@ void BoundaryElementSolver::hBlockAssemblyReflMat(BlockCluster* phiBlock, BlockC
                 }
             }
         }
-    }
-}
-
-void BoundaryElementSolver::fullPivotACA(BlockCluster* block, const long rank, double relativeError, std::function<std::complex<double> (long, long)> implicitMatrix)
-{
-    block->VAdjMat.resize(0,0);
-    block->singularValues.resize(0);
-    block->UMat.resize(0,0);
-
-    double norm = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
-    double residuumNorm = 0;
-    long rowStartIndex = block->rowStartIndex();
-    long columnStartIndex = block->colStartIndex();
-    long blockRows = block->rows(); //assumes contiguous ascending indexes
-    long blockColumns = block->cols();
-
-    long maxRank = std::min(blockRows, blockColumns);
-    long initialRankReservation = 5;
-    if(rank > 0)
-    {
-        maxRank = std::min(maxRank, rank);
-        block->UMat.resize(blockRows, maxRank);
-        block->singularValues.resize(maxRank);
-        block->VAdjMat.resize(maxRank, blockColumns);
-    }
-    else
-    {
-        long reservationRank = std::min(initialRankReservation, maxRank);
-        block->UMat.resize(blockRows, reservationRank);
-        block->singularValues.resize(reservationRank);
-        block->VAdjMat.resize(reservationRank, blockColumns);
-    }
-    long tmpRank = 0;
-    Eigen::RowVectorXcd rowVector(blockColumns);
-    Eigen::MatrixXcd Residuum(blockRows, blockColumns);
-    for (int i = 0; i < blockRows ; i++)
-    {
-        calcHBlockRowVector(rowVector, rowStartIndex + i, columnStartIndex, implicitMatrix);
-        Residuum.row(i) = rowVector;
-    }
-    norm = Residuum.norm();
-    long rowIndex;
-    long columnIndex;
-
-    Eigen::VectorXcd columnVector(blockRows);
-    while(tmpRank < maxRank)
-    {
-        Residuum.cwiseAbs().maxCoeff(&rowIndex, &columnIndex);
-
-        calcHBlockRowVector(rowVector, rowStartIndex + rowIndex, columnStartIndex, implicitMatrix);
-
-        if(tmpRank >= 1)
-        {
-            rowVector -= (block->UMat.leftCols(tmpRank).row(rowIndex) * block->singularValues.head(tmpRank).asDiagonal()) * block->VAdjMat.topRows(tmpRank);
-        }
-
-        calcHBlockColumnVector(columnVector, rowStartIndex, columnStartIndex + columnIndex,  implicitMatrix);
-
-        std::complex<double> alpha = 1.0 / rowVector(columnIndex);
-
-        if(tmpRank >= 1)
-        {
-            columnVector -= block->UMat.leftCols(tmpRank) * (block->singularValues.head(tmpRank).asDiagonal() * block->VAdjMat.topRows(tmpRank).col(columnIndex));
-        }
-
-        if(block->singularValues.size() <= tmpRank)
-        {
-            long newSize = std::min(2*tmpRank, maxRank);
-            block->UMat.conservativeResize(Eigen::NoChange, newSize);
-            block->singularValues.conservativeResize(newSize);
-            block->VAdjMat.conservativeResize(newSize, Eigen::NoChange);
-         }
-
-        block->UMat.col(tmpRank) = columnVector;
-        block->singularValues(tmpRank) = alpha;
-        block->VAdjMat.row(tmpRank) = rowVector;
-        Residuum -= block->UMat.col(tmpRank) * block->singularValues(tmpRank) * block->VAdjMat.row(tmpRank);
-        tmpRank++; // increment rank counter to actual current rank of the low rank matrix
-
-
-        residuumNorm = Residuum.norm();
-
-        if(relativeError > 0 && residuumNorm / norm < relativeError)
-        {
-            break;
-        }
-    }
-    block->UMat.conservativeResize(Eigen::NoChange, tmpRank);
-    block->singularValues.conservativeResize(tmpRank);
-    block->VAdjMat.conservativeResize(tmpRank, Eigen::NoChange);
-
-    if(tmpRank == 0) // if nothing has been sampled
-    {
-         block->UMat = Eigen::MatrixXcd::Zero(blockRows, 1);
-         block->singularValues = Eigen::VectorXcd::Zero(1);
-         block->VAdjMat = Eigen::MatrixXcd::Zero(1, blockColumns);
     }
 }
 
@@ -1647,7 +1545,7 @@ void BoundaryElementSolver::partialPivotACAextra(BlockCluster* block, long rank,
     }
 }
 
-void BoundaryElementSolver::BemOperatorsConst(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk)
+void BoundaryElementSolver::BemOperatorsConst(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk)
 {
     if(row == column) //observation Point p is on the same Panel as source points(q)
     {
@@ -1699,7 +1597,7 @@ void BoundaryElementSolver::BemOperatorsConst(const long row, const long column,
     }
 }
 
-void BoundaryElementSolver::BemOperatorsSingularPolarInt(const long triangleIndex, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk)
+void BoundaryElementSolver::BemOperatorsSingularPolarInt(const long triangleIndex, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk)
 {
     Lk = 0.0;
     Mk = 0.0;
@@ -1834,7 +1732,7 @@ void BoundaryElementSolver::BemOperatorsSingularPolarInt(const long triangleInde
     Nk = NkTest;
 }
 
-void BoundaryElementSolver::BemOperatorsSingularitySubtraction(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk)
+void BoundaryElementSolver::BemOperatorsSingularitySubtraction(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk)
 {        //observation Point p is on the same Panel as source points(q)
     Lk = 0.0;
     Mk = 0.0;
@@ -1996,7 +1894,7 @@ void BoundaryElementSolver::BemOperatorsSingularitySubtraction(const long row, c
     Nk = Nk1 + Nk2 + Nk3 + N0e - wavenumberSquaredHalf * L0e;
 }
 
-void BoundaryElementSolver::BemOperatorsNearSingSinh(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk)
+void BoundaryElementSolver::BemOperatorsNearSingSinh(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk)
 {
     // routine to evaluate the nearly singular BEM operators found in
     // "A new method for the numerical evaluation of nearly singular integrals on triangular elements in the 3D boundary element method"
@@ -2190,7 +2088,7 @@ void BoundaryElementSolver::BemOperatorsNearSingSinh(const long row, const long 
     }
 }
 
-void BoundaryElementSolver::BemOperatorsNearSing(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk)
+void BoundaryElementSolver::BemOperatorsNearSing(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk)
 {
     // routine to evaluate the nearly singular BEM operators found in
     // "A new method for the numerical evaluation of nearly singular integrals on triangular elements in the 3D boundary element method"
@@ -2319,7 +2217,7 @@ void BoundaryElementSolver::BemOperatorsNearSing(const long row, const long colu
     }
 }
 
-void BoundaryElementSolver::BemOperatorsReflected(const long row, const long column, std::complex<double>& Lk, std::complex<double>& Mk, std::complex<double>& Mtk, std::complex<double>& Nk, const BoundaryElements &boundaryElements, const BoundaryElements &reflectedElements)
+void BoundaryElementSolver::BemOperatorsReflected(const long row, const long column, std::complex<double> &Lk, std::complex<double> &Mk, std::complex<double> &Mtk, std::complex<double> &Nk, const BoundaryElements &boundaryElements, const BoundaryElements &reflectedElements)
 {
     Lk = 0.0;
     Mk = 0.0;
@@ -2997,6 +2895,10 @@ void BoundaryElementSolver::calcHBlockColumnVector(Eigen::VectorXcd &columnVecto
 
 void BoundaryElementSolver::calculateFieldSolution()
 {
+    const bool hMatFieldSolving = bemSolverParameters.hMatFieldSolving; // Use the (fast) H-matrix solver for the field calculation.
+    const double fieldACARelativeError = bemSolverParameters.fieldACARelativeError; // Controls the approximation error for the adaptive cross approximation in the field calculation.
+    const unsigned long fieldACAMaxRank = bemSolverParameters.fieldACAMaxRank; // Sets the (maximum) local rank of the ACA for the field calculation. If set to zero, only the fieldACARelativeError tolerance is used.
+
     std::cout << "Calculating field solution at " << frequency << " Hz." << std::endl;
     wavenumber = (2.0 * frequency * global::PI) / waveSpeed;
     wavenumberSquared = wavenumber * wavenumber;
@@ -3004,6 +2906,7 @@ void BoundaryElementSolver::calculateFieldSolution()
     iWavenumber = wavenumber * imaginaryUnit;
 
     setUpQuadratureRules();
+    prepareBoundaryElements();
     int numberOfFieldPoints=0;
     for(int i=0;i<observationFields.size();i++)
     {
@@ -3047,6 +2950,18 @@ void BoundaryElementSolver::calculateFieldSolution()
     message=QString("Runtime of field calculation: "+QString::number(timer.secs())+" seconds.");
     logStrings::logString.append(message+"\r\n");
     emit updateLog();
+}
+
+void BoundaryElementSolver::phiSolutionToSoundPressure()
+{
+    if(frequency != 0) // calculate sound pressure from acoustic potential
+    {
+        boundaryElements.soundPressure = (imaginaryUnit*airDensity * PI2 * frequency) * boundaryElements.phiSolution;
+    }
+    else // laplace equation
+    {
+        boundaryElements.soundPressure = (imaginaryUnit*airDensity * PI2) * boundaryElements.phiSolution;
+    }
 }
 
 void BoundaryElementSolver::calculateFieldSolutionRegular()
@@ -3104,7 +3019,7 @@ void BoundaryElementSolver::calculateFieldSolutionRegular()
     }
 }
 
-void BoundaryElementSolver::BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double>& Mk, std::complex<double>& Lk, const BoundaryElements &boundaryElements)
+void BoundaryElementSolver::BemOperatorField(const Eigen::Vector3d observationPoint, const int boundaryTriangleIndex, std::complex<double> &Mk, std::complex<double> &Lk, const BoundaryElements &boundaryElements)
 {
     Mk = 0.0;
     Lk = 0.0;
@@ -3445,8 +3360,8 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
 //            reflectedClusterTree.clear(); // can't be deleted here -> still a memory leak
             continue;
         }
-        HArithm::recursiveHMatAddition(* reflMatPhi.getRootBlock(), * newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError);
-        HArithm::recursiveHMatAddition(* reflMatDPhi.getRootBlock(), * newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
+        HArithm::recursiveHMatAddition(*reflMatPhi.getRootBlock(), *newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError);
+        HArithm::recursiveHMatAddition(*reflMatDPhi.getRootBlock(), *newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
 //        HArithm::recursiveHMatSubstraction(reflMatPhi.getRootBlock(), newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError);
 //        HArithm::recursiveHMatSubstraction(reflMatDPhi.getRootBlock(), newReflMatDPhi.getRootBlock(), maxRank, 0.1 * relativeError);
 
@@ -3518,7 +3433,7 @@ std::complex<double> BoundaryElementSolver::implicitDPhiMatrixField(const long r
 {
     Eigen::Vector3d observationPoint = observationPoints.at(rowIndex);
 //        std::complex<double> Mk = 0.0;
-    std::complex<double> Lk =0.0;
+    std::complex<double> Lk = 0.0;
     Eigen::Vector3d nq;
     double quadratureWeight;
     double quadratureAbscissaNode1;
@@ -4242,9 +4157,7 @@ void BoundaryElementSolver::calculateBoundaryConditionAndSourceTermVector()
         alpha(row) = boundaryElements.triangles.at(row).robinBoundaryCondition.a;
         beta(row) = boundaryElements.triangles.at(row).robinBoundaryCondition.b;
         f(row) = boundaryElements.triangles.at(row).robinBoundaryCondition.g;
-//        alpha(row)=boundaryElements.robinBoundaryConditions.at(row).a;
-//        beta(row)=boundaryElements.robinBoundaryConditions.at(row).b;
-//        f(row)=boundaryElements.robinBoundaryConditions.at(row).g;
+
         currentCollocPoint = boundaryElements.collocationPoints.at(row);
         currentNormal = boundaryElements.triangles.at(row).normal;
         currentSourceObservationValue = 0.0;
@@ -4269,9 +4182,9 @@ std::complex<double> BoundaryElementSolver::sourceTerm(const PointSource source,
     double r = rVector.norm();
 //    double rup= -(rVector.dot(normal))/r; // in exterior AEBEM3 comparison is -normal required
     double rup = (rVector.dot(normal))/r; // in exterior AEBEM3 comparison is -normal required
-    std::complex<double> ikr = iWavenumber*r;
-    std::complex<double> greensFunction = source.weight*(std::exp(ikr))/(PI4*r); //e^(ikr-iwt)
-    std::complex<double> dGreensDR = (greensFunction/r)*(ikr-1.0);
+    std::complex<double> ikr = iWavenumber * r;
+    std::complex<double> greensFunction = source.weight * (std::exp(ikr))/(PI4*r); //e^(ikr-iwt)
+    std::complex<double> dGreensDR = (greensFunction/r) / (ikr-1.0);
     return greensFunction + couplingParameter * dGreensDR * rup;
 }
 
@@ -4279,8 +4192,8 @@ std::complex<double> BoundaryElementSolver::sourcePhiTerm(const PointSource sour
 {
     Eigen::Vector3d rVector = source.position-listeningPosition; //p-q
     double r = rVector.norm();
-    std::complex<double> ikr = iWavenumber*r;
-    std::complex<double> greensFunction = source.weight*(std::exp(ikr))/(PI4*r);
+    std::complex<double> ikr = iWavenumber * r;
+    std::complex<double> greensFunction = source.weight  * (std::exp(ikr)) / (PI4 * r);
     return greensFunction;
 }
 
@@ -4304,6 +4217,6 @@ void BoundaryElementSolver::prepareBoundaryElements()
 
 void BoundaryElementSolver::setCouplingParameterNegative()
 {
-    couplingParameter = -couplingParameter;
-    couplingParameterHalf = -couplingParameterHalf;
+    couplingParameter *= -1;
+    couplingParameterHalf *= -1;
 }

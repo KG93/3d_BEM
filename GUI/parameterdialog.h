@@ -14,6 +14,7 @@
 #include <QValidator>
 
 #include "qdoublespinboxnotrailzeros.h"
+#include "../bemparameters.h"
 
 /**
 * \class ParameterDialog
@@ -22,19 +23,13 @@
 class ParameterDialog : public QDialog {
     Q_OBJECT
 public:
-    ParameterDialog(QWidget *parent = nullptr);
+    ParameterDialog(QWidget* parent = nullptr);
 
     /**
-    * \brief Returns whether coupling is enabled.
-    * \return true if coupling is enabled, false otherwise
+    * \brief Returns the selected BEM coupling method to solve the non-uniqueness problem.
+    * \return Returns one of NoCoupling, BurtonMillerCoupling and KirkupCoupling.
     */
-    bool getCoupling();
-
-    /**
-    * \brief Returns whether the Burton-Miller coupling method is selected.
-    * \return true if the Burton-Miller coupling method is selected, false otherwise
-    */
-    bool getBurtonMillerCoupling();
+    BemCoupling getCoupling();
 
     /**
     * \brief Returns whether the H-Matrix solver is enabled.
@@ -76,7 +71,7 @@ public:
     * \brief Returns whether the user has chosen to calculate the matrix norm and condition number.
     * \return True if the matrix norm and condition number should be calculated, false otherwise.
     */
-    double getCalculeteNormAndConditionNumber();
+    double getCalculateNormAndConditionNumber();
 
     /**
     * \brief Returns whether the H-Field solver is enabled.
@@ -96,36 +91,38 @@ public:
     */
     double getHFieldSolverRelError();
 
+    BemSolverParameters getBemSolverParameters();
+
 private:
   // checkboxes for the bem coupling parameter
-  QCheckBox *couplingCheckBox;
-  QRadioButton *burtonMillerCheckBox;
-  QRadioButton *kirkupCheckBox;
+  QCheckBox* couplingCheckBox;
+  QRadioButton* burtonMillerCheckBox;
+  QRadioButton* kirkupCheckBox;
 
-  QLabel *couplingParamLabel;
+  QLabel* couplingParamLabel;
 
-  QCheckBox *hsolverCheckBox;
-  QLabel *acaErrorLabel;
-  QLineEdit *acaErrorLineEdit;
-  QDoubleSpinBoxNoTrailZeros *acaErrorQSpinBox;
-  QLabel *acaMaxRankLabel;
-  QSpinBox *acaMaxRankQSpinBox;
+  QCheckBox* hsolverCheckBox;
+  QLabel* acaErrorLabel;
+  QLineEdit* acaErrorLineEdit;
+  QDoubleSpinBoxNoTrailZeros* acaErrorQSpinBox;
+  QLabel* acaMaxRankLabel;
+  QSpinBox* acaMaxRankQSpinBox;
 
-  QCheckBox *usePreconditionerCheckBox;
+  QCheckBox* usePreconditionerCheckBox;
 
-  QLabel *precRankLabel;
-  QSpinBox *precRankQSpinBox;
-  QLabel *precErrorLabel;
-  QDoubleSpinBoxNoTrailZeros *precErrorQSpinBox;
+  QLabel* precRankLabel;
+  QSpinBox* precRankQSpinBox;
+  QLabel* precErrorLabel;
+  QDoubleSpinBoxNoTrailZeros* precErrorQSpinBox;
 
-  QCheckBox *calculateNormCheckBox;
+  QCheckBox* calculateNormCheckBox;
 
   QDoubleValidator doubleValidator = QDoubleValidator(0, 1, 16);
   QIntValidator intValidator = QIntValidator(0, global::maxInt);
 
-  QCheckBox *HFieldSolverCheckBox;
-  QSpinBox *fieldACAMaxRankQSpinBox;
-  QDoubleSpinBoxNoTrailZeros *fieldACARelErrorQSpinBox;
+  QCheckBox* HFieldSolverCheckBox;
+  QSpinBox* fieldACAMaxRankQSpinBox;
+  QDoubleSpinBoxNoTrailZeros* fieldACARelErrorQSpinBox;
 };
 
 #endif // PARAMETERDIALOG_H

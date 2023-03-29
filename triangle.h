@@ -15,7 +15,7 @@ class Triangle
 public:
     Triangle();
 //    ~triangle();
-    Triangle(qint64 elementIndex/*, quint64 numberOfPhysicalGroup*/, qint64 node1, qint64 node2, qint64 node3,const QString& nodesReference){
+    Triangle(qint64 elementIndex/*, quint64 numberOfPhysicalGroup*/, qint64 node1, qint64 node2, qint64 node3, const QString &nodesReference){
         this->node1 = node1;
         this->node2 = node2;
         this->node3 = node3;
@@ -24,7 +24,7 @@ public:
 
 //        this->numberOfPhysicalGroup = numberOfPhysicalGroup;
     }
-//node ordering is counter clockwise for triangle front side
+    //node ordering is counter clockwise for triangle front side
     qint64 elementIndex;
 //    quint64 numberOfPhysicalGroup;
     qint64 node1;

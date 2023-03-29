@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget* parent) :
     widget = new QWidget(this);
     mainLayout = new QVBoxLayout;
     tabWidget =new QTabWidget();
-    menuBar2 = new QMenuBar();
+    menuBar = new QMenuBar();
     openGlWidget = new openglWidget();
     openGlTabLayout = new QHBoxLayout();
     QWidget* openQlContainerWidget = new QWidget(tabWidget);
@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget* parent) :
     tabWidget->addTab(registerScriptsTab,"Scripts");
     tabWidget->addTab(generalLog,"Log");
     tabWidget->addTab(errorLog,"Error log");
-    mainLayout->setMenuBar(menuBar2);
+    mainLayout->setMenuBar(menuBar);
     mainLayout->addWidget(tabWidget);
     mainLayout->setContentsMargins(QMargins(3,3,3,3));
     widget->setLayout(mainLayout);
@@ -57,11 +57,8 @@ MainWindow::MainWindow(QWidget* parent) :
 
     parameterDialog = new ParameterDialog(widget);
     freqWidget = new FreqListWidget();
-    connect(freqWidget, SIGNAL(signalNewSelection(Eigen::VectorXcd, Eigen::VectorXcd, Eigen::VectorXcd)), openGlWidget, SLOT(getNewSolution(Eigen::VectorXcd, Eigen::VectorXcd, Eigen::VectorXcd)));
-    connect(freqWidget, SIGNAL(signalNewSelection(Eigen::VectorXcd, Eigen::VectorXcd, Eigen::VectorXcd, QVector<Eigen::VectorXcd>, QVector<Eigen::VectorXcd>)), openGlWidget, SLOT(getNewSolutionField(Eigen::VectorXcd, Eigen::VectorXcd, Eigen::VectorXcd, QVector<Eigen::VectorXcd>, QVector<Eigen::VectorXcd>)));
-//    void signalNewSelection(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField);
-//    void openglWidget::getNewSolutionField(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField)
-//    freqWidget->show();
+
+    setUpBemSolverSignalsAndSlots();
 
     if(global::activeProgramming)
     {
@@ -69,20 +66,13 @@ MainWindow::MainWindow(QWidget* parent) :
         QString filename = "/home/lrak/workspace/3d_BEM/Example/Sphere/sphere.abec"; //sphere
 
         projFileHandler->readProjectFile(filename);
-
         solvinScript = QFileInfo(projFileHandler->getSolvingScript());
         setUpObservationScripts(projFileHandler->getObservScriptList());
         setUpMeshFiles(projFileHandler->getMeshFileList(),projFileHandler->getMeshFileAliasList());
-
         loadProject();
         BoundaryElements elements = boundaryElementSolver->getBoundaryElements();
-//        elements.reflectGeometry();
         openGlWidget->setBoundaryElements(elements);
-//        openGlWidget->setBoundaryElements(boundaryElementSolver->getBoundaryElements());
         std::cout<<"Setting up boundary elements in gl widget."<< std::endl;
-//        openGlWidget->setupClustertree();
-//        std::cout<<"Setting up clusterTree in gl widget."<< std::endl;
-//        calculateSolution();
     }
 }
 
@@ -93,8 +83,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::setUpMenu()
 {
-    menuBar2->clear();
-    QMenu* menu = menuBar2->addMenu(tr("Project"));
+    menuBar->clear();
+    QMenu* menu = menuBar->addMenu(tr("Project"));
     QAction* newProjectAction = new QAction(tr("&New project"), this);
     QAction* openProjectAction = new QAction(tr("&Open project"), this);
 
@@ -106,7 +96,7 @@ void MainWindow::setUpMenu()
 
     if(showSolutionAndFieldMenu)
     {
-        QMenu* menu1 = menuBar2->addMenu(tr("Viewer"));
+        QMenu* menu1 = menuBar->addMenu(tr("Viewer"));
         QAction* showFrequencySelectorAction = new QAction(tr("&Show frequency selector"), this);
         QAction* showSolutionAction = new QAction(tr("&Show solution on boundary"), this);
         QAction* hideSolutionAction = new QAction(tr("&Hide solution on boundary"), this);
@@ -125,11 +115,11 @@ void MainWindow::setUpMenu()
 
         menu1->addAction(showFrequencySelectorAction);
 
-        if(openGlWidget->getShowSolutionValue() && hasBeenSolved)
+        if(openGlWidget->getShowSolutionValue() && bemSolverController->getSolutionState() == AtLeastOneSolved)
         {
             menu1->addAction(hideSolutionAction);
         }
-        else if (hasBeenSolved)
+        else if (bemSolverController->getSolutionState() == AtLeastOneSolved)
         {
             menu1->addAction(showSolutionAction);
         }
@@ -149,7 +139,7 @@ void MainWindow::setUpMenu()
         {
             menu1->addAction(showLegendAction);
         }
-        if((openGlWidget->getShowSolutionValue() || openGlWidget->getDrawField()) && openGlWidget->getShowPhaseValue() && hasBeenSolved)
+        if((openGlWidget->getShowSolutionValue() || openGlWidget->getDrawField()) && openGlWidget->getShowPhaseValue() && bemSolverController->getSolutionState() == AtLeastOneSolved)
         {
             menu1->addAction(drawPressureAction);
             if(openGlWidget->getAnimatePhase())
@@ -161,7 +151,7 @@ void MainWindow::setUpMenu()
                 menu1->addAction(animatePhaseAction);
             }
         }
-        else if((openGlWidget->getShowSolutionValue() || openGlWidget->getDrawField()) && hasBeenSolved)
+        else if((openGlWidget->getShowSolutionValue() || openGlWidget->getDrawField()) && bemSolverController->getSolutionState() == AtLeastOneSolved)
         {
             menu1->addAction(drawPhaseAction);
             if(openGlWidget->getUseGlobalMinMaxDb())
@@ -189,74 +179,46 @@ void MainWindow::setUpMenu()
         connect(showGlobalDb, SIGNAL(triggered()), SLOT(useGlobalPressureMaximaForSolutionColoring()));
         connect(saveImageAction, SIGNAL(triggered()), SLOT(saveImage()));
 
-        QMenu* menu2 = menuBar2->addMenu(tr("Solving"));
+        QMenu* menu2 = menuBar->addMenu(tr("Solving"));
+
         QAction* calculateSolutionAction = new QAction(tr("&Calculate solution on boundary"), this);
         QAction* setParametersAction = new QAction(tr("&Set solver parameters"), this);
-//        QAction* hSolvingAction = new QAction(tr("&Switch to H-Solver"), this);
-//        QAction* setACArelError = new QAction(tr("&Set relative ACA  error"), this);
-//        QAction* setPrecondRank = new QAction(tr("&Set local rank of preconditioner"), this);
 
-//        QAction* regSolvingAction = new QAction(tr("&Switch to regular Solver"), this);
-//        QAction* defaultCouplinAction = new QAction(tr("&No Coupling"), this);
-//        QAction* burtonMillerCouplingAction = new QAction(tr("&Burton and Miller Coupling"), this);
-//        QAction* KirkupCouplingAction = new QAction(tr("&Kirkup Coupling"), this);
-//        QAction* flipCouplingSign = new QAction(tr("&Set sign of coupling parameter negative"), this);
-//        QAction* setRegularQuadratureOrderAction = new QAction(tr("&Set regular quadrature order"), this);
-//        QAction* setHigQuadratureOrderAction = new QAction(tr("&Set precision quadrature order"), this);
-//        if(!couplingSignPos)
-//        {
-//            flipCouplingSign= new QAction(tr("&Set sign of coupling parameter positive"), this);
-//        }
-        menu2->addAction(calculateSolutionAction);
+        if(bemSolverController->getControllerState() == NotWorking)
+        {
+            menu2->addAction(calculateSolutionAction);
+        }
         menu2->addAction(setParametersAction);
-//        if(boundaryElementSolver->getHSolving())
-//        {
-//            menu2->addAction(regSolvingAction);
-//            menu2->addAction(setACArelError);
-//            menu2->addAction(setPrecondRank);
-//        }
-//        else
-//        {
-//            menu2->addAction(hSolvingAction);
-//        }
-//        menu2->addAction(defaultCouplinAction);
-//        menu2->addAction(burtonMillerCouplingAction);
-//        menu2->addAction(KirkupCouplingAction);
-//        menu2->addAction(flipCouplingSign);
-//        menu2->addAction(setRegularQuadratureOrderAction);
-//        menu2->addAction(setHigQuadratureOrderAction);
+
         connect(calculateSolutionAction, SIGNAL(triggered()), SLOT(calculateSolution()));
         connect(setParametersAction, SIGNAL(triggered()), SLOT(showSolverParameterDialog()));
-//        connect(hSolvingAction, SIGNAL(triggered()), this,  SLOT(setHSolving()));
-//        connect(setACArelError, SIGNAL(triggered()),this, SLOT(setACARelativeError()));
-//        connect(setPrecondRank, SIGNAL(triggered()),this, SLOT(setPreconditionerRank()));
 
-//        connect(regSolvingAction, SIGNAL(triggered()),this, SLOT(setRegularSolving()));
-//        connect(defaultCouplinAction, SIGNAL(triggered()),boundaryElementSolver, SLOT(setNoCoupling()));
-//        connect(burtonMillerCouplingAction, SIGNAL(triggered()),boundaryElementSolver, SLOT(setBurtonMillerCoupling()));
-//        connect(KirkupCouplingAction, SIGNAL(triggered()),boundaryElementSolver, SLOT(setKirkupCoupling()));
-//        connect(flipCouplingSign, SIGNAL(triggered()),this, SLOT(flipCouplingSign()));
-//        connect(setRegularQuadratureOrderAction, SIGNAL(triggered()),this, SLOT(setRegularQuadrature()));
-//        connect(setHigQuadratureOrderAction, SIGNAL(triggered()),this, SLOT(setHighOrderQuadrature()));
-
-        QMenu* menu3 = menuBar2->addMenu(tr("Field"));
-        if(showCalculateFieldButton)
+        QMenu* menu3 = menuBar->addMenu(tr("Field"));
+        if(showCalculateFieldButton && bemSolverController->getControllerState() == NotWorking)
         {
             QAction* calculateFieldAction = new QAction(tr("&Calculate solution on field"), this);
             menu3->addAction(calculateFieldAction);
             connect(calculateFieldAction, SIGNAL(triggered()), SLOT(calculateSolutionOnField()));
         }       
 
-        QAction* reloadProjectAction = new QAction(tr("&Reload Project"), this);
+        QAction* reloadProjectAction = new QAction(tr("Reload Project"), this);
         connect(reloadProjectAction, SIGNAL(triggered()), SLOT(reloadProjectQuery()));
-        QAction* reloadObsScript = new QAction(tr("&Reload ObservationScript"), this);
+        QAction* reloadObsScript = new QAction(tr("Reload ObservationScript"), this);
         connect(reloadObsScript, SIGNAL(triggered()), SLOT(loadObservationScript()));
-        menuBar2->addAction(reloadProjectAction);
-        menuBar2->addAction(reloadObsScript);
+        menuBar->addAction(reloadProjectAction);
+        menuBar->addAction(reloadObsScript);
+
+        BemControllerStates controllerState = bemSolverController->getControllerState();
+        if(controllerState == Working)
+        {
+            QAction* stopSolverThread = new QAction(tr("&Stop Solver"), this);
+            connect(stopSolverThread, SIGNAL(triggered()), bemSolverController, SLOT(terminateThread()));
+            menuBar->addAction(stopSolverThread);
+        }
     }
 }
 
-void MainWindow:: newProject()
+void MainWindow::newProject()
 {
     QString filename = QFileDialog::getSaveFileName(this, "Creates new .abec project file.","",tr("Text files (*.abec)"));
                                                                                                     // filter, für nur .abec dateien
@@ -269,9 +231,10 @@ void MainWindow:: newProject()
       {
           filename.append(".abec");
       }
+      bemSolverController->clear();
+
       showSolutionAndFieldMenu = true;
       showCalculateFieldButton = false;
-      hasBeenSolved = false;
       projFileHandler->createProjectFile(filename);
       setUpMenu();
 }
@@ -285,6 +248,7 @@ void MainWindow:: openProject()
           std::cout << "Empty filename: " << std::endl;
           return;
       }
+      bemSolverController->clear();
       if(global::activeProgramming)
       {
           std::cout << "Project path: " << filename.toStdString() << std::endl;
@@ -390,13 +354,16 @@ void MainWindow::loadProject()
 
     showSolutionAndFieldMenu = true;
     showCalculateFieldButton = false;
-    hasBeenSolved = false;
+    bemSolverController->clear();
     setUpMenu();
     update();
+    openGlWidget->update();
 }
 
 void MainWindow::loadObservationScript()
 {
+    bemSolverController->clearFields();
+
     obsScriptReader->setElementSectionsNames(solvScriptReader->getElementSectionsNames());
     obsScriptReader->setMeshFilesAndAliases(projFileHandler->getMeshFileList(), projFileHandler->getMeshFileAliasList());
     obsScriptReader->setEdgeLength(solvScriptReader->getGlobalEdgelength());
@@ -410,79 +377,63 @@ void MainWindow::loadObservationScript()
     boundaryElementSolver->setObservationPoints(obsScriptReader->getObservationPoints());
     openGlWidget->setObservationFields(obsScriptReader->getObservationFields());
     openGlWidget->setObservationPoints(obsScriptReader->getObservationPoints());
+    openGlWidget->update();
 }
 
-//void MainWindow::calculateSolution()
-//{
-//    if(hasBeenSolved)
-//    {
-//        QMessageBox::StandardButton reply;
-//        reply = QMessageBox::question(this, "", "Project has already been solved.\r\n Solve again?", QMessageBox::Yes|QMessageBox::No);
-//        if (reply == QMessageBox::No)
-//        {
-//            return;
-//        }
-//    }
-//    setSolverParameters();
-//    boundaryElementSolver->setBoundaryElements(solvScriptReader->getBoundaryElements());
-//    boundaryElementSolver->setPointSources(solvScriptReader->getPointSources());
-//    boundaryElementSolver->setObservationFields(obsScriptReader->getObservationFields());
-//    boundaryElementSolver->setObservationPoints(obsScriptReader->getObservationPoints());
-////    boundaryElementSolver->setWavenumber(std::complex<double>(0.37,0.0));
-//    boundaryElementSolver->setFrequency(solvScriptReader->getFrequencies().first());
-//    boundaryElementSolver->setWavespeed(solvScriptReader->getWavespeed());
-//    boundaryElementSolver->setAirDensity(solvScriptReader->getAirDensity());
-//    boundaryElementSolver->prepareBoundaryElements();
-//    boundaryElementSolver->solve();
-//    openGlWidget->setBoundaryElements(boundaryElementSolver->getBoundaryElements());
-//    showCalculateFieldButton=true;
-//    hasBeenSolved=true;
-//    openGlWidget->setShowSolutionValue(true);
-//    setUpMenu();
-//    openGlWidget->update();
-//}
-
-void MainWindow::calculateSolution()
+void MainWindow::handle3dViewerLogic()
 {
-    if(hasBeenSolved)
+    freqWidget->show();
+
+    unsigned int currentSelectedFreqIndex = freqWidget->getCurrentSelectedFreqIndex();
+    std::cerr << "currentSelectedFreqIndex " << currentSelectedFreqIndex << std::endl;
+    BemSolutionStates controllerState = bemSolverController->getSolutionState();
+
+    switch(controllerState)
     {
-        QMessageBox::StandardButton reply;
-        reply = QMessageBox::question(this, "", "Project has already been solved.\r\n Solve again?", QMessageBox::Yes|QMessageBox::No);
-        if (reply == QMessageBox::No)
-        {
-            return;
-        }
+        case NothingSolved:
+            openGlWidget->setShowSolutionValue(false);
+            openGlWidget->setDrawField(false);
+            break;
+        case AtLeastOneSolved:
+            if(bemSolverController->isBoundarySolvedAtFreq(currentSelectedFreqIndex) && showSolutionIfAvailable)
+            {
+                openGlWidget->setBoundaryElements(bemSolverController->getBoundaryElements());
+                BoundarySolution solution = bemSolverController->getBoundarySolutionAtFrequencyIndex(currentSelectedFreqIndex);
+                openGlWidget->setNewBoundarySolution(solution);
+                showCalculateFieldButton = true;
+                openGlWidget->setShowSolutionValue(true);
+            }
+            else
+            {
+                openGlWidget->setShowSolutionValue(false);
+            }
+            if(bemSolverController->isFieldSolvedAtFreq(currentSelectedFreqIndex))
+            {
+                openGlWidget->setBoundaryElements(bemSolverController->getBoundaryElements());
+                FieldSolutions solutions = bemSolverController->getFieldSolutionAtFrequencyIndex(currentSelectedFreqIndex);
+                openGlWidget->setObservationFields(bemSolverController->getObservationFields());
+                openGlWidget->setNewFieldSolution(solutions);
+            }
+            break;
     }
-    setSolverParameters();
-    boundaryElementSolver->setBoundaryElements(solvScriptReader->getBoundaryElements());
-    boundaryElementSolver->setPointSources(solvScriptReader->getPointSources());
-
-    boundaryElementSolver->setWavespeed(solvScriptReader->getWavespeed());
-    boundaryElementSolver->setAirDensity(solvScriptReader->getAirDensity());
-
-    for(int i=0; i<freqWidget->getFrequencies().length(); i++)
-    {
-        boundaryElementSolver->setObservationFields(obsScriptReader->getObservationFields());
-        boundaryElementSolver->setObservationPoints(obsScriptReader->getObservationPoints());
-        boundaryElementSolver->setFrequency(freqWidget->getFrequencies().at(i));
-//        boundaryElementSolver->setBoundaryElements(boundaryElementsFreq.at(i));
-        boundaryElementSolver->prepareBoundaryElements();
-        boundaryElementSolver->solve();
-        freqWidget->setSolutions(i, boundaryElementSolver->getBoundaryElements().phiSolution, boundaryElementSolver->getBoundaryElements().dPhiSolution, boundaryElementSolver->getBoundaryElements().soundPressure);
-    }
-    std::pair<double, double> minMaxSoundPressure = freqWidget->getMinAndMaxSoundPressureOnBoundary();
-    openGlWidget->setGlobalMinDbOnBoundary(minMaxSoundPressure.first);
-    openGlWidget->setGlobalMaxDbOnBoundary(minMaxSoundPressure.second);
-
-    openGlWidget->setBoundaryElements(boundaryElementSolver->getBoundaryElements());
-//    openGlWidget->->getBoundaryElements().
-
-    showCalculateFieldButton = true;
-    hasBeenSolved = true;
-    openGlWidget->setShowSolutionValue(true);
     setUpMenu();
     openGlWidget->update();
     freqWidget->show();
+}
+
+void MainWindow::calculateSolution()
+{
+    bemSolverController->setSolverObjective(SolveBoundary);
+    bemSolverController->setBoundaryElements(solvScriptReader->getBoundaryElements());
+    bemSolverController->setPointSources(solvScriptReader->getPointSources());
+    bemSolverController->setBemSolverParameters(parameterDialog->getBemSolverParameters());
+    BemParameters bemParameters = {0,solvScriptReader->getWavespeed(),solvScriptReader->getAirDensity()};
+    bemSolverController->setBemParameters(bemParameters);
+    bemSolverController->setFrequencies(freqWidget->getFrequencies());
+
+    bemSolverController->start(); // start threaded BEM calculation
+    openGlWidget->setBoundaryElements(bemSolverController->getBoundaryElements());
+    setUpMenu();
 }
 
 void MainWindow::showSolverParameterDialog() // Set the parameters for the solver.
@@ -497,65 +448,35 @@ void MainWindow::showFreqSelector()
 
 void MainWindow::showSolutionOnBoundaryElements()
 {
-    openGlWidget->setShowSolutionValue(true);
+    showSolutionIfAvailable = true;
+    handle3dViewerLogic();
+
+//    openGlWidget->setShowSolutionValue(true);
     setUpMenu();
     openGlWidget->update();
 }
 
 void MainWindow::hideSolutionOnBoundaryElements()
 {
-    openGlWidget->setShowSolutionValue(false);
+    showSolutionIfAvailable = false;
+    handle3dViewerLogic();
+
     setUpMenu();
     openGlWidget->update();
 }
 
-//void MainWindow::calculateSolutionOnField()
-//{
-//    setSolverParameters();
-//    boundaryElementSolver->calculateFieldSolution();
-//    openGlWidget->setObservationFields(boundaryElementSolver->getObservationFields());
-//    openGlWidget->setDrawField(true);
-//    setUpMenu();
-//    openGlWidget->update();
-//}
-
 void MainWindow::calculateSolutionOnField()
 {
-    setSolverParameters();
-//    boundaryElementSolver->setObservationFields(obsScriptReader->getObservationFields());
+    bemSolverController->setSolverObjective(SolveField);
+    bemSolverController->setBemSolverParameters(parameterDialog->getBemSolverParameters());
+    bemSolverController->setObservationFields(obsScriptReader->getObservationFields());
+    bemSolverController->start(); // start threaded BEM calculation
 
-    for(int i=0; i<freqWidget->getFrequencies().length(); i++)
-    {
-        std::tuple<Eigen::VectorXcd, Eigen::VectorXcd, Eigen::VectorXcd> solution = freqWidget->getSolution(i);
-        BoundaryElements elements = boundaryElementSolver->getBoundaryElements();
-        elements.phiSolution = std::get<0>(solution);
-        elements.dPhiSolution = std::get<1>(solution);
-        elements.soundPressure = std::get<2>(solution);
-        boundaryElementSolver->setBoundaryElements(elements);
-        boundaryElementSolver->setFrequency(freqWidget->getFrequencies().at(i));
-        boundaryElementSolver->prepareBoundaryElements();
-        boundaryElementSolver->calculateFieldSolution();
-
-        QVector<ObservationField> obsFields = boundaryElementSolver->getObservationFields();
-        QVector<Eigen::VectorXcd> phiSolutionField(obsFields.size());
-        QVector<Eigen::VectorXcd> soundPressureField(obsFields.size());
-        for(int j=0; j<obsFields.size(); j++)
-        {
-            phiSolutionField[j] = obsFields.at(j).phiSolution;
-            soundPressureField[j] = obsFields.at(j).soundPressure;
-        }
-        freqWidget->setSolutionsField(i, phiSolutionField, soundPressureField);
-    }
-    openGlWidget->setBoundaryElements(boundaryElementSolver->getBoundaryElements());
-    openGlWidget->setObservationFields(boundaryElementSolver->getObservationFields());
-
-    std::pair<double, double> minMaxSoundPressure = freqWidget->getMinAndMaxSoundPressureOnField();
-    openGlWidget->setGlobalMinDbOnField(minMaxSoundPressure.first);
-    openGlWidget->setGlobalMaxDbOnField(minMaxSoundPressure.second);
+    openGlWidget->setObservationFields(bemSolverController->getObservationFields());
+    openGlWidget->setBoundaryElements(bemSolverController->getBoundaryElements());
     openGlWidget->setDrawField(true);
+
     setUpMenu();
-    openGlWidget->update();
-    freqWidget->show();
 }
 
 void MainWindow::showField()
@@ -647,94 +568,6 @@ void MainWindow::saveImage()
 //    openGlWidget->resize(windowSize);
 }
 
-void MainWindow::setHSolving()
-{
-    boundaryElementSolver->setHSolving(true);
-    setUpMenu();
-}
-
-void MainWindow::setACARelativeError()
-{
-    bool ok;
-    double acaRelError = boundaryElementSolver->getACArelativeError();
-    acaRelError = QInputDialog::getDouble(this, tr("Set the relative ACA approximation error"),tr("relative Error:"), acaRelError, 0, 1, 6, &ok, Qt::WindowFlags(), 0.01);
-    if(ok)
-    {
-        boundaryElementSolver->setACArelativeError(acaRelError);
-    }
-}
-
-void MainWindow::setPreconditionerRank()
-{
-    bool ok;
-    unsigned long rank = boundaryElementSolver->getPreconditionerRank();
-    rank = QInputDialog::getInt(this, tr("Set the rank of the preconditioner. Rank zero is a direct solver."),tr("Order:"), rank, 0, std::numeric_limits<int>::max(), 1, &ok);
-    if(ok)
-    {
-        boundaryElementSolver->setPreconditionerRank(rank);
-    }
-}
-
-void MainWindow::setRegularSolving()
-{
-    boundaryElementSolver->setHSolving(false);
-    setUpMenu();
-}
-
-void MainWindow::setHFieldSolving()
-{
-    boundaryElementSolver->setHFieldSolving(true);
-    setUpMenu();
-}
-
-void MainWindow::setFieldACARelativeError()
-{
-    bool ok;
-    double acaRelError = boundaryElementSolver->getFieldACARelError();
-    acaRelError = QInputDialog::getDouble(this, tr("Set the relative ACA approximation error for the field calculatation"),tr("relative Error:"), acaRelError, 0, 1, 6, &ok, Qt::WindowFlags(), 0.01);
-    if(ok)
-    {
-        boundaryElementSolver->setFieldACARelError(acaRelError);
-    }
-}
-
-void MainWindow::setFieldACAMaxRank()
-{
-    bool ok;
-    unsigned long rank = boundaryElementSolver->getFieldACAMaxRank();
-    rank = QInputDialog::getInt(this, tr("Set the maximum local rank of the field ACA. Rank zero is umlimited."),tr("Order:"), rank, 0, std::numeric_limits<int>::max(), 1, &ok);
-    if(ok)
-    {
-        boundaryElementSolver->setFieldACAMaxRank(rank);
-    }
-}
-
-void MainWindow::setRegularFieldSolving()
-{
-    boundaryElementSolver->setHFieldSolving(false);
-    setUpMenu();
-}
-
-void MainWindow::setRegularQuadrature()
-{
-    bool ok;
-    regQuadOrder = QInputDialog::getInt(this, tr("Set the order of the regular quadrature method"),tr("Order:"), regQuadOrder, 1, 14, 1, &ok);
-    if(ok)
-    {
-        boundaryElementSolver->setRegularOrderQuadratureRule(regQuadOrder);
-    }
-}
-
-void MainWindow::setHighOrderQuadrature()
-{
-    bool ok;
-    highQuadOrder = QInputDialog::getInt(this, tr("Set the order of the high order quadrature method"),tr("Order:"), highQuadOrder, 1, 14, 1, &ok);
-    if(ok)
-    {
-        boundaryElementSolver->setHighOrderQuadratureRule(highQuadOrder);
-    }
-}
-
 void MainWindow::setUpObservationScripts(const QStringList &observationFiles)
 {
     observationScripts.resize(observationFiles.size());
@@ -763,10 +596,10 @@ void MainWindow::setUpMeshFiles(const QStringList &MeshFiles,const QStringList &
 
 void MainWindow::updateScripts()
 {
-    solvinScript=registerScriptsTab->getSolvingScript();
-    observationScripts=registerScriptsTab->getObservationScripts();
-    meshFiles=registerScriptsTab->getMeshFiles();
-    meshFileAlias=registerScriptsTab->getMeshFileAliases();
+    solvinScript = registerScriptsTab->getSolvingScript();
+    observationScripts = registerScriptsTab->getObservationScripts();
+    meshFiles = registerScriptsTab->getMeshFiles();
+    meshFileAlias = registerScriptsTab->getMeshFileAliases();
     projFileHandler->setSolvingScript(solvinScript.absoluteFilePath());
     projFileHandler->setObservScriptList(getObservationscripts());
     projFileHandler->setMeshFileList(getMeshFiles());
@@ -805,9 +638,18 @@ QStringList MainWindow::getObservationscripts()
     return obsScriptList;
 }
 
+void MainWindow::setUpBemSolverSignalsAndSlots()
+{
+    connect(bemSolverController, SIGNAL(boundarySolvedForFreqIndex(int)), freqWidget, SLOT(colorSolvedFreq(int)));
+//    connect(bemSolverController, SIGNAL(boundarySolved(Eigen::VectorXcd, Eigen::VectorXcd, Eigen::VectorXcd)), freqWidget, SLOT(colorFreqSolved(int)));
+    connect(freqWidget, SIGNAL(currentRowChanged(int)), this, SLOT(handle3dViewerLogic()));
+    connect(bemSolverController, SIGNAL(boundarySolvedForFreqIndex(int)), this, SLOT(handle3dViewerLogic()));
+    connect(bemSolverController, SIGNAL(finished()), this, SLOT(handle3dViewerLogic()));
+}
+
 void MainWindow::reloadProjectQuery()
 {
-    if(hasBeenSolved)
+    if(bemSolverController->getSolutionState() == AtLeastOneSolved)
     {
         QMessageBox::StandardButton reply;
         reply = QMessageBox::question(this, "", "Project has already been solved.\r\n Reload Project?", QMessageBox::Yes|QMessageBox::No);
@@ -854,37 +696,10 @@ void MainWindow::preventSliderCrossingMin()
      emit slidersChanged(minSlider->value(), maxSlider->value());
 }
 
-void MainWindow::flipCouplingSign()
-{
-    if(couplingSignPos)
-    {
-        couplingSignPos = false;
-    }
-    else
-    {
-        couplingSignPos = true;
-    }
-    setUpMenu();
-    boundaryElementSolver->flipCouplingSign();
-}
-
 void MainWindow::setSolverParameters()
 {
-    if(parameterDialog->getCoupling())
-    {
-        if(parameterDialog->getBurtonMillerCoupling())
-        {
-            boundaryElementSolver->setBurtonMillerCoupling();
-        }
-        else
-        {
-            boundaryElementSolver->setKirkupCoupling();
-        }
-    }
-    else
-    {
-        boundaryElementSolver->setNoCoupling();
-    }
+    boundaryElementSolver->setCoupling(parameterDialog->getCoupling());
+
     boundaryElementSolver->setHSolving(parameterDialog->getUseHSolver());
     boundaryElementSolver->setACArelativeError(parameterDialog->getACARelError());
     boundaryElementSolver->setACAMaxRank(parameterDialog->getACAMaxRank());
@@ -893,7 +708,7 @@ void MainWindow::setSolverParameters()
     boundaryElementSolver->setPreconditionerRelativeError(parameterDialog->getPreconditionerRelError());
     boundaryElementSolver->setPreconditionerRank(parameterDialog->getPreconditionerMaxRank());
 
-    boundaryElementSolver->setCalculateNormAndConditionNumber(parameterDialog->getCalculeteNormAndConditionNumber());
+    boundaryElementSolver->setCalculateNormAndConditionNumber(parameterDialog->getCalculateNormAndConditionNumber());
 
     boundaryElementSolver->setHFieldSolving(parameterDialog->getUseHFieldSolver());
     boundaryElementSolver->setFieldACARelError(parameterDialog->getHFieldSolverRelError());

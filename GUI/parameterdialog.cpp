@@ -1,6 +1,6 @@
 #include "parameterdialog.h"
 
-ParameterDialog::ParameterDialog(QWidget *parent) : QDialog(parent)
+ParameterDialog::ParameterDialog(QWidget* parent) : QDialog(parent)
 {
 ////////////////////// CouplingParameters
 
@@ -12,11 +12,11 @@ ParameterDialog::ParameterDialog(QWidget *parent) : QDialog(parent)
     kirkupCheckBox = new QRadioButton(tr("Kirkup"));
     kirkupCheckBox->setChecked(true);
 
-    QGridLayout *couplingParameterLayout = new QGridLayout;
+    QGridLayout* couplingParameterLayout = new QGridLayout;
     couplingParameterLayout->addWidget(burtonMillerCheckBox, 0, 1);
     couplingParameterLayout->addWidget(kirkupCheckBox, 0, 2);
 
-    QGroupBox *couplingParameterGroupBox = new QGroupBox(tr("Coupling parameters"));
+    QGroupBox* couplingParameterGroupBox = new QGroupBox(tr("Coupling parameters"));
     couplingParameterGroupBox->setLayout(couplingParameterLayout);
 
 
@@ -62,9 +62,9 @@ ParameterDialog::ParameterDialog(QWidget *parent) : QDialog(parent)
     calculateNormCheckBox = new QCheckBox(tr("Calculate matrix norm and condition number"));
     calculateNormCheckBox->setChecked(false);
 
-    QGridLayout *hParamLayout = new QGridLayout;
+    QGridLayout* hParamLayout = new QGridLayout;
 //    hParamLayout->setSizeConstraint(QLayout::SetFixedSize);
-    QGroupBox *hParameterWidget = new QGroupBox;
+    QGroupBox* hParameterWidget = new QGroupBox;
     hParameterWidget->setLayout(hParamLayout);
 
     hParamLayout->addWidget(acaErrorLabel, 1, 1);
@@ -88,14 +88,14 @@ ParameterDialog::ParameterDialog(QWidget *parent) : QDialog(parent)
     HFieldSolverCheckBox = new QCheckBox(tr("H-Matrix field solver"));
     HFieldSolverCheckBox->setChecked(true);
 
-    QLabel *fieldACALabel = new QLabel(tr("Field ACA Rank:"));
+    QLabel* fieldACALabel = new QLabel(tr("Field ACA Rank:"));
     fieldACAMaxRankQSpinBox = new QSpinBox;
     fieldACAMaxRankQSpinBox->setMinimum(0);
     fieldACAMaxRankQSpinBox->setMaximum(global::maxInt);
     fieldACAMaxRankQSpinBox->setValue(0);
     fieldACALabel->setBuddy(fieldACAMaxRankQSpinBox);
 
-    QLabel *fieldACAErrorLabel = new QLabel(tr("Relative field ACA error"));
+    QLabel* fieldACAErrorLabel = new QLabel(tr("Relative field ACA error"));
     fieldACARelErrorQSpinBox = new QDoubleSpinBoxNoTrailZeros;
     fieldACARelErrorQSpinBox->setValue(0.01);
     fieldACARelErrorQSpinBox->setSingleStep(0.01);
@@ -104,8 +104,8 @@ ParameterDialog::ParameterDialog(QWidget *parent) : QDialog(parent)
 //    fieldACARelErrorQSpinBox->setDecimals(16);
     fieldACAErrorLabel->setBuddy(fieldACARelErrorQSpinBox);
 
-    QGridLayout *fieldParameterLayout = new QGridLayout;
-    QGroupBox *fieldParameterGroupBox = new QGroupBox(tr("Field solver parameters"));
+    QGridLayout* fieldParameterLayout = new QGridLayout;
+    QGroupBox* fieldParameterGroupBox = new QGroupBox(tr("Field solver parameters"));
     fieldParameterGroupBox->setLayout(fieldParameterLayout);
 
     fieldParameterLayout->addWidget(fieldACALabel,1,1);
@@ -116,7 +116,7 @@ ParameterDialog::ParameterDialog(QWidget *parent) : QDialog(parent)
 
 ////////////////////// MainLayout
 
-    QGridLayout *mainLayout = new QGridLayout;
+    QGridLayout* mainLayout = new QGridLayout;
     mainLayout->setSizeConstraint(QLayout::SetFixedSize);
     mainLayout->addWidget(couplingCheckBox, 0, 1);
     mainLayout->addWidget(couplingParameterGroupBox,1,1);
@@ -138,14 +138,23 @@ ParameterDialog::ParameterDialog(QWidget *parent) : QDialog(parent)
 //    this->show();
 }
 
-bool ParameterDialog::getCoupling()
+BemCoupling ParameterDialog::getCoupling()
 {
-    return couplingCheckBox->isChecked();
-}
-
-bool ParameterDialog::getBurtonMillerCoupling()
-{
-    return burtonMillerCheckBox->isChecked();
+    if(couplingCheckBox->isChecked())
+    {
+        if(burtonMillerCheckBox->isChecked())
+        {
+            return BurtonMillerCoupling;
+        }
+        else
+        {
+            return KirkupCoupling;
+        }
+    }
+    else
+    {
+        return NoCoupling;
+    }
 }
 
 bool ParameterDialog::getUseHSolver()
@@ -178,7 +187,7 @@ double ParameterDialog::getPreconditionerMaxRank()
     return precRankQSpinBox->value();
 }
 
-double ParameterDialog::getCalculeteNormAndConditionNumber()
+double ParameterDialog::getCalculateNormAndConditionNumber()
 {
     return calculateNormCheckBox->isChecked();
 }
@@ -196,4 +205,23 @@ int ParameterDialog::getHFieldSolverMaxRank()
 double ParameterDialog::getHFieldSolverRelError()
 {
     return fieldACARelErrorQSpinBox->value();
+}
+
+BemSolverParameters ParameterDialog::getBemSolverParameters()
+{
+    BemSolverParameters parameters;
+
+    parameters.hMatSolving = getUseHSolver(); // Use the (fast) H-matrix solver.
+    parameters.acaRelativeError = getACARelError(); // Controls the approximation error for the adaptive cross approximation.
+    parameters.acaMaxRank = getACAMaxRank(); // Controls the maximum rank for the adaptive cross approximation.
+    parameters.usePreconditioner = getUseHPreconditioning(); // Use HLU preconditioning for the H-matrix solver.
+    parameters.preconditionerRank = getPreconditionerMaxRank(); // Sets the (maximum) local rank of the H-LU preconditioner for the GMRES. If set to zero, the acaRelativeError tolerance is used.
+    parameters.preconditionerRelError = getPreconditionerRelError(); // Controls the accuracy during the preconditioner calculation.
+    parameters.hMatFieldSolving = getUseHFieldSolver(); // Use the (fast) H-matrix solver for the field calculation.
+    parameters.fieldACARelativeError = getHFieldSolverRelError(); // Controls the approximation error for the adaptive cross approximation in the field calculation.
+    parameters.fieldACAMaxRank = getHFieldSolverMaxRank(); // Sets the (maximum) local rank of the ACA for the field calculation. If set to zero, only the fieldACARelativeError tolerance is used.
+    parameters.calculateNormAndCond = getCalculateNormAndConditionNumber(); // Controls whether to estimate the norm and condition number of the dphi bem matrix.
+    parameters.coupling = getCoupling(); // Holds the selected BEM coupling method to solve the non-uniqueness problem.
+
+    return parameters;
 }

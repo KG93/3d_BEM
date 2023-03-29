@@ -1,7 +1,7 @@
 #include "gls.h"
 
 // Ax = By + c with alpha_i*x_i + beta_i * y_i = f_i
-void GLS::calculateGLS(Eigen::MatrixXcd& A, Eigen::VectorXcd& x, Eigen::MatrixXcd& B, Eigen::VectorXcd& y, Eigen::VectorXcd& c, Eigen::VectorXcd& alpha, Eigen::VectorXcd& beta, Eigen::VectorXcd& f)
+void GLS::calculateGLS(Eigen::MatrixXcd &A, Eigen::VectorXcd &x, Eigen::MatrixXcd &B, Eigen::VectorXcd &y, Eigen::VectorXcd &c, Eigen::VectorXcd &alpha, Eigen::VectorXcd &beta, Eigen::VectorXcd &f)
 {
     std::cout<<"GLS solver started!"<<std::endl;
     int n = A.rows();

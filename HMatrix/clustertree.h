@@ -37,7 +37,7 @@ public:
         this-> clusterTreeDepth = clusterTreeDepth;
     }
     long size() const {return indices.size();} /*!< \brief Get the size of the cluster. */
-    long startIndex() const {return indices.first();}; /*!< \brief Get the first index of the cluster. */
+    long startIndex() const {return indices.first();} /*!< \brief Get the first index of the cluster. */
 
     void getRandomElementFromEachLeafNode(QVector<long> &rowIndices, const long maxNumberOfElements = 0);
 
@@ -63,9 +63,6 @@ public:
     */
     std::unique_ptr<Cluster> son1 = nullptr;
     std::unique_ptr<Cluster> son2 = nullptr;
-//    Cluster* son1 = nullptr;
-//    Cluster* son2 = nullptr;
-
 };
 
 /**

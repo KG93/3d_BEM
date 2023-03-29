@@ -22,7 +22,7 @@ public:
     * \param order The order of the gauss quadrature rule.
     * \return Eigen::MatrixX2d with the abscissas and weights of the quadrature rule.
     */
-    static Eigen::MatrixX2d weightsandAbscissa(int order);
+    static Eigen::MatrixX2d weightsandAbscissa(unsigned int order);
 };
 
 #endif // LINEQUADRATURERULES_H

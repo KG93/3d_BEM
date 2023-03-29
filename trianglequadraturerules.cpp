@@ -10,19 +10,11 @@ triangleQuadratureRules::triangleQuadratureRules()
 
 }
 
-Eigen::MatrixX3d triangleQuadratureRules::weightsandAbscissa(int n)
+Eigen::MatrixX3d triangleQuadratureRules::weightsandAbscissa(unsigned int n)
 {
     Eigen::MatrixX3d abscissaAndWeights;
-    if(n <= 0)
-    {
-        n = 1;
-    }
 
-//    if(n > 9)
-//    {
-//        n = 9;
-//    }
-    if (n == 1)
+    if (n <= 1)
     {
         abscissaAndWeights=Eigen::MatrixX3d(1,3);
         abscissaAndWeights<<0.33333333333333, 0.33333333333333, 1.00000000000000;
@@ -250,7 +242,7 @@ Eigen::MatrixX3d triangleQuadratureRules::weightsandAbscissa(int n)
           0.267625659273967961282458816185,  0.096506481292159228736516560903,	  0.037038683681384627918546472190,
           0.267625659273967961282458816185,  0.635867859433872768286976979827,	  0.037038683681384627918546472190;
     }
-    else if (n == 13)
+    else if (n == 12 || n  == 13)
     {
         abscissaAndWeights = Eigen::MatrixX3d(37,3);
         abscissaAndWeights <<

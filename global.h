@@ -138,17 +138,17 @@ static Eigen::VectorXcd getTrianglesPhi(const QVector<VectorTriangle> &triangleV
 /**
 * \brief Write dphi-solution from boundary elements into vector.
 */
-static Eigen::VectorXcd getTrianglesDPhi(const QVector<VectorTriangle>& triangleVector);
+static Eigen::VectorXcd getTrianglesDPhi(const QVector<VectorTriangle> &triangleVector);
 
 /**
 * \brief Write phi-solution from vector into boundary elements.
 */
-static void setTrianglesPhi(QVector<VectorTriangle>& triangleVector, const Eigen::VectorXcd& phiVector);
+static void setTrianglesPhi(QVector<VectorTriangle> &triangleVector, const Eigen::VectorXcd &phiVector);
 
 /**
 * \brief Write dphi-solution from vector into boundary elements.
 */
-static void setTrianglesDPhi(QVector<VectorTriangle>& triangleVector, const Eigen::VectorXcd& phiVector);
+static void setTrianglesDPhi(QVector<VectorTriangle> &triangleVector, const Eigen::VectorXcd &phiVector);
 
 static void calculateTriangleMidPoints(QVector<VectorTriangle> &triangleVector);
 
@@ -157,9 +157,9 @@ static Eigen::Matrix3d quadrilateralCoordinateMatrix(const VectorQuadrilateral &
 
 static Eigen::Vector3d calculateAveragePoint(const QVector<VectorTriangle> &triangleVector, const QVector<VectorQuadrilateral> &quadrilateralVector);
 static double calculateMaxRelativeDistance(const QVector<VectorTriangle> &triangleVector, const Eigen::Vector3d &refNode); // calculates the  maximum distance between all the triangle nodes and the reference point
-static Eigen::Vector3d calculateMaxNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/);
+static Eigen::Vector3d calculateMaxNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral> &quadrilateralVector*/);
 static Eigen::Vector3d triangleCompWiseMaxNorm(const VectorTriangle &triangle);
-static Eigen::Vector3d calculateMinNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral>& quadrilateralVector*/);
+static Eigen::Vector3d calculateMinNorm(const QVector<VectorTriangle> &triangleVector/*, const QVector<VectorQuadrilateral> &quadrilateralVector*/);
 static Eigen::Vector3d triangleCompWiseMinNorm(const VectorTriangle &triangle);
 
 static quint64 indexOfMaxOfThree(double a, double b, double c);

@@ -1,6 +1,6 @@
 #include "qdoublespinboxnotrailzeros.h"
 
-QDoubleSpinBoxNoTrailZeros::QDoubleSpinBoxNoTrailZeros(QWidget *parent) : QDoubleSpinBox(parent),
+QDoubleSpinBoxNoTrailZeros::QDoubleSpinBoxNoTrailZeros(QWidget* parent) : QDoubleSpinBox(parent),
   validator(new QRegularExpressionValidator(QRegularExpression("-?\\d{1,}(?:[,.]{1})\\d*"), this))
 {
 

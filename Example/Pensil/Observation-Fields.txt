@@ -27,7 +27,7 @@ Field "FieldVertical"
     //FieldIndex  NodeIndex  NodeIndex  NodeIndex  NodeIndex
     101   1001  1002  1003  1004
 
-Field "FieldHorizontal"
+off Field "FieldHorizontal"
     RefNodes=FieldContourNodes
     MeshFrequency=10kHz
     //Meshing=Bifu

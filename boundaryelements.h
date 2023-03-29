@@ -13,6 +13,16 @@
 #include <QVector>
 
 /**
+* \brief The solution to the BEM equations (the potential and its normal derivative) at the collocation points.
+*/
+struct BoundarySolution
+{
+    Eigen::VectorXcd phiSolution; /*!< The acoustic potential (is proportional to the sound pressure). */
+    Eigen::VectorXcd dPhiSolution; /*!< The normal derivative of the acoustic potential (is proportional to the particle velocity). */
+    Eigen::VectorXcd soundPressure; /*!< The sound pressure. */
+};
+
+/**
 *\class BoundaryElements
 *\brief This class represents a boundary element method (BEM) discretization of a 3D surface.
 *
@@ -53,10 +63,9 @@ public:
     /**
     * \brief The solution to the BEM equations (the potential and its normal derivative) at the collocation points.
     */
-    Eigen::VectorXcd phiSolution;
-    Eigen::VectorXcd dPhiSolution;
-    Eigen::VectorXcd soundPressure;
-
+    Eigen::VectorXcd phiSolution; /*!< The acoustic potential (is proportional to the sound pressure). */
+    Eigen::VectorXcd dPhiSolution; /*!< The normal derivative of the acoustic potential (is proportional to the particle velocity). */
+    Eigen::VectorXcd soundPressure; /*!< The sound pressure. */
     /**
      * \brief The name of the boundary element group.
      */
@@ -90,6 +99,24 @@ public:
 //    std::vector<triangle> getTriangles();
 //    void addTriangles(QString elementsGroupName, std::vector<triangle> triangleVector);
 //    void addTriangles(std::vector<Triangle> triangleVector);
+
+    /**
+    * \brief Set solution of the BoundaryElements.
+    */
+    void setSolution(const BoundarySolution &solution)
+    {
+        phiSolution = solution.phiSolution;
+        dPhiSolution = solution.dPhiSolution;
+        soundPressure = solution.soundPressure;
+    }
+
+    /**
+    * \brief Get solution of the BoundaryElements.
+    */
+    BoundarySolution getSolution()
+    {
+        return {phiSolution, dPhiSolution, soundPressure};
+    }
 
     /**
     * \brief Calculate the collocation points for the BEM.

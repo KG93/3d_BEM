@@ -37,51 +37,6 @@ class BlockCluster
         this->father = father;
     }
 
-//    BlockCluster(const BlockCluster &block)
-//    {
-//        this->son11 = nullptr;
-//        this->son12 = nullptr;
-//        this->son21 = nullptr;
-//        this->son22 = nullptr;
-
-//        this->isAdmissible = block.isAdmissible;
-//        this->isRoot = block.isRoot;
-//        this->isLeaf = block.isLeaf;
-
-//        this->rowCluster = block.rowCluster;
-//        this->columnCluster = block.columnCluster;
-
-//        this->frobeniusNorm = block.frobeniusNorm;
-
-//        this->fullMat = block.fullMat;
-//        this->UMat = block.UMat;
-//        this->singularValues = block.singularValues;
-//        this->VAdjMat = block.VAdjMat;
-//    }
-
-//    BlockCluster& operator=(const BlockCluster &block) /*!< \brief The copy assignment operator */
-//    {
-//        this->son11 = nullptr;
-//        this->son12 = nullptr;
-//        this->son21 = nullptr;
-//        this->son22 = nullptr;
-
-//        this->isAdmissible = block.isAdmissible;
-//        this->isRoot = block.isRoot;
-//        this->isLeaf = block.isLeaf;
-
-//        this->rowCluster = block.rowCluster;
-//        this->columnCluster = block.columnCluster;
-
-//        this->frobeniusNorm = block.frobeniusNorm;
-
-//        this->fullMat = block.fullMat;
-//        this->UMat = block.UMat;
-//        this->singularValues = block.singularValues;
-//        this->VAdjMat = block.VAdjMat;
-
-//        return *this;
-//    }
     virtual ~BlockCluster(){}
 
     long rows() const; /*!< \brief Get number of rows of the block. */
@@ -160,11 +115,9 @@ class BlockCluster
 
     Cluster* rowCluster = nullptr;
     Cluster* columnCluster = nullptr;
+
     BlockCluster* father = nullptr;
-//    BlockCluster* son11 = nullptr;
-//    BlockCluster* son12 = nullptr;
-//    BlockCluster* son21 = nullptr;
-//    BlockCluster* son22 = nullptr;
+
     std::unique_ptr<BlockCluster> son11 = nullptr;
     std::unique_ptr<BlockCluster> son12 = nullptr;
     std::unique_ptr<BlockCluster> son21 = nullptr;
@@ -298,9 +251,7 @@ private:
 
     int maxRank = 5; // unused in bem solver
     double frobeniusNorm = -1;
-//    ClusterTree* rowClustertree = nullptr;
-//    ClusterTree* columnClustertree = nullptr;
-//    BlockCluster* rootBlockCluster = nullptr;
+
     std::shared_ptr<ClusterTree> rowClustertree = nullptr;
     std::shared_ptr<ClusterTree> columnClustertree = nullptr;
     std::unique_ptr<BlockCluster> rootBlock = nullptr;
