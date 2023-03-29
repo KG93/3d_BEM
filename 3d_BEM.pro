@@ -40,6 +40,7 @@ SOURCES += main.cpp\
     LinearElements/lineartrianglenode.cpp \
     SolvingScript/infinitebafflesection.cpp \
     bemoperatorsubroutines.cpp \
+    bemsolvercontroller.cpp \
     impedanceplane.cpp \
     LinearElements/linearboundaryelements.cpp \
     linequadraturerules.cpp \
@@ -96,6 +97,8 @@ HEADERS  += GUI/colorgradient.h \
     SolvingScript/infinitebafflesection.h \
     Timer.h \
     bemoperatorsubroutines.h \
+    bemparameters.h \
+    bemsolvercontroller.h \
     impedanceplane.h \
     LinearElements/linearboundaryelements.h \
     linequadraturerules.h \

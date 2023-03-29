@@ -35,7 +35,7 @@ static constexpr bool debugging = false;
 /**
 * \brief Set to true for active development.
 */
-static constexpr bool activeProgramming = false;
+static constexpr bool activeProgramming = true;
 
 /**
 * \brief A small value used for triangle partition in the quadrature method for almost singular integrals.

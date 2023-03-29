@@ -128,14 +128,8 @@ void openglWidget::setCameraRadius(double radius)
     {
         radius = 0.1;
     }
-
     cameraDistance = 2.0 * radius;
     scale = radius;
-    int width = widthWidget;
-    int height = heightWidget;
-
-    resize(width-1,height-1);//neccessary to adapt scale
-    resize(width,height);
 }
 
 void openglWidget::paintGL()
@@ -150,7 +144,10 @@ void openglWidget::paintGL()
     setUpCamera();
 
     drawPointSources();
-    if(drawField){drawFields();}
+    if(drawField)
+    {
+        drawFields();
+    }
     drawObservationPoints();
     if(!showBoundariesColouredBySolution)
     {
@@ -239,7 +236,17 @@ void openglWidget::getMinAndMaxCut(int min, int max)
     update();
 }
 
-void openglWidget::getNewSolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure)
+void openglWidget::setNewBoundarySolution(BoundarySolution solution)
+{
+    boundaryElements.phiSolution = solution.phiSolution;
+    boundaryElements.dPhiSolution = solution.dPhiSolution;
+    boundaryElements.soundPressure = solution.soundPressure;
+    setBoundaryElements(boundaryElements);
+    updateSelectedTriangleSoundPressure();
+    update();
+}
+
+void openglWidget::setNewBoundarySolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure)
 {
     boundaryElements.phiSolution = phiSolution;
     boundaryElements.dPhiSolution = dPhiSolution;
@@ -249,7 +256,19 @@ void openglWidget::getNewSolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd
     update();
 }
 
-void openglWidget::getNewSolutionField(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField)
+void openglWidget::setNewFieldSolution(FieldSolutions fieldSolutions)
+{
+    for(int i=0; i<observationFields.size(); i++)
+    {
+        observationFields[i].phiSolution = fieldSolutions.phiSolutions.at(i);
+        observationFields[i].soundPressure = fieldSolutions.soundPressures.at(i);
+    }
+    setObservationFields(observationFields);
+    updateSelectedTriangleSoundPressure();
+    update();
+}
+
+void openglWidget::setNewFieldSolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField)
 {
     boundaryElements.phiSolution = phiSolution;
     boundaryElements.dPhiSolution = dPhiSolution;
@@ -265,7 +284,7 @@ void openglWidget::getNewSolutionField(Eigen::VectorXcd phiSolution, Eigen::Vect
     update();
 }
 
-void openglWidget::mouseMoveEvent(QMouseEvent *event)
+void openglWidget::mouseMoveEvent(QMouseEvent* event)
  {
     if (!event->buttons())
     {
@@ -297,14 +316,14 @@ void openglWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void openglWidget::mousePressEvent(QMouseEvent *event)
+void openglWidget::mousePressEvent(QMouseEvent* event)
  {
     if(event->button() == Qt::RightButton)
     {
 //        emit customContextMenuRequested(event->pos());
     }
 
-    if (event->buttons() != Qt::LeftButton)
+    if(event->buttons() != Qt::LeftButton)
     {
         return;
     }
@@ -313,28 +332,28 @@ void openglWidget::mousePressEvent(QMouseEvent *event)
     mouseClickPosition = mouseDragPosition = event->pos();
 }
 
-void openglWidget::keyPressEvent(QKeyEvent *event)
+void openglWidget::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_Left)
+    if(event->key() == Qt::Key_Left)
         cameraOffsetX = cameraOffsetX + 0.2;
-    if (event->key() == Qt::Key_Right)
+    if(event->key() == Qt::Key_Right)
         cameraOffsetX = cameraOffsetX - 0.2;
-    if (event->key() == Qt::Key_Up)
+    if(event->key() == Qt::Key_Up)
         cameraOffsetZ = cameraOffsetZ + 0.2;
-    if (event->key() == Qt::Key_Down)
+    if(event->key() == Qt::Key_Down)
         cameraOffsetZ = cameraOffsetZ - 0.2;
     update();
 }
 
-void openglWidget::wheelEvent(QWheelEvent *event) // Zoomen per Mausrad
+void openglWidget::wheelEvent(QWheelEvent* event) // Zoomen per Mausrad
 {
-    if (event->angleDelta().y() > 15)
+    if(event->angleDelta().y() > 15)
     {
 //    cameraOffsetZ=cameraOffsetZ+0.2;
         cameraDistance = cameraDistance + 0.1 * scale * scalingMultiplier;
     }
 
-    if (event->angleDelta().y() < -15)
+    if(event->angleDelta().y() < -15)
     {
 //    cameraOffsetZ=cameraOffsetZ-0.2;
         cameraDistance = cameraDistance - 0.1 * scale * scalingMultiplier;
@@ -342,18 +361,18 @@ void openglWidget::wheelEvent(QWheelEvent *event) // Zoomen per Mausrad
     update();
 }
 
-void  openglWidget::mouseDoubleClickEvent(QMouseEvent *event)
+void  openglWidget::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    if (event->buttons() == Qt::LeftButton)
+    if(event->buttons() == Qt::LeftButton)
     {
         QPointF mousePos = event->position();
-        mouseXInOpenGL=mousePos.x();
-        mouseYInOpenGL=heightWidget-mousePos.y();
+        mouseXInOpenGL = mousePos.x();
+        mouseYInOpenGL = heightWidget-mousePos.y();
         update();
         QVector3D windowPos = QVector3D(mousePos.x(), mousePos.y(), mousePosZBufferVal);
-        QRect viewPort=QRect(QPoint(0,heightWidget), QPoint(widthWidget,0));
+        QRect viewPort = QRect(QPoint(0,heightWidget), QPoint(widthWidget,0));
         QVector3D worldPos = windowPos.unproject(modelViewMatrix, projectionMatrix, viewPort);
-        Eigen::Vector3d worlPosEigen={worldPos.x(), worldPos.y(), worldPos.z()};
+        Eigen::Vector3d worlPosEigen = {worldPos.x(), worldPos.y(), worldPos.z()};
 //        std::cout<<"world coordinates of double click: "<<worldPos.x()<<" "<<worldPos.y()<<" "<<worldPos.z()<<std::endl;
 
         double minFieldDistance = std::numeric_limits<double>::max();
@@ -422,6 +441,7 @@ void  openglWidget::mouseDoubleClickEvent(QMouseEvent *event)
         {
             soundPressureOnSelectedTriangle = referenceSoundpressure;
         }
+        update();
     }
     else
     {
@@ -539,18 +559,18 @@ void openglWidget::solutionColoring()
             }
             else
             {
-                maxSol=maxDbOnBoundary;
-                minSol=minDbOnBoundary;
+                maxSol = maxDbOnBoundary;
+                minSol = minDbOnBoundary;
             }
         }
-        double tmpMax=maxSol;
-        maxSol=maxSol-highCut*(maxSol-minSol);
-        minSol=lowCut*(tmpMax-minSol)+minSol;
+        double tmpMax = maxSol;
+        maxSol = maxSol-highCut*(maxSol-minSol);
+        minSol = lowCut*(tmpMax-minSol)+minSol;
         if(maxSol<minSol)
         {
-            double tmp=maxSol;
-            maxSol=minSol;
-            minSol=tmp;
+            double tmp = maxSol;
+            maxSol = minSol;
+            minSol = tmp;
         }
         ColorGradient heatMapGradient;
         heatMapGradient.defaultGradient();

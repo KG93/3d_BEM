@@ -10,7 +10,7 @@ Control_Solver
     NumFrequencies=1;  
     Abscissa=log;
     c=344m/s
-    MeshFrequency=400Hz
+    MeshFrequency=300Hz
 
 Elements Spere
     scale=1m

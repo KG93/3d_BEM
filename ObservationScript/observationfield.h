@@ -4,6 +4,15 @@
 #include "global.h"
 
 /**
+* \brief The solution to the BEM equations (the potential) at the field points.
+*/
+struct FieldSolutions
+{
+    QVector<Eigen::VectorXcd> phiSolutions; /*!< The acoustic potential (is proportional to the sound pressure). */
+    QVector<Eigen::VectorXcd> soundPressures; /*!< The sound pressure. */
+};
+
+/**
 * \class ObservationField
 * \brief The class represents an observation field as it is used in the BoundaryElementSolver.
 *
@@ -15,8 +24,8 @@ public:
     ObservationField(){}
     ObservationField(QString name, QVector<VectorTriangle> triangles)
     {
-        this->name=name;
-        this->triangles=triangles;
+        this->name = name;
+        this->triangles = triangles;
     }
 
     /**
@@ -49,6 +58,7 @@ public:
     * \brief Calculate the geometric midpoint of the triangles.
     */
     void calculateTrianglesMidpoints();
-};
+    static FieldSolutions getFieldSolutions(const QVector<ObservationField> &fields);
 
+};
 #endif // OBSERVATIONFIELD_H

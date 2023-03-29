@@ -16,6 +16,7 @@
 #include "globallogstrings.h"
 #include <eigen3/Eigen/Geometry>
 #include "Timer.h"
+#include "bemparameters.h"
 
 #include "HMatrix/harithm.h"
 #include "HMatrix/gmres.h"
@@ -36,7 +37,7 @@
  * and \f$ k \f$ is the local rank of the approximation. The local rank is \f$ O(\sqrt{\kappa} * \log(1/relError)) \f$, where \f$ \kappa \f$ is the wavenumber and \f$ relError \f$ is the relative approximation error of the H-matrix.
  * The H-matrix method is therefore only efficient for low to medium frequencies.
  */
-class BoundaryElementSolver: public QObject
+class BoundaryElementSolver : public QObject
 {
     Q_OBJECT
 public:
@@ -82,6 +83,14 @@ public:
     void setAirDensity(double airDensity){this->airDensity = airDensity;}
 
     /**
+    * \brief Set all the (environment) parameters for the BEM solver.
+    * \param bemParameters The collection of control parameters for the BEM solver.
+    */
+    void setBemParameters(BemParameters bemParameters){this->frequency = bemParameters.frequency;
+                                                       this->waveSpeed = bemParameters.waveSpeed;
+                                                       this->airDensity = bemParameters.airDensity;}
+
+    /**
     \brief Set the point sources for the solver.
     \param newPointSources A QVector of PointSource objects representing the point sources.
     */
@@ -117,97 +126,103 @@ public:
     * \brief Get whether the solver uses H-arithmatic.
     * \return True if the solver uses H-arithmatic.
     */
-    bool getHSolving(){return hMatSolving;}
+    bool getHSolving(){return bemSolverParameters.hMatSolving;}
 
     /**
     * \brief Set whether to use H-arithmetic in the solver.
     * \param val True to use H-arithmetic.
     */
-    void setHSolving(bool val){this->hMatSolving = val;}
+    void setHSolving(bool val){this->bemSolverParameters.hMatSolving = val;}
 
     /**
     * \brief Get the relative approximation error of the adaptive cross approximation.
     * \return The relative approximation error of the adaptive cross approximation.
     */
-    double getACArelativeError(){return acaRelativeError;}
+    double getACArelativeError(){return bemSolverParameters.acaRelativeError;}
 
     /**
     * \brief Set the relative approximation error of the adaptive cross approximation.
     * \param relError The relative approximation error.
     */
-    void setACArelativeError(double relError){this->acaRelativeError = std::max(relError, 0.0);}
+    void setACArelativeError(double relError){this->bemSolverParameters.acaRelativeError = std::max(relError, 0.0);}
 
     /**
     * \brief Set the maximum rank of the adaptive cross approximation.
     * \param maxRank The maximum rank of the adaptive cross approximation.
     */
-    void setACAMaxRank(long maxRank){this->acaMaxRank = maxRank;}
+    void setACAMaxRank(long maxRank){this->bemSolverParameters.acaMaxRank = maxRank;}
 
     /**
     * \brief Set whether to use HLU preconditioning in the HMatrix solver.
     * \param val True to use HLU preconditioning.
     */
-    void setUsePreconditioner(bool val){this->usePreconditioner = val;}
+    void setUsePreconditioner(bool val){this->bemSolverParameters.usePreconditioner = val;}
 
     /**
     * \brief Get the (maximum) rank of the H-matrix preconditioner.
     * \return The (maximum) rank of the H-matrix preconditioner.
     */
-    unsigned long getPreconditionerRank(){return preconditionerRank;}
+    unsigned long getPreconditionerRank(){return bemSolverParameters.preconditionerRank;}
 
     /**
     * \brief Set the (maximum) rank of the H-matrix preconditioner.
     * \param rank The (maximum) rank of the H-matrix preconditioner.
     */
-    void setPreconditionerRank(unsigned long rank){this->preconditionerRank = rank;}
+    void setPreconditionerRank(unsigned long rank){this->bemSolverParameters.preconditionerRank = rank;}
 
     /**
     * \brief Set the relative error of the H-matrix preconditioner.
     * \param relError The relative error of the H-matrix preconditioner.
     */
-    void setPreconditionerRelativeError(double relError){this->preconditionerRelError = std::max(relError, 0.0);}
+    void setPreconditionerRelativeError(double relError){this->bemSolverParameters.preconditionerRelError = std::max(relError, 0.0);}
 
     /**
     * \brief Get whether the solver uses H-arithmatic for sound field calculation.
     * \return True, if the solver uses H-arithmatic for sound field calculation.
     */
-    bool getHFieldSolving(){return hMatFieldSolving;}
+    bool getHFieldSolving(){return bemSolverParameters.hMatFieldSolving;}
 
     /**
     * \brief Set to true to use H-arithmatic in the solver for sound field calculation.
     * \param val Boolean value indicating whether to use H-arithmatic.
     */
-    void setHFieldSolving(bool val){this->hMatFieldSolving = val;}
+    void setHFieldSolving(bool val){this->bemSolverParameters.hMatFieldSolving = val;}
 
     /**
     * \brief Get the relative approximation error of the adaptive cross approximation for sound field calculation.
     * \return The relative approximation error of the adaptive cross approximation for sound field calculation.
     */
-    double getFieldACARelError(){return fieldACARelativeError;}
+    double getFieldACARelError(){return bemSolverParameters.fieldACARelativeError;}
 
     /**
     * \brief Set the relative approximation error of the adaptive cross approximation for sound field calculation.
     * \param relError The relative approximation error.
     */
-    void setFieldACARelError(double relError){this->fieldACARelativeError = std::max(relError, 0.0);}
+    void setFieldACARelError(double relError){this->bemSolverParameters.fieldACARelativeError = std::max(relError, 0.0);}
 
     /**
     * \brief Get the maximum rank of the adaptive cross approximation for sound field calculation.
     * \return The maximum rank of the adaptive cross approximation for sound field calculation.
     */
-    unsigned long getFieldACAMaxRank(){return fieldACAMaxRank;}
+    unsigned long getFieldACAMaxRank(){return bemSolverParameters.fieldACAMaxRank;}
 
     /**
     * \brief Set the maximum rank of the adaptive cross approximation for sound field calculation.
     * \param rank The maximum rank.
     */
-    void setFieldACAMaxRank(unsigned long rank){this->fieldACAMaxRank = rank;}
+    void setFieldACAMaxRank(unsigned long rank){this->bemSolverParameters.fieldACAMaxRank = rank;}
 
     /**
     * \brief Control whether to calculate the matrix norm and condition number during bem solving.
     * \param calcNorm Boolean value indicating whether to calculate the norm and condition number.
     */
-    void setCalculateNormAndConditionNumber(bool calcNorm){this->calculateNormAndCond = calcNorm;}
+    void setCalculateNormAndConditionNumber(bool calcNorm){this->bemSolverParameters.calculateNormAndCond = calcNorm;}
+
+    /**
+    * \brief Set all the control parameters for the BEM solver.
+    * \param bemSolverParameters The collection of control parameters for the BEM solver.
+    */
+    void setBemSolverParameters(BemSolverParameters bemSolverParameters){this->bemSolverParameters = bemSolverParameters;}
 
     /**
     * \brief Return the observation points from the solver.
@@ -286,16 +301,6 @@ public:
     void hBlockAssemblyReflMat(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError, const BoundaryElements &boundaryElements, const BoundaryElements &reflectedElements);
 
     // different implementations of the adaptive cross approximation
-    /**
-    * \brief Low rank assembly of an H-block by ACA with full pivoting.
-    * This function performs low rank assembly of an H-block by ACA with full pivoting.
-    * \param block The H-matrix block.
-    * \param rank The rank of the H-matrix block.
-    * \param relativeError The relative approximation error of the adaptive cross approximation.
-    * \param implicitMatrix The implicit matrix used in the ACA.
-    */
-    void fullPivotACA(BlockCluster* block, const long rank, double relativeError, std::function<std::complex<double> (long, long)> implicitMatrix);
-
     /**
     * \brief Low rank assembly of an H-block by ACA with partial pivoting.
     * This function performs low rank assembly of an H-block by ACA with partial pivoting.
@@ -714,24 +719,14 @@ private:
     Eigen::MatrixX2d weightsAndAbscissaLineQuadrature = lineQuadratureRules::weightsandAbscissa(orderLineQuadrature);
     int numberOfWeightsAndAbscissaLineQuadrature = weightsAndAbscissaLineQuadrature.rows();
 
-    bool polarIntegOfSingOps = true; /*!< Use polar integration for the calculation of singular BEM operators in the regular BEM. */
-    bool hMatSolving = true; /*!< Use the (fast) H-matrix solver. */
-    double acaRelativeError = 0.01; /*!< Controls the approximation error for the adaptive cross approximation. */
-    unsigned long acaMaxRank = 0; /*!< Controls the maximum rank for the adaptive cross approximation. */
-    bool usePreconditioner = true; /*!< Use HLU preconditioning for the H-matrix solver. */
-    unsigned long preconditionerRank = 2; /*!< Sets the (maximum) local rank of the H-LU preconditioner for the GMRES. If set to zero, the acaRelativeError tolerance is used.*/
-    double preconditionerRelError = 0; /*!< Controls the accuracy during the preconditioner calculation. */
-    bool hMatFieldSolving = true; /*!< Use the (fast) H-matrix solver for the field calculation. */
-    double fieldACARelativeError = 0.01; /*!< Controls the approximation error for the adaptive cross approximation in the field calculation. */
-    unsigned long fieldACAMaxRank = 0; /*!< Sets the (maximum) local rank of the ACA for the field calculation. If set to zero, only the fieldACARelativeError tolerance is used.*/
-    bool calculateNormAndCond = false; /*!< Controls whether to estimate the norm and condition number of the dphi bem matrix. */
+    BemSolverParameters bemSolverParameters;  /*!< \brief Control parameters for the BEM solver. */
 
+    static constexpr bool polarIntegOfSingOps = true; /*!< Use polar integration for the calculation of singular BEM operators in the regular BEM. */
     static constexpr bool avoidHMatGLS = true;
     static constexpr bool avoidGLS = true; /*!< Assemble the BEM matrices with implicit substitution and avoid the GLS routine. */
     static constexpr bool testACA = false; ///// set true only for testing; stops the solve routines after matrix assembly
-    bool burtonMillerCoupling = true;
-    bool kirkupCoupling = true;
-    bool negativeCoupling = false;
+
+//    bool negativeCoupling = false;
 
 signals:
     void updateLog(); /*!< Update the GUI log. */
@@ -741,11 +736,8 @@ public slots:
     * \brief Start the boundary element solver.
     * The function will either call regularSolve(), regularSolveWithGMRES() or hMatrixSolve().
     */
-    void solve();
-    void setNoCoupling(){burtonMillerCoupling = false; kirkupCoupling = false;} /*!< Turn off the coupling for the boundary element method. */
-    void setBurtonMillerCoupling(){burtonMillerCoupling = true; kirkupCoupling = false;} /*!< Use the coupling parameter of the classic bourton-miller BEM. */
-    void setKirkupCoupling(){burtonMillerCoupling = false; kirkupCoupling = true;} /*!< Use the coupling parameter recommended by Stephen Kirkup. */
-    void flipCouplingSign(){if(negativeCoupling){negativeCoupling = false;} else {negativeCoupling = true;}} /*!< Use a negative coupling parameter for the BEM. */
+    void calculateBoundarySolution();
+    void setCoupling(BemCoupling coupling){bemSolverParameters.coupling = coupling;} /*!< Sets the different BEM coupling method to solve the non-uniqueness problem. */
 };
 
 #endif // BOUNDARYELEMENTSOLVER_H

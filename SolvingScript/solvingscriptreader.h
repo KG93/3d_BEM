@@ -47,13 +47,13 @@ public:
     * \param[in] meshFileAlias The list of mesh file aliases.
     * \return True if the mesh files and aliases were set successfully, false otherwise.
     */
-    bool setMeshFilesAndAliases( const QStringList& meshFiles, const QStringList& meshFileAlias);
+    bool setMeshFilesAndAliases( const QStringList &meshFiles, const QStringList &meshFileAlias);
 
     /**
     * \brief Read the solving script with the given file name.
     * \param[in] fileName The file name of the solving script.
     */
-    void readSolvingScript(const QString& fileName);
+    void readSolvingScript(const QString &fileName);
 
     /**
     * \brief Clears the data stored by this SolvingScriptReader object.
@@ -134,16 +134,14 @@ public:
 private:
 //    void setUpBoundaryElementsParameters(BoundaryElements& boundaryElements,const ElementSection& elementSection);
     bool controlSolverSectionDeclared;
-    bool newSectionDeclared(const QString& Line);
-    QRegularExpression sectionIdentifierRegEx(const QString& identifier);
+    bool newSectionDeclared(const QString &Line);
+    QRegularExpression sectionIdentifierRegEx(const QString &identifier);
     void setSolverParameters();
-    void handleLineAccordingToCurrentSection(const QString& Line);
+    void handleLineAccordingToCurrentSection(const QString &Line);
     enum sections {none, Control_Solver, Driving, Subdomain_Properties, MeshFile_Properties, Elements, Nodes, WallImpedance, Pressure_Points, Infinite_Baffle};
     int currentSection = none;
     QStringList getNodesSectionsNames();
     QStringList getPressurePointsSectionsNames();
-
-//    double convertToValues(const QString& input);
 
     ControlSolverSection controlSolverSection;
     QVector<NodesSection> nodesSections;
@@ -177,8 +175,6 @@ private:
     double globalEdgelength;
     double c;
 
-    template<typename container>
-    void printVector(container &vector);
 signals:
     void errorMessage(QString err);
     void logMessage(QString log);

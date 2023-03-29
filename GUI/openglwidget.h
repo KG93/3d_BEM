@@ -9,7 +9,9 @@
 
 #include "../Timer.h" //Timer
 
-#include "../boundaryelements.h"
+//#include "../boundaryelements.h"
+#include "../bemsolvercontroller.h"
+
 #include "../vectortriangle.h"
 #include "../SolvingScript/elementSection.h"
 #include "../pointsource.h"
@@ -223,11 +225,7 @@ private:
     BoundaryElements boundaryElements;
     QVector<ObservationPoint> observationPoints;
     QVector<ObservationField> observationFields;
-//    std::vector<BoundaryElements> boundaryElements;
-    //test
-    ClusterTree clusterTree;
-    HMatrix blockClusterTree;
-    //test
+
     QList<ElementSection> elementsSections;
     QVector<PointSource> pointSources;
     bool initialized = false;
@@ -282,8 +280,10 @@ public slots:
     void getMaxCut(int value);
     void getMinCut(int value);
     void getMinAndMaxCut(int min, int max);
-    void getNewSolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure);
-    void getNewSolutionField(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField);
+    void setNewBoundarySolution(BoundarySolution solution);
+    void setNewBoundarySolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure);
+    void setNewFieldSolution(FieldSolutions fieldSolutions);
+    void setNewFieldSolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField);
 
 private slots:
     void mousePressEvent(QMouseEvent* event) override;

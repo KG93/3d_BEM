@@ -5,7 +5,7 @@ SolvingScriptReader::SolvingScriptReader(QObject* parent): QObject(parent)
 
 }
 
-bool SolvingScriptReader::setMeshFilesAndAliases( const QStringList& meshFiles, const QStringList& meshFileAlias)
+bool SolvingScriptReader::setMeshFilesAndAliases( const QStringList &meshFiles, const QStringList &meshFileAlias)
 {
     this->meshFiles=meshFiles;
     this->meshFileAlias=meshFileAlias;
@@ -1101,40 +1101,25 @@ BoundaryElements SolvingScriptReader::getBoundaryElements()
     return returnElements;
 }
 
-//void SolvingScriptReader::setUpBoundaryElementsParameters(BoundaryElements& boundaryElements,const ElementSection& elementSection)
-//{
-//    if(/*elementSection.EdgeLength==0 &&*/elementSection.MeshFrequency==0)
-//    {
-////        boundaryElements.MeshFrequency;
-//    }
-//    QVector<VectorTriangle> triangles;
-//    for(int i=0;i<elementsSections.length();i++)
-//    {
-//        ElementSection currentElementSection=elementsSections[i];
-//        triangles.append(currentElementSection.elementsVectorTriangles);
-//        triangles.append(global::quadrilateralsToTriangles(currentElementSection.elementsVectorQuadrilaterals));
-//    }
-//}
-
 void SolvingScriptReader::refineElements()
 {
-    for(int i=0;i<elementsSections.length();i++)
+    for(int i=0; i<elementsSections.length(); i++)
     {
-        ElementSection currentElementSection=elementsSections[i];
+        ElementSection currentElementSection = elementsSections[i];
         if(currentElementSection.MeshFrequency==0 && currentElementSection.EdgeLength==0)
         {
-            elementsSections[i].EdgeLength=globalEdgelength;
+            elementsSections[i].EdgeLength = globalEdgelength;
         }
-        else if(currentElementSection.MeshFrequency!=0)
+        else if(currentElementSection.MeshFrequency != 0)
         {
-            elementsSections[i].EdgeLength=(c/currentElementSection.MeshFrequency)/2;
+            elementsSections[i].EdgeLength = (c/currentElementSection.MeshFrequency)/2;
         }
-        QVector<VectorTriangle> triangles=elementsSections[i].refineQuadrilaterals(elementsSections[i].elementsVectorQuadrilaterals);
+        QVector<VectorTriangle> triangles = elementsSections[i].refineQuadrilaterals(elementsSections[i].elementsVectorQuadrilaterals);
         elementsSections[i].elementsVectorQuadrilaterals.clear();
         elementsSections[i].elementsVectorTriangles.append(triangles);
-        for(int j=0; j<elementsSections[i].elementsVectorTriangles.size();j++)
+        for(int j=0; j<elementsSections[i].elementsVectorTriangles.size(); j++)
         {
-            elementsSections[i].elementsVectorTriangles[j].normal=global::normalVectorOfTriangle(elementsSections[i].elementsVectorTriangles[j]);
+            elementsSections[i].elementsVectorTriangles[j].normal = global::normalVectorOfTriangle(elementsSections[i].elementsVectorTriangles[j]);
 //            std::cout<<"normal; "<<elementsSections[i].elementsVectorTriangles[j].normal(0)<<" "<<elementsSections[i].elementsVectorTriangles[j].normal(1)<<" "<<elementsSections[i].elementsVectorTriangles[j].normal(2)<<std::endl;
         }
         elementsSections[i].elementsVectorTriangles=elementsSections[i].refineTriangles(elementsSections[i].elementsVectorTriangles);
@@ -1145,9 +1130,9 @@ void SolvingScriptReader::refineElements()
 void SolvingScriptReader::calculateCenterOfMass()
 {
     QVector<VectorTriangle> triangles;
-    for(int i=0;i<elementsSections.length();i++)
+    for(int i=0; i<elementsSections.length(); i++)
     {
-        ElementSection currentElementSection=elementsSections[i];
+        ElementSection currentElementSection = elementsSections[i];
         QVector<VectorTriangle> tmpTriangles;
         tmpTriangles.append(currentElementSection.elementsVectorTriangles);
         tmpTriangles.append(global::quadrilateralsToTriangles(currentElementSection.elementsVectorQuadrilaterals));
@@ -1157,58 +1142,23 @@ void SolvingScriptReader::calculateCenterOfMass()
         }
         triangles.append(tmpTriangles);
     }
-    int numberOfTriangles=triangles.size();
+    int numberOfTriangles = triangles.size();
     QPair<Eigen::Vector3d,double> centerOfMassAndVolume = global::centerAndVolumeOfMassOfTriangleObject(triangles);
-    centerOfMass=centerOfMassAndVolume.first;
-    objectVolume=centerOfMassAndVolume.second;
-    std::cerr << " here " << std::endl;
+    centerOfMass = centerOfMassAndVolume.first;
+    objectVolume = centerOfMassAndVolume.second;
 
-//    std::cerr << " centerOfMass: " << centerOfMass << std::endl;
-//    Eigen::Vector3d max=global::calculateMaxNorm(triangles);
-//    Eigen::Vector3d min=global::calculateMinNorm(triangles);
-//    max={std::abs(max(0)-centerOfMass(0)),std::abs(max(1)-centerOfMass(1)),std::abs(max(2)-centerOfMass(2))};
-//    min={std::abs(min(0)-centerOfMass(0)),std::abs(min(1)-centerOfMass(1)),std::abs(min(2)-centerOfMass(2))};
-//    Eigen::Vector3d max=global::calculateRelativeMaxNorm(triangles, centerOfMass);
-//    QVector<double> vector;
-//    vector.push_back(max(0));
-//    vector.push_back(max(1));
-//    vector.push_back(max(2));
-
-
-//    double maxx=*std::max_element(vector.constBegin(),vector.constEnd());
-//    containingSphereRadius=maxx;
     containingSphereRadius = global::calculateMaxRelativeDistance(triangles, centerOfMass);
-    std::cerr << " out " << std::endl;
-    if(numberOfTriangles==0)
+
+    if(numberOfTriangles == 0)
     {
-        containingSphereRadius=1;
-        centerOfMass=Eigen::Vector3d(0,0,0);
+        containingSphereRadius = 1;
+        centerOfMass = Eigen::Vector3d(0,0,0);
     }
-    std::cout<<"Radius of containing sphere: "<<containingSphereRadius<<" m."<<std::endl;
+    std::cout << "Radius of containing sphere: " << containingSphereRadius << " m."<<std::endl;
     QString message=QString("Radius of containing sphere: "+QString::number(containingSphereRadius)+" m.");
     logStrings::logString.append(message+"\r\n");
 
     emit logMessage(message);
 
     triangles.clear();
-}
-
-template<typename container>
-void SolvingScriptReader::printVector(container &vector)
-//template <template<class, class> class container, class S, class T>
-//void global::printVector(const container<S,T> &vector)
-//template <template<class S> class container, class S>
-//void global::printVector(const container<S> &vector)
-//template <typename S>
-//void global::printVector(const QVector<S> &vector)
-{
-//   typedef std::vector<T> container;
-////   for(int i=0; i<vector.length(); i++)
-////   {
-////   }
-//   for (typename container::const_iterator it = vector.begin(); it != vector.end(); ++it)
-//   {
-//       std::cout << *it << " ";
-//   }
-   std::cout << std::endl;
 }

@@ -13,17 +13,17 @@ class QDoubleSpinBoxNoTrailZeros : public QDoubleSpinBox
 {
     Q_OBJECT
 public:
-    QDoubleSpinBoxNoTrailZeros(QWidget *parent = nullptr);
+    QDoubleSpinBoxNoTrailZeros(QWidget* parent = nullptr);
     ~QDoubleSpinBoxNoTrailZeros();
 
-    QValidator::State validate(QString &text, int & pos) const override;
+    QValidator::State validate(QString &text, int &pos) const override;
 
     double valueFromText(const QString &text) const override;
 
     QString textFromValue(double value) const override;
 
 private:
-    QRegularExpressionValidator *validator;
+    QRegularExpressionValidator* validator;
 };
 
 #endif // QDOUBLESPINBOXNOTRAILZEROS_H

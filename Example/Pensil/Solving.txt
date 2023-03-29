@@ -10,7 +10,7 @@ Control_Solver
     f1=100; f2=200;
     NumFrequencies=12;  
     Abscissa=log;
-    MeshFrequency= 1000
+    MeshFrequency=4000
 
 Elements enclosure-Exterior
     scale=mm
