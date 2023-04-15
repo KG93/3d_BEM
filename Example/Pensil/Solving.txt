@@ -7,7 +7,7 @@
 
 // Controlling parameters of the solver
 Control_Solver
-    f1=100; f2=200;
+    f1=100; f2=4000;
     NumFrequencies=12;  
     Abscissa=log;
     MeshFrequency=4000

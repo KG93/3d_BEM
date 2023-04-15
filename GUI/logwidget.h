@@ -9,7 +9,7 @@ class LogWidget: public QPlainTextEdit
 {
     Q_OBJECT
 public:
-    LogWidget();
+    explicit LogWidget(QWidget *parent = nullptr);
 
 private:
     QFile m_logFile;

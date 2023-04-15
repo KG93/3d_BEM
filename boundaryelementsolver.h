@@ -6,7 +6,7 @@
 #define BOUNDARYELEMENTSOLVER_H
 
 #include "boundaryelements.h"
-#include "LinearElements/linearboundaryelements.h"
+//#include "LinearElements/linearboundaryelements.h"
 #include "trianglequadraturerules.h"
 #include "linequadraturerules.h"
 #include "gls.h"
@@ -280,50 +280,6 @@ public:
     void calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const BoundaryElements &elements, BoundaryElements reflElements, std::shared_ptr<ClusterTree> clusterTree, int lastPlaneIndex = -1);
 
     /**
-    * \brief Assemble the matrices of the two H-matrix blocks.
-    * \param phiBlock A pointer to the H-matrix block that corresponds to the Phi matrix.
-    * \param dPhiBlock A pointer to the H-matrix block that corresponds to the dPhi matrix.
-    * \param maxRank The maximum rank of the adaptive cross approximation.
-    * \param relativeError The relative approximation error of the adaptive cross approximation.
-    */
-    void hBlockAssembly(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError);
-
-    /**
-    * \brief Assemble the matrices of the two H-matrix blocks for the reflection matrices.
-    * This function assembles the matrices of the two H-matrix blocks for the reflection matrices.
-    * \param phiBlock The phi H-matrix block.
-    * \param dPhiBlock The dPhi H-matrix block.
-    * \param maxRank The maximum rank for (admissible) H-matrix blocks.
-    * \param relativeError The relative approximation error of the adaptive cross approximation.
-    * \param boundaryElements The boundary elements for the H-matrix rows (collocation points).
-    * \param reflectedElements The reflected boundary elements for the H-matrix columns.
-    */
-    void hBlockAssemblyReflMat(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError, const BoundaryElements &boundaryElements, const BoundaryElements &reflectedElements);
-
-    // different implementations of the adaptive cross approximation
-    /**
-    * \brief Low rank assembly of an H-block by ACA with partial pivoting.
-    * This function performs low rank assembly of an H-block by ACA with partial pivoting.
-    * \param block The H-matrix block.
-    * \param rank The rank of the H-matrix block.
-    * \param relativeError The relative approximation error of the adaptive cross approximation.
-    * \param implicitMatrix The implicit matrix used in the ACA.
-    */
-    void partialPivotACA(BlockCluster* block, const long rank, double relativeError, std::function<std::complex<double> (long, long)> implicitMatrix);
-
-    /**
-    * \brief Low-rank assembly of an H-block by ACA with heuristic partial pivoting and additional error control heuristic.
-    * This function performs low-rank assembly of an H-block by ACA with heuristic partial pivoting.
-    * The (guaranteed) accuracy is improved for dPhi-blocks.
-    * \param block The H-matrix block.
-    * \param rank The rank of the H-matrix.
-    * \param relativeError The relative approximation error of the adaptive cross approximation.
-    * \param getPivotIndices The function that returns the pivot indices to use in the ACA.
-    * \param implicitMatrix The implicit matrix used in the ACA.
-    */
-    void partialPivotACAextra(BlockCluster* block, const long rank, double relativeError, std::function<QVector<std::pair<long,long>>(BlockCluster*,double)> getPivotIndices, std::function<std::complex<double> (long, long)> implicitMatrix);
-
-    /**
     * \brief Group the block-corresponding boundary elements by their normals' orientation and return a cross product of the groups' representatives by themselves.
     * This function groups the boundary elements corresponding to the given block by their normal's orientation and returns a cross product of the group representatives by themselves.
     * The returned pivot elements can be used in the partialPivotACAgivenPivotIndices() function.
@@ -401,17 +357,6 @@ private:
     * \param maxRank The maximum rank used for the H-matrix compression.
     */
     void calculateFieldSolutionFast(const double relativeError, const long maxRank);
-
-    /**
-    * \brief Assemble the matrices of the two h-matrix blocks for the reflection matrices.
-    * \param phiBlock The phi h-matrix block to be assembled.
-    * \param dPhiBlock The dphi h-matrix block to be assembled.
-    * \param maxRank The maximum rank used for the H-matrix compression.
-    * \param relativeError The relative error used for the H-matrix compression.
-    * \param observationPoints The points at which the field is observed.
-    * \param boundaryElements The boundary elements used for the calculation.
-    */
-    void hBlockAssemblyField(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &boundaryElements);
 
     /**
     * \brief Calculate the truncated sum of reflection matrices for two parallel impedance planes. The higher terms correspond to higher order reflections between the planes.

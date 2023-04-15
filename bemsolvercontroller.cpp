@@ -4,6 +4,7 @@ BemSolverController::BemSolverController(QObject* parent)
     : QThread{parent}
 {
     this->setTerminationEnabled(true); // not safe yet
+    connect(&boundaryElementSolver, SIGNAL(updateLog()), this, SLOT(getUpdateLogSignalFromSolver()));
 }
 
 void BemSolverController::clear()

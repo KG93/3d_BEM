@@ -1,12 +1,6 @@
 #include "registerscriptstab.h"
 
-//registerScriptsTab::registerScriptsTab()
-//{
-
-//}
-
-RegisterScriptsTab::RegisterScriptsTab(/*const QFileInfo &fileInfo,*/ QWidget *parent)
-    : QWidget(parent)
+RegisterScriptsTab::RegisterScriptsTab(QWidget *parent) : QWidget(parent)
 {
 //    this->setUpdatesEnabled(true);
     QFileInfo argFileInfo;

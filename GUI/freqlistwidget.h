@@ -19,7 +19,7 @@ public:
 
     void setFrequencies(const QVector<double> frequenciesArg);
     QVector<double> getFrequencies(){return frequencies;}
-    unsigned int getCurrentSelectedFreqIndex() {currentSelected = currentRow(); return currentSelected;}
+    unsigned int getCurrentSelectedFreqIndex();
 
 private:
     int currentSelected = 0;

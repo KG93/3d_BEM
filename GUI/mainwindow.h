@@ -66,8 +66,6 @@ private:
     SolvingScriptReader* solvScriptReader;
     ObservationScriptReader* obsScriptReader;
     BemSolverController* bemSolverController = new BemSolverController;
-    BoundaryElementSolver* boundaryElementSolver = new BoundaryElementSolver;
-    QThread workerThread;
 
     FreqListWidget* freqWidget;
     QVector<double> freq;
@@ -127,6 +125,5 @@ private slots:
     void reloadProjectQuery(); /** Query in case the already solved project is to be reloaded by user input. */
     void preventSliderCrossingMax();
     void preventSliderCrossingMin();
-    void setSolverParameters(); /** Passes the control parameters for the BEM from the script interpreters to the bem solver controller. */
 };
 #endif // MAINWINDOW_H

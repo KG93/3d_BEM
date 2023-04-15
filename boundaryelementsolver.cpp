@@ -84,7 +84,6 @@ void BoundaryElementSolver::calculateBoundarySolution()
             //        hMatrixSolve(preconditionerRank, acaRelativeError);
             //        timer.stop();
             //        std::cerr << "Runtime of hMatrixSolve: " << timer.secs() << " seconds" << std::endl;
-            //        timer.reset();
 
             //        regularSolveWithGMRES(0.01);  //compare with regular solver
 
@@ -251,7 +250,6 @@ void BoundaryElementSolver::regularSolveWithLU()
     message = QString("Runtime of matrix initialization: " + QString::number(timer.secs())+" seconds.");
     logStrings::logString.append(message + "\r\n");
     emit updateLog();
-    timer.reset();
     if(testACA)
     {
         testDirect = matrixPhi; //tmp
@@ -395,7 +393,6 @@ void BoundaryElementSolver::regularSolveWithGMRES(double error)
     emit updateLog();
 //    std::cerr << "matrix dphi frobenius condition number: " << matrixDPhi.norm() * matrixDPhi.inverse().norm() << std::endl;
 //    std::cerr << "matrix phi frobenius condition number: " << matrixPhi.norm() * matrixPhi.inverse().norm() << std::endl;
-    timer.reset();
     if(testACA)
     {
         testDirect = matrixPhi; //tmp
@@ -425,7 +422,7 @@ void BoundaryElementSolver::regularSolveWithGMRES(double error)
     }
     timer.stop();
     std::cout << "Runtime of full GMRES solver: " << timer.secs() << " seconds" << std::endl;
-    message=QString("Runtime of full GMRES solver: " + QString::number(timer.secs()) + " seconds.");
+    message = QString("Runtime of full GMRES solver: " + QString::number(timer.secs()) + " seconds.");
     logStrings::logString.append(message+"\r\n");
     emit updateLog();
 
@@ -437,7 +434,7 @@ void BoundaryElementSolver::regularSolveWithGMRES(double error)
         std::cout << "sources: " << sourceTermVector(0) << std::endl;
 
         boundaryElements.soundPressure = (imaginaryUnit*airDensity*PI2*frequency) * boundaryElements.phiSolution;
-        for(int i=0;i<numberOfElements;i++)
+        for(int i=0; i<numberOfElements; i++)
         {
            std::cout<<"index: "<< boundaryElements.triangles.at(i).elementIndex<<" phi: "<<boundaryElements.phiSolution(i)<<" velocity: "<<boundaryElements.dPhiSolution(i)<<"sound pressure: "<<boundaryElements.soundPressure(i)<<std::endl;
         }
@@ -526,301 +523,6 @@ void BoundaryElementSolver::regularSolveWithGMRES(double error)
 //    }
 //}
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//void BoundaryElementSolver::hMatrixSolve()
-//{
-//    randomGenerator.seed(QRandomGenerator::system()->generate());
-
-////    boundaryElements.calculateTriangleMidPoints();
-//    std::cout<<"Number of elements in H-matrix solve: " << boundaryElements.triangles.length() << std::endl;
-
-//    ClusterTree clusterTree(&boundaryElements);
-
-//    HMatrix phiHMat;
-//    HMatrix dPhiHMat;
-
-//    phiHMat.setClusterTrees(&clusterTree, &clusterTree);
-//    phiHMat.populateBlockClusterTree();
-
-//    dPhiHMat.setClusterTrees(&clusterTree, &clusterTree);
-//    dPhiHMat.populateBlockClusterTree();
-
-//    prepareBoundaryElements();
-//    calculateBoundaryConditionAndSourceTermVector();
-
-//    QVector<BlockCluster*> phiHMatPartition = phiHMat.getMinPartition();
-//    QVector<BlockCluster*> dPhiHMatPartition = dPhiHMat.getMinPartition();
-//    if(phiHMatPartition.size() != dPhiHMatPartition.size())
-//    {
-//        std::cerr<< "phiHMatPartition.size() != dPhiHMatPartition.size() in hMatrixSolve()" << std::endl;
-//    }
-
-//    Timer timer;
-//    timer.start();
-//    std::cout<< "Started the block assembly." << std::endl;
-//    #pragma omp parallel master
-//    for(long blockIndex = 0; blockIndex < phiHMatPartition.size(); blockIndex++)
-//    {
-//        #pragma omp task
-//        hBlockAssembly(phiHMatPartition.at(blockIndex), dPhiHMatPartition.at(blockIndex), acaMaxRank, acaRelativeError);
-//    }
-//    timer.stop();
-//    std::cout << "runtime of hBlockAssembly: " << timer.secs() << std::endl;
-//    timer.reset();
-
-//    double normPhiResiduum = 0;
-//    if(calculateNormAndCond)
-//    {
-//        timer.reset();
-//        timer.start();
-//        normPhiResiduum = HArithm::spectralNormLeastSignificant(dPhiHMat); // Approximates the spectral norm of the residuum of dPhiHMat
-//        timer.stop();
-//        std::cout << "Spectral norm of the dphi residuum: " << normPhiResiduum << std::endl;
-//        std::cout << "Runtime of norm calculations: " << timer.secs() << std::endl;
-//    }
-
-//    timer.start();
-//    double compressionRatio = phiHMat.getCompressionRatio();
-//    timer.stop();
-//    std::cout << std::endl << "phi compressionRatio: " << compressionRatio <<std::endl << "calculated in " << timer.secs() << " seconds" << std::endl;
-//    timer.reset();
-
-//    timer.start();
-//    double dPhiCompressionRatio = dPhiHMat.getCompressionRatio();
-//    timer.stop();
-//    std::cout << "dPhi compressionRatio: " << dPhiCompressionRatio <<std::endl << "calculated in " << timer.secs() << " seconds" << std::endl;
-//    timer.reset();
-//    std::cout << "maximum local rank of phi matrix: " << phiHMat.calculateMaxBlockRank() << std::endl;
-//    std::cout << "maximum local rank of dPhi matrix: " << dPhiHMat.calculateMaxBlockRank() << std::endl;
-
-//    ////////////////////////////////////// Copy hMat for accuracy comparison
-//    if(testACA)
-//    {
-//        testDPhiHMat = HArithm::hMatToFullMat(dPhiHMat);
-//        testPhiHMat = HArithm::hMatToFullMat(phiHMat);
-
-////        phiHMat.clear(true);
-////        dPhiHMat.clear(true);
-////        return;
-//    }
-//    ////////////////////////////////////// end Copy hMat for accuracy comparison
-
-//    timer.start();
-//    //re-compress matrices with lower relative error
-//    HArithm::compressHMat(phiHMat, acaMaxRank, 0.1 * acaRelativeError);
-//    HArithm::compressHMat(dPhiHMat, acaMaxRank, 0.1 * acaRelativeError);
-////    std::cout << "phi.norm(): " << phiHMat.norm() << std::endl;
-//    std::cout << "frobenius norm of phi matrix: " << phiHMat.normInSVDForm() << std::endl;
-//    timer.stop();
-//    compressionRatio = phiHMat.getCompressionRatio();
-//    std::cout << std::endl << "phi compressionRatio: " << compressionRatio << " after additional compression calculated in " << timer.secs() << " seconds." << std::endl;
-//    dPhiCompressionRatio = dPhiHMat.getCompressionRatio();
-//    std::cout << "dPhi compressionRatio: " << dPhiCompressionRatio << " after additional compression calculated in " << timer.secs() << " seconds." << std::endl;
-//    timer.reset();
-//    std::cout << std::endl << "maximum local rank of phi matrix: " << phiHMat.calculateMaxBlockRank() << std::endl;
-//    std::cout << "maximum local rank of dPhi matrix: " << dPhiHMat.calculateMaxBlockRank() << std::endl;
-
-//    ////////////////////////////////////// Calculate the righthand side for the linear system
-
-//    Eigen::VectorXcd rightHandside = sourceTermVector;
-//    HArithm::MVM(rightHandside, phiHMat, f);
-//    Eigen::VectorXcd rightHandsideCopy = rightHandside;
-//    phiHMat.clear(true); // phimat in not needed anymore
-
-//    HMatRightHandSide = rightHandside;
-//    //////////////////////////////////////
-//    if(boundaryElements.impedancePlanes.length() == 1)
-//    {
-//        std::cout << std::endl << "Calculating reflection matrices for a single impedance planes." << std::endl;
-//        BoundaryElements reflectedBoundaryElements = boundaryElements;
-//        reflectedBoundaryElements.reflectGeometry(boundaryElements.impedancePlanes.at(0));
-
-//        ClusterTree reflectedClusterTree(clusterTree);  //copy the original clustertree
-//        reflectedClusterTree.updateMinCuboids(&reflectedBoundaryElements);
-
-//        HMatrix halfSpaceReflMatPhi;
-//        halfSpaceReflMatPhi.setClusterTrees(&clusterTree, &reflectedClusterTree);
-//        halfSpaceReflMatPhi.populateBlockClusterTree();
-
-//        HMatrix halfSpaceReflMatDPhi;
-//        halfSpaceReflMatDPhi.setClusterTrees(&clusterTree, &reflectedClusterTree);
-//        halfSpaceReflMatDPhi.populateBlockClusterTree();
-
-//        QVector<BlockCluster*> reflectedPhiHMatPartition = halfSpaceReflMatPhi.getMinPartition();
-//        QVector<BlockCluster*> reflectedDPhiHMatPartition = halfSpaceReflMatDPhi.getMinPartition();
-//        if(reflectedPhiHMatPartition.size() != reflectedDPhiHMatPartition.size())
-//        {
-//            std::cerr<< "reflectedPhiHMatPartition.size() != reflectedDPhiHMatPartition.size() in hMatrixSolve()" << std::endl;
-//        }
-//        std::cout<< "Started the block assembly of the reflection Matrix" << std::endl;
-//        timer.start();
-//        std::cout<< "reflectedPhiHMatPartition.size(): " << reflectedPhiHMatPartition.size() << std::endl;
-
-//        #pragma omp parallel master
-//        for(long blockIndex = 0; blockIndex < reflectedPhiHMatPartition.size(); blockIndex++)
-//        {
-//            #pragma omp task
-//            hBlockAssemblyReflMat(reflectedPhiHMatPartition.at(blockIndex), reflectedDPhiHMatPartition.at(blockIndex), acaMaxRank, acaRelativeError, boundaryElements, reflectedBoundaryElements);
-//        }
-//        std::cout<< "Finished the block assembly of the reflection Matrix" << std::endl;
-//        timer.stop();
-//        std::cout << "Runtime of hBlockAssemblyReflectedMatrix: " << timer.secs() << std::endl;
-//        timer.reset();
-
-//        HArithm::MVM(rightHandside, halfSpaceReflMatPhi, f); // for fully reflective plane
-////        HArithm::MVM(rightHandside, halfSpaceReflMatPhi, -f); // for absorbtive plane
-//        halfSpaceReflMatPhi.clear(true); // halfSpaceReflMatPhi in not needed anymore
-//        rightHandsideCopy = rightHandside;
-//        HMatRightHandSide = rightHandside;
-
-//        timer.start();
-//        #pragma omp parallel master
-//        {
-//            HArithm::recursiveHMatAddition(dPhiHMat.getRootBlock(), halfSpaceReflMatDPhi.getRootBlock(), acaMaxRank, 0.1 * acaRelativeError); // for fully reflective plane
-//        }
-//        timer.stop();
-//        std::cout << "Runtime of recursiveHMatAddition: " << timer.secs() << std::endl;
-//        timer.reset();
-
-////        HArithm::recursiveHMatSubstraction(dPhiHMat.getRootBlock(), halfSpaceReflMatDPhi.getRootBlock(), 0, 0.1 * error); // for absorbtive plane
-//        dPhiCompressionRatio = halfSpaceReflMatDPhi.getCompressionRatio();
-//        std::cout << "halfSpaceReflMatDPhi compressionRatio: " << dPhiCompressionRatio << ". " << std::endl;
-//        halfSpaceReflMatDPhi.clear(true); // halfSpaceReflMatDPhi in not needed anymore
-//        reflectedClusterTree.clear();
-//        dPhiCompressionRatio = dPhiHMat.getCompressionRatio();
-//        std::cout << "dPhi compressionRatio: " << dPhiCompressionRatio << " after additional compression calculated in " << timer.secs() << " seconds." << std::endl;
-//        std::cout << "maximum local rank of dPhi matrix: " << dPhiHMat.calculateMaxBlockRank() << std::endl;
-//    }
-//    else if(boundaryElements.impedancePlanes.length() >= 2)
-//    {
-//        std::cout << "Calculating reflection matrices for two parallel impedance planes." << std::endl;
-//        Timer refMatTimer;
-//        refMatTimer.start();
-//        HMatrix halfSpaceReflMatPhi;
-//        HMatrix halfSpaceReflMatDPhi;
-
-//        calcReflectionMatrices(halfSpaceReflMatPhi, halfSpaceReflMatDPhi, acaMaxRank, acaRelativeError, boundaryElements, boundaryElements, clusterTree);
-//        refMatTimer.stop();
-//        std::cout << "Runtime of new reflection matrix calculation: " << refMatTimer.secs() << std::endl;
-//        std::cout << "Compression ratio of the dPhi reflection Matrix: " << halfSpaceReflMatDPhi.getCompressionRatio() << std::endl;
-//        HArithm::MVM(rightHandside, halfSpaceReflMatPhi, f);
-//        rightHandsideCopy = rightHandside;
-//        HMatRightHandSide = rightHandside;
-//        #pragma omp parallel master
-//        {HArithm::recursiveHMatAddition(dPhiHMat.getRootBlock(), halfSpaceReflMatDPhi.getRootBlock(), acaMaxRank, 0.1 * acaRelativeError);}
-//        halfSpaceReflMatPhi.clear(); // halfSpaceReflMatDPhi in not needed anymore
-//        halfSpaceReflMatDPhi.clear(true); // halfSpaceReflMatDPhi in not needed anymore
-//    }
-//    ////////////////////////////////////// Copy dPhiHMat for later GMRES usage, as LUSolver modifies th original dPhiHMat
-
-//    HMatrix dPhiHMatCopy;
-//    std::pair<HMatrix,HMatrix> LUPair;
-//    if(usePreconditioner)
-//    {
-//        timer.start();
-//        dPhiHMatCopy = HMatrix(dPhiHMat, preconditionerRank, preconditionerRelError, true);
-//        timer.stop();
-//        std::cout << std::endl << "dPhiHMatCopy(dPhiHMat) took " << timer.secs() << " seconds." << std::endl;
-//        timer.reset();
-//        timer.start();
-//        compressionRatio = dPhiHMatCopy.getCompressionRatio();
-//        timer.stop();
-//        std::cout << std::endl << "dPhiHMatCopy compressionRatio: " << compressionRatio <<std::endl << "calculated in " << timer.secs() << " seconds" << std::endl;
-//        timer.reset();
-
-//        timer.start();
-//        std::cout << "Calculating the HLU preconditioner." << std::endl;
-//        LUPair = HArithm::LUDecomposition(dPhiHMatCopy, preconditionerRank, preconditionerRelError); // calculate the LU decomposition of dPhiHMatCopy
-//        dPhiHMatCopy.clear(true); // delete low rank copy
-//        timer.stop();
-//        std::cout << "Runtime of LUDecomposition: " << timer.secs() << std::endl;
-//        timer.reset();
-//    }
-
-//    ////////////////////////////////////// Testing section start ////////////////////////////////
-//    if(testACA)
-//    {
-//        phiHMat.clear(true);
-//        dPhiHMat.clear(true);
-//        return;
-//    }
-//    ////////////////////////////////////// Testing section end ////////////////////////////////
-
-//    if(LUPair.first.hasNan() || LUPair.second.hasNan() || usePreconditioner == false) // LU decomposition has NaN; -> don't use the preconditioner
-//    {
-//        if(usePreconditioner == true)
-//        {
-//            std::cerr << " There are NaNs in the LU decomposition. Continuing without preconditioner." << std::endl;
-//        }
-//        timer.start();
-//        HMatrixWrapper dPhiHMatForGMRES(&dPhiHMat); // set up a wrapper class for the hmatrix to be used in the matrix free gmres routine
-//        boundaryElements.dPhiSolution = GMRES::gmresSolve(dPhiHMatForGMRES, Eigen::VectorXcd::Random(boundaryElements.triangles.length()), rightHandsideCopy, 0.001*acaRelativeError); // solve dPhiHMat * x = righthandside
-//        timer.stop();
-//        std::cout << "Runtime of GMRES: " << timer.secs() << std::endl;
-//        timer.reset();
-//        if(calculateNormAndCond)
-//        {
-//            timer.start();
-//            double normPhi = HArithm::spectralNorm(dPhiHMat); // Approximate the spectral norm of dPhiHMat via power iteration
-//            timer.stop();
-//            std::cout << "Spectral norm of the dphi matrix: " << normPhi << std::endl;
-//            std::cout << "Relative spectral approximation error of the dphi matrix: " << normPhiResiduum/normPhi << std::endl;
-//            std::cout << "Runtime of norm calculation: " << timer.secs() << std::endl;
-//        }
-//        Eigen::VectorXcd b = Eigen::VectorXcd::Zero(boundaryElements.dPhiSolution.size());
-//        HArithm::MVM(b, dPhiHMat, boundaryElements.dPhiSolution);
-//        std::cout << "Relative error of the residuum: " << (b - rightHandsideCopy).norm()/ rightHandsideCopy.norm() << std::endl;
-//    }
-//    else
-//    {
-//        Eigen::VectorXcd gmresGuess = HArithm::LUSubstitutionSolve(LUPair.first, LUPair.second, rightHandsideCopy);
-//        timer.start();
-//        LUPrecondidionedHMatrixWrapper dPhiHMatForLUPreconditionedGMRES(&dPhiHMat, &LUPair.first, &LUPair.second);
-//        boundaryElements.dPhiSolution = GMRES::gmresLUPreconditionedSolve(dPhiHMatForLUPreconditionedGMRES, gmresGuess, rightHandsideCopy, 0.001*acaRelativeError);
-//        timer.stop();
-//        std::cout << "Runtime of preconditioned GMRES: " << timer.secs() << std::endl;
-//        timer.reset();
-
-//        Eigen::VectorXcd b = Eigen::VectorXcd::Zero(boundaryElements.dPhiSolution.size());
-//        HArithm::MVM(b, dPhiHMat, boundaryElements.dPhiSolution);
-//        std::cout << "Relative error of the residuum: " << (b - rightHandsideCopy).norm()/ rightHandsideCopy.norm() << std::endl;
-//        if(calculateNormAndCond)
-//        {
-//            timer.start();
-//            double normPhi = HArithm::spectralNorm(dPhiHMat); // Approximates the spectral norm of dPhiHMat via power iteration
-//            double normPhiInverse = HArithm::spectralNormFromLU(LUPair.first, LUPair.second); // Approximates the spectral norm of the inverse of of dPhiHMat via power iteration with its LU decomposition.
-//            timer.stop();
-//            std::cout << "Spectral norm of the dphi matrix: " << normPhi << std::endl;
-//            std::cout << "Relative spectral approximation error of the dphi matrix: " << normPhiResiduum/normPhi << std::endl;
-//            std::cout << "Spectral norm of the inverse dphi matrix: " << normPhiInverse /*<< ". Calculation may be unreliable for large low rank preconditioning matrices."*/ << std::endl;
-//            std::cout << "Spectral condition number of the dphi matrix: " << normPhi * normPhiInverse<< std::endl;
-//            std::cout << "Runtime of norm calculations: " << timer.secs() << std::endl;
-//        }
-//    }
-
-//    dPhiHMat.clear(false); // delete matrix
-//    LUPair.first.clear(false); // delete preconditioner
-//    LUPair.second.clear(false);
-
-//    /////////////////////////////////////////////////////////// reconstruct phiSolution from dPhiSolution via the boundary conditions
-
-//    boundaryElements.phiSolution = boundaryElements.dPhiSolution;
-//    for(long i = 0; i < substituteDPhiWithPhi.size(); i++)
-//    {
-//        if (substituteDPhiWithPhi(i))
-//        {
-//            boundaryElements.dPhiSolution(i) = (f(i) - alpha(i) * boundaryElements.phiSolution(i)) / beta(i);
-//        }
-//        else
-//        {
-//            boundaryElements.phiSolution(i) = (f(i) - beta(i) * boundaryElements.dPhiSolution(i)) / alpha(i);
-//        }
-//    }
-//    testSol2 = boundaryElements.phiSolution; // for testing
-//    clusterTree.clear();
-//    global::trimMemory();
-//}
-
 void BoundaryElementSolver::hMatrixSolve()
 {
     const double acaRelativeError = bemSolverParameters.acaRelativeError; // Controls the approximation error for the adaptive cross approximation.
@@ -856,13 +558,10 @@ void BoundaryElementSolver::hMatrixSolve()
     }
     timer.stop();
     std::cout << "phiHMat assembled in " << timer.secs() << " seconds" << std::endl;
-    //    std::cout << "frobenius norm of phi matrix: " << phiHMat.normInSVDForm() << std::endl;
-//        std::cout << "frobenius norm of phi matrix: " << phiHMat.norm() << std::endl;
 
     double normPhiResiduum = 0;
     if(calculateNormAndCond)
     {
-        timer.reset();
         timer.start();
         normPhiResiduum = HArithm::spectralNormLeastSignificant(phiHMat); // Approximates the spectral norm of the residuum of dPhiHMat
         timer.stop();
@@ -870,14 +569,10 @@ void BoundaryElementSolver::hMatrixSolve()
         std::cout << "Runtime of norm calculations: " << timer.secs() << std::endl;
     }
 
-
-    timer.reset();
-
     timer.start();
     double compressionRatio = phiHMat.getCompressionRatio();
     timer.stop();
     std::cout << std::endl << "phi compressionRatio: " << compressionRatio <<std::endl << "calculated in " << timer.secs() << " seconds" << std::endl;
-    timer.reset();
     std::cout << "maximum local rank of phi matrix: " << phiHMat.calculateMaxBlockRank() << std::endl;
 
     Eigen::VectorXcd rightHandside = sourceTermVector;
@@ -909,7 +604,6 @@ void BoundaryElementSolver::hMatrixSolve()
     }
     timer.stop();
     std::cout << "dPhiHMat assembled in " << timer.secs() << " seconds" << std::endl;
-    timer.reset();
 
     if(testACA) // just for testing
     {
@@ -919,19 +613,16 @@ void BoundaryElementSolver::hMatrixSolve()
     double normDPhiResiduum = 0;
     if(calculateNormAndCond)
     {
-        timer.reset();
         timer.start();
         normDPhiResiduum = HArithm::spectralNormLeastSignificant(dPhiHMat); // Approximates the spectral norm of the residuum of dPhiHMat
         timer.stop();
         std::cout << "Spectral norm of the dphi residuum: " << normDPhiResiduum << std::endl;
         std::cout << "Runtime of norm calculations: " << timer.secs() << std::endl;
     }
-
     timer.start();
     compressionRatio = dPhiHMat.getCompressionRatio();
     timer.stop();
     std::cout << std::endl << "dphi compressionRatio: " << compressionRatio <<std::endl << "calculated in " << timer.secs() << " seconds" << std::endl;
-    timer.reset();
     std::cout << "maximum local rank of dphi matrix: " << dPhiHMat.calculateMaxBlockRank() << std::endl;
 
     ////////////////////////////////////// Copy dPhiHMat for later GMRES usage, as LUSolver modifies the original dPhiHMat
@@ -944,12 +635,10 @@ void BoundaryElementSolver::hMatrixSolve()
         dPhiHMatCopy = HMatrix(dPhiHMat, preconditionerRank, preconditionerRelError, false);
         timer.stop();
         std::cout << std::endl << "dPhiHMatCopy(dPhiHMat) took " << timer.secs() << " seconds." << std::endl;
-        timer.reset();
         timer.start();
         compressionRatio = dPhiHMatCopy.getCompressionRatio();
         timer.stop();
         std::cout << std::endl << "dPhiHMatCopy compressionRatio: " << compressionRatio <<std::endl << "calculated in " << timer.secs() << " seconds" << std::endl;
-        timer.reset();
 
         timer.start();
         std::cout << "Calculating the HLU preconditioner." << std::endl;
@@ -958,7 +647,6 @@ void BoundaryElementSolver::hMatrixSolve()
         dPhiHMatCopy.clear(true); // delete low rank copy
         timer.stop();
         std::cout << "Runtime of LUDecomposition: " << timer.secs() << std::endl;
-        timer.reset();
     }
 
     ////////////////////////////////////// Testing section start ////////////////////////////////
@@ -982,7 +670,6 @@ void BoundaryElementSolver::hMatrixSolve()
         boundaryElements.dPhiSolution = GMRES::gmresSolve(dPhiHMatForGMRES, Eigen::VectorXcd::Random(boundaryElements.triangles.length()), rightHandsideCopy, 0.001*acaRelativeError); // solve dPhiHMat * x = righthandside
         timer.stop();
         std::cout << "Runtime of GMRES: " << timer.secs() << std::endl;
-        timer.reset();
         if(calculateNormAndCond)
         {
             timer.start();
@@ -1005,7 +692,6 @@ void BoundaryElementSolver::hMatrixSolve()
         boundaryElements.dPhiSolution = GMRES::gmresLUPreconditionedSolve(dPhiHMatForLUPreconditionedGMRES, gmresGuess, rightHandsideCopy, 0.001*acaRelativeError);
         timer.stop();
         std::cout << "Runtime of preconditioned GMRES: " << timer.secs() << std::endl;
-        timer.reset();
 
         Eigen::VectorXcd b = Eigen::VectorXcd::Zero(boundaryElements.dPhiSolution.size());
         HArithm::MVM(b, dPhiHMat, boundaryElements.dPhiSolution);
@@ -1022,7 +708,6 @@ void BoundaryElementSolver::hMatrixSolve()
             std::cout << "Spectral condition number of the dphi matrix: " << normPhi * normPhiInverse<< std::endl;
             std::cout << "Runtime of norm calculations: " << timer.secs() << std::endl;
 
-//            timer.reset();
 //            timer.start();
 //            normPhi = dPhiHMat.norm();
 //            normPhiInverse = HArithm::frobeniusNormFromLU(LUPair.first, LUPair.second, 5); // Approximates the frobenius norm of the inverse of of dPhiHMat.
@@ -1069,9 +754,6 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
         BoundaryElements reflectedBoundaryElements = reflElements;
         reflectedBoundaryElements.reflectGeometry(elements.impedancePlanes.at(planeIndex));
 
-//        ClusterTree reflectedClusterTree(clusterTree);  //copy the original clustertree
-//        reflectedClusterTree.updateMinCuboids(&reflectedBoundaryElements);
-
         std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*clusterTree);  //copy the original clustertree
         reflectedClusterTree->updateMinCuboids(&reflectedBoundaryElements);
 
@@ -1083,21 +765,13 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
         newReflMatDPhi.setClusterTrees(clusterTree, reflectedClusterTree);
         newReflMatDPhi.populateBlockClusterTree();
 
-        QVector<BlockCluster*> newReflMatPhiPartition = newReflMatPhi.getMinPartition();
-        QVector<BlockCluster*> newReflMatDPhiPartition = newReflMatDPhi.getMinPartition();
-
         Timer timer;
         timer.start();
-
-        #pragma omp parallel master
-        for(long blockIndex = 0; blockIndex < newReflMatPhiPartition.size(); blockIndex++)
-        {
-            #pragma omp task
-            hBlockAssemblyReflMat(newReflMatPhiPartition.at(blockIndex), newReflMatDPhiPartition.at(blockIndex), 0, relativeError, elements, reflectedBoundaryElements);
-        }
+        newReflMatPhi.assembleBlocks(maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixReflected, this, std::placeholders::_1, std::placeholders::_2, std::ref(elements), std::ref(reflectedBoundaryElements)), false);
+        newReflMatDPhi.assembleBlocks(maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitDPhiMatrixReflected, this, std::placeholders::_1, std::placeholders::_2, std::ref(elements), std::ref(reflectedBoundaryElements)), false);
+//        newReflMatDPhi.assembleBlocksExtra(maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitDPhiMatrixReflected, this, std::placeholders::_1, std::placeholders::_2, std::ref(elements), std::ref(reflectedBoundaryElements)), false);
         timer.stop();
         std::cout << "Runtime of hBlockAssemblyReflectedMatrix: " << timer.secs() << std::endl;
-        timer.reset();
 
         omp_set_max_active_levels(2); // raise the number of active parallelization levels for the current section
         #pragma omp parallel sections
@@ -1127,7 +801,6 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
             reflMatDPhi = newReflMatDPhi;
 
             calcReflectionMatrices(reflMatPhi, reflMatDPhi, maxRank, relativeError, elements, reflectedBoundaryElements, clusterTree, planeIndex);
-//            reflectedClusterTree.clear();  // can't be deleted here -> still a memory leak
             continue;
         }
         omp_set_max_active_levels(2); // raise the number of active parallelization levels for the current section
@@ -1145,7 +818,6 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
 
         newReflMatDPhi.clear(); // newReflMatDPhi in not needed anymore
         newReflMatPhi.clear(); // newReflMatPhi in not needed anymore
-//        reflectedClusterTree->clear();
 
         double reflMatPhiNorm = reflMatPhi.norm();
         double reflMatDPhiNorm = reflMatDPhi.norm();
@@ -1166,382 +838,6 @@ void BoundaryElementSolver::calcReflectionMatrices(HMatrix &reflMatPhi, HMatrix 
     if(lastPlaneIndex == -1)
     {
         global::trimMemory();
-    }
-}
-
-void BoundaryElementSolver::hBlockAssembly(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError)
-{
-    if(phiBlock -> isAdmissible) // Adaptive Cross Approximation for low rank block assembly
-    {
-            #pragma omp task
-            partialPivotACA(phiBlock, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrix, this, std::placeholders::_1, std::placeholders::_2));
-            #pragma omp task
-            partialPivotACAextra(dPhiBlock, maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndices, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrix, this, std::placeholders::_1, std::placeholders::_2));
-    }
-    else // nearfield block full matrix assembly
-    {
-        long rowStartIndex = phiBlock->rowStartIndex();
-        long columnStartIndex = phiBlock->colStartIndex();
-        long blockRows = phiBlock->rows(); //assumes contiguous ascending indexes
-        long blockColumns = phiBlock->cols();
-
-        phiBlock->fullMat = Eigen::MatrixXcd(blockRows, blockColumns);
-        dPhiBlock->fullMat = Eigen::MatrixXcd(blockRows, blockColumns);
-
-        std::complex<double> Mk;
-        std::complex<double> Nk;
-        std::complex<double> Lk;
-        std::complex<double> Mtk;
-        bool onPanel = false;
-
-//        #pragma omp parallel for private(Mk,Nk,Lk,Mtk,onPanel)// parallelizes matrix initialization
-        for(long row = 0; row < blockRows; row++)
-        {
-            for(long column = 0; column < blockColumns; column++)
-            {
-                long globalRowIndex = rowStartIndex + row;
-                long globalColumnIndex = columnStartIndex + column;
-                onPanel = (globalRowIndex == globalColumnIndex);
-
-                BemOperatorsConst(rowStartIndex + row, columnStartIndex + column, Lk, Mk, Mtk, Nk);
-
-                if(substituteDPhiWithPhi(globalColumnIndex))
-                {
-                    phiBlock->fullMat(row,column) = - (Lk + couplingParameter * Mtk + ((double)onPanel) * couplingParameterHalf) / beta(globalColumnIndex);
-                    dPhiBlock->fullMat(row,column) = -alpha(globalColumnIndex) / beta(globalColumnIndex) * (Lk + couplingParameter * Mtk + ((double)onPanel) * couplingParameterHalf) - (Mk + couplingParameter * Nk - ((double)onPanel) * 0.5);
-                }
-                else
-                {
-                    phiBlock->fullMat(row,column) = (Mk + couplingParameter * Nk - ((double)onPanel) * 0.5) / alpha(globalColumnIndex);
-                    dPhiBlock->fullMat(row,column) = Lk + couplingParameter * Mtk + ((double)onPanel) * couplingParameterHalf + beta(globalColumnIndex)/alpha(globalColumnIndex) * (Mk + couplingParameter * Nk - ((double)onPanel) * 0.5);
-                }
-            }
-        }
-    }
-}
-
-void BoundaryElementSolver::hBlockAssemblyReflMat(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError, const BoundaryElements &boundaryElements, const BoundaryElements &reflectedElements)
-{
-    if(phiBlock -> isAdmissible) // Adaptive Cross Approximation
-    {
-        #pragma omp task
-        partialPivotACA(phiBlock, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixReflected, this, std::placeholders::_1, std::placeholders::_2, std::ref(boundaryElements), std::ref(reflectedElements)));
-        #pragma omp task
-        partialPivotACA(dPhiBlock, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitDPhiMatrixReflected, this, std::placeholders::_1, std::placeholders::_2, std::ref(boundaryElements), std::ref(reflectedElements)));
-    }
-    else // nearfield block full matrix assembly
-    {
-        long rowStartIndex = phiBlock->rowStartIndex();
-        long columnStartIndex = phiBlock->colStartIndex();
-        long blockRows = phiBlock->rows(); //assumes contiguous ascending indexes
-        long blockColumns = phiBlock->cols();
-
-        phiBlock->fullMat = Eigen::MatrixXcd(blockRows, blockColumns);
-        dPhiBlock->fullMat = Eigen::MatrixXcd(blockRows, blockColumns);
-
-        std::complex<double> Mk;
-        std::complex<double> Nk;
-        std::complex<double> Lk;
-        std::complex<double> Mtk;
-
-//        #pragma omp parallel for private(Mk,Nk,Lk,Mtk)// parallelizes matrix initialization
-        for(long row = 0; row < blockRows; row++)
-        {
-            for(long column = 0; column < blockColumns; column++)
-            {
-                long globalColumnIndex = columnStartIndex + column;
-                BemOperatorsReflected(rowStartIndex + row, columnStartIndex + column, Lk, Mk, Mtk, Nk, boundaryElements, reflectedElements);
-
-                if(substituteDPhiWithPhi(globalColumnIndex))
-                {
-                    phiBlock->fullMat(row,column) = - (Lk + couplingParameter * Mtk) / beta(globalColumnIndex);
-                    dPhiBlock->fullMat(row,column) = -alpha(globalColumnIndex) / beta(globalColumnIndex) * (Lk + couplingParameter * Mtk) - (Mk + couplingParameter * Nk);
-                }
-                else
-                {
-                    phiBlock->fullMat(row,column) = (Mk + couplingParameter * Nk) / alpha(globalColumnIndex);
-                    dPhiBlock->fullMat(row,column) = Lk + couplingParameter * Mtk + beta(globalColumnIndex)/alpha(globalColumnIndex) * (Mk + couplingParameter * Nk);
-                }
-            }
-        }
-    }
-}
-
-void BoundaryElementSolver::partialPivotACA(BlockCluster* block, const long rank, double relativeError, std::function<std::complex<double> (long, long)> implicitMatrix)
-{
-    block->VAdjMat.resize(0,0);
-    block->singularValues.resize(0);
-    block->UMat.resize(0,0);
-
-    std::complex<double> normEstimate = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
-    double relErrorTarget = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
-    long rowStartIndex = block->rowStartIndex();
-    long columnStartIndex = block->colStartIndex();
-    long blockRows = block->rows(); //assumes contiguous ascending indexes
-    long blockColumns = block->cols();
-
-    long maxRank = std::min(blockRows, blockColumns);
-    long initialRankReservation = 5;
-    if(rank > 0)
-    {
-        maxRank = std::min(maxRank, rank);
-        block->UMat.resize(blockRows, maxRank);
-        block->singularValues.resize(maxRank);
-        block->VAdjMat.resize(maxRank, blockColumns);
-    }
-    else
-    {
-        long reservationRank = std::min(initialRankReservation, maxRank);
-        block->UMat.resize(blockRows, reservationRank);
-        block->singularValues.resize(reservationRank);
-        block->VAdjMat.resize(reservationRank, blockColumns);
-    }
-    long tmpRank = 0;
-
-    Eigen::RowVectorXcd rowVector(blockColumns);
-    Eigen::VectorXcd columnVector(blockRows);
-
-    long rowIndex;
-    long columnIndex;
-
-    columnIndex = QRandomGenerator::system()->bounded((qint32) blockColumns); // find random row index, indices can not be reused
-    calcHBlockColumnVector(columnVector, rowStartIndex, columnStartIndex + columnIndex,  implicitMatrix);
-
-    while(tmpRank < maxRank /*&& error condition*/)
-    {
-        if(tmpRank >= 1)
-        {
-            columnVector[rowIndex] = 0;
-        }
-        else //generate new random row index
-        {
-//            rowIndex = QRandomGenerator::global()->bounded((qint32) blockRows); // find random row index, indices can not be reused
-            rowIndex = QRandomGenerator::system()->bounded((qint32) blockRows); // find random row index, indices can not be reused
-        }
-        columnVector.cwiseAbs().maxCoeff(&rowIndex);
-
-        if(std::abs(columnVector(rowIndex)) <= global::tiny && tmpRank >= 1) //the max absolute element is too small -> no suitable column index for rowIndex
-        {
-            std::cerr << "max(columnVector) <= global::Tiny" << std::endl;
-            break;    //change later
-        }
-
-        // calculate the block row rowIndex
-        calcHBlockRowVector(rowVector, rowStartIndex + rowIndex, columnStartIndex, implicitMatrix);
-
-        if(tmpRank >= 1)
-        {
-            rowVector -= (block->UMat.leftCols(tmpRank).row(rowIndex) * block->singularValues.head(tmpRank).asDiagonal()) * block->VAdjMat.topRows(tmpRank);
-        }
-
-         // find column index for largest absolute element in row with above rowindex
-        double maxRowVal = rowVector.cwiseAbs().maxCoeff(&columnIndex); //  columnIndex is now max column index of phiAbsVec
-
-        if(maxRowVal <= global::tiny && tmpRank >= 1) //the max absolute element is too small -> no suitable column index for rowIndex
-        {
-            std::cerr << "max(rowAbsVec) <= Tiny" << std::endl;
-            break;    //change later
-        }
-
-        // calculate the block column columnIndex
-        calcHBlockColumnVector(columnVector, rowStartIndex, columnStartIndex + columnIndex, implicitMatrix);
-
-        std::complex<double> alpha = 1.0 / rowVector(columnIndex);
-
-        if(tmpRank >= 1)
-        {
-            columnVector -= block->UMat.leftCols(tmpRank) * (block->singularValues.head(tmpRank).asDiagonal() * block->VAdjMat.topRows(tmpRank).col(columnIndex));
-        }
-
-        if(block->singularValues.size() <= tmpRank)
-        {
-            long newSize = std::min(2*tmpRank, maxRank);
-            block->UMat.conservativeResize(Eigen::NoChange, newSize);
-            block->singularValues.conservativeResize(newSize);
-            block->VAdjMat.conservativeResize(newSize, Eigen::NoChange);
-         }
-
-        block->UMat.col(tmpRank) = columnVector;
-        block->VAdjMat.row(tmpRank) = rowVector;
-        block->singularValues(tmpRank) = alpha;
-        tmpRank++; // increment rank counter to actual current rank of the low rank matrix
-
-        normEstimate += std::abs(std::pow(alpha, 2)) *  rowVector.squaredNorm() * columnVector.squaredNorm();
-        for(long i = 0; i < tmpRank - 1; i++)
-        {
-            normEstimate += 2.0 * std::conj(alpha) * block->singularValues(i) * (columnVector.adjoint() * block->UMat.col(i))(0,0) * (( block->VAdjMat.row(i)) * ( rowVector).adjoint())(0,0);
-        }
-        relErrorTarget = std::real(std::pow(relativeError, 2) * normEstimate);
-        if(relativeError > 0 && std::pow(std::abs(alpha), 2) * rowVector.squaredNorm() * columnVector.squaredNorm() < relErrorTarget)
-        {
-            break;
-        }
-    }
-    block->UMat.conservativeResize(Eigen::NoChange, tmpRank);
-    block->singularValues.conservativeResize(tmpRank);
-    block->VAdjMat.conservativeResize(tmpRank, Eigen::NoChange);
-
-    block->frobeniusNorm = std::sqrt(std::abs(normEstimate));
-
-    if(tmpRank == 0) // if the first pivoting element was already do small -> nothing has been sampled
-    {
-         block->UMat = Eigen::MatrixXcd::Zero(blockRows, 1);
-         block->singularValues = Eigen::VectorXcd::Zero(1);
-         block->VAdjMat = Eigen::MatrixXcd::Zero(1, blockColumns);
-    }
-}
-
-void BoundaryElementSolver::partialPivotACAextra(BlockCluster* block, long rank, double relativeError, std::function<QVector<std::pair<long,long>>(BlockCluster*,double)> getPivotIndices, std::function<std::complex<double> (long, long)> implicitMatrix) /*!< Low-rank assembly of an h-block by ACA with heuristic partial pivoting. The (guaranteed) accuracy is improved for dPhi-blocks. */
-{
-    block->VAdjMat.resize(0,0);
-    block->singularValues.resize(0);
-    block->UMat.resize(0,0);
-
-    std::complex<double> normEstimate = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
-    double relErrorTarget = 0; // full rank matrix norm approximation by the R1 matrix norm multiplied by relative error
-    long rowStartIndex = block->rowStartIndex();
-    long columnStartIndex = block->colStartIndex();
-    long blockRows = block->rows(); //assumes contiguous ascending indexes
-    long blockColumns = block->cols();
-    long maxRank = std::min(blockRows, blockColumns);
-    long initialRankReservation = 5;
-    if(rank > 0)
-    {
-        maxRank = std::min(maxRank, rank);
-        block->UMat.resize(blockRows, maxRank);
-        block->singularValues.resize(maxRank);
-        block->VAdjMat.resize(maxRank, blockColumns);
-    }
-    else
-    {
-        long reservationRank = std::min(initialRankReservation, maxRank);
-        block->UMat.resize(blockRows, reservationRank);
-        block->singularValues.resize(reservationRank);
-        block->VAdjMat.resize(reservationRank, blockColumns);
-    }
-
-    QVector<std::pair<long,long>> pivotIndices = getPivotIndices(block, 0.44);
-
-    Eigen::RowVectorXcd rowVector(blockColumns);
-    Eigen::VectorXcd columnVector(blockRows);
-    long tmpRank = 0;
-
-    for(long i = 0; i < pivotIndices.size() && tmpRank < maxRank; i++)
-    {
-
-        long rowIndex = pivotIndices.at(i).first;
-        long columnIndex = pivotIndices.at(i).second;
-
-        std::complex<double> pivotElement = implicitMatrix(rowStartIndex + rowIndex, columnStartIndex + columnIndex);
-
-        if(std::abs(pivotElement) < global::tiny)
-        {
-            continue; // pivot element is too small
-        }
-        if(std::abs((pivotElement - ((block->UMat.row(rowIndex).head(tmpRank).transpose().array() * block->singularValues.head(tmpRank).array()).array() * block->VAdjMat.col(columnIndex).head(tmpRank).array()).sum()) / pivotElement) < relativeError)
-        {
-            continue; // pivot element is already sufficiently approximated
-        }
-        calcHBlockColumnVector(columnVector, rowStartIndex, columnStartIndex + columnIndex, implicitMatrix);
-        if(tmpRank >= 1)
-        {
-            columnVector -= block->UMat.leftCols(tmpRank) * (block->singularValues.head(tmpRank).asDiagonal() * block->VAdjMat.topRows(tmpRank).col(columnIndex));
-        }
-        bool firstIterationForCurrentPivotElement = true;
-        while(tmpRank < maxRank)
-        {
-//            std::cerr<<"tmpRank " <<tmpRank <<std::endl;
-
-            Eigen::VectorXd colAbsVec;
-            colAbsVec  = columnVector.cwiseAbs();
-            if(!firstIterationForCurrentPivotElement)
-            {
-                colAbsVec[rowIndex] = 0; //at this point rowIndex is still the number from the last iteration
-            }
-            colAbsVec.maxCoeff(&rowIndex); //  columnIndex is now max column index of phiAbsVec
-            firstIterationForCurrentPivotElement = false;
-            if(std::abs(columnVector(rowIndex)) <= global::tiny && tmpRank >= 1) //the max absolute element is too small -> no suitable column index for rowIndex
-            {
-                 std::cerr << "max(columnVector) <= global::Tiny" << std::endl;
-                 break;    //change later
-            }
-
-            // calculate the block row
-            calcHBlockRowVector(rowVector, rowStartIndex + rowIndex, columnStartIndex, implicitMatrix);
-
-            if(tmpRank >= 1)
-            {
-                rowVector -= (block->UMat.leftCols(tmpRank).row(rowIndex) * block->singularValues.head(tmpRank).asDiagonal()) * block->VAdjMat.topRows(tmpRank);
-            }
-
-             // find column index for largest absolute element in row with above rowindex
-
-            Eigen::RowVectorXd rowAbsVec = rowVector.cwiseAbs();
-
-             double maxRowVal = rowAbsVec.maxCoeff(&columnIndex); //  columnIndex is now max column index of phiAbsVec
-
-            if(maxRowVal <= global::tiny && tmpRank >= 1) //the max absolute element is too small -> no suitable column index for rowIndex
-            {
-                std::cerr << "max(rowAbsVec) <= Tiny" << std::endl;
-            //             std::cerr << "maxRowVal: " << maxRowVal << std::endl;
-                break;    //change later
-            }
-
-            // calculate the block column
-            calcHBlockColumnVector(columnVector, rowStartIndex, columnStartIndex + columnIndex, implicitMatrix);
-
-            std::complex<double> alpha = 1.0 / rowVector(columnIndex);
-
-            if(tmpRank >= 1)
-            {
-                columnVector -= block->UMat.leftCols(tmpRank) * (block->singularValues.head(tmpRank).asDiagonal() * block->VAdjMat.topRows(tmpRank).col(columnIndex));
-            }
-
-            if(block->singularValues.size() <= tmpRank)
-            {
-                long newSize = std::min(2*tmpRank, maxRank);
-                block->UMat.conservativeResize(Eigen::NoChange, newSize);
-                block->singularValues.conservativeResize(newSize);
-                block->VAdjMat.conservativeResize(newSize, Eigen::NoChange);
-             }
-
-            block->UMat.col(tmpRank) = columnVector;
-            block->VAdjMat.row(tmpRank) = rowVector;
-            block->singularValues(tmpRank) = alpha;
-            tmpRank++; // increment rank counter to actual current rank of the low rank matrix
-
-            std::complex<double> oldNorm = normEstimate;
-
-            normEstimate += std::abs(std::pow(alpha, 2)) * rowVector.squaredNorm() * columnVector.squaredNorm();
-            for(long i = 0; i < tmpRank - 1; i++)
-            {
-                normEstimate += 2.0 * std::conj(alpha) * block->singularValues(i) * (columnVector.adjoint() * block->UMat.col(i))(0,0) * (( block->VAdjMat.row(i)) * ( rowVector).adjoint())(0,0);
-            }
-            relErrorTarget = std::real(std::pow(relativeError, 2) * normEstimate);
-            double normOfLastGain2 = std::pow(std::abs(alpha), 2) * rowVector.squaredNorm() * columnVector.squaredNorm();
-
-            if(relativeError > 0 && normOfLastGain2 < relErrorTarget)
-            {
-                if(relativeError > 0 && normOfLastGain2 < 0.1 * relErrorTarget)
-                {
-                    tmpRank--;
-                    normEstimate = oldNorm;
-                }
-                break;
-            }
-        }
-    }
-    block->UMat.conservativeResize(Eigen::NoChange, tmpRank);
-    block->singularValues.conservativeResize(tmpRank);
-    block->VAdjMat.conservativeResize(tmpRank, Eigen::NoChange);
-
-    block->frobeniusNorm = std::sqrt(std::abs(normEstimate));
-
-    if(tmpRank == 0)
-    {
-         block->UMat = Eigen::MatrixXcd::Zero(blockRows, 1);
-         block->singularValues = Eigen::VectorXcd::Zero(1);
-         block->VAdjMat = Eigen::MatrixXcd::Zero(1, blockColumns);
     }
 }
 
@@ -1962,7 +1258,7 @@ void BoundaryElementSolver::BemOperatorsNearSingSinh(const long row, const long 
         VectorTriangle currentTriangle = splitTriangles.at(i);
 //        std::cerr << "triangleArea: " << triangleArea << std:: endl;
 
-        if(false)
+        if(false) // no transform
         {
             double triangleArea = global::areaOfTriangle(currentTriangle);
             double upNq = np.dot(nq);
@@ -1994,7 +1290,7 @@ void BoundaryElementSolver::BemOperatorsNearSingSinh(const long row, const long 
             Mtk += tmpMtk * triangleArea;
             Nk += tmpNk * triangleArea;
         }
-        else
+        else // sinh transform
         {
             Eigen::Vector3d triangle13Side = (currentTriangle.node3-currentTriangle.node1);
             Eigen::Vector3d triangle23Side = (currentTriangle.node3-currentTriangle.node2);
@@ -3162,10 +2458,12 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
                 Eigen::VectorXcd tmp;
                 if(block.isAdmissible) // use ACA for low-rank block assembly
                 {
-                    partialPivotACA(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, boundaryElements));
+                    block.partialPivotACA(maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, boundaryElements));
+//                    partialPivotACA(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, boundaryElements));
                     tmp.noalias() = block.UMat * (block.singularValues.asDiagonal() * (block.VAdjMat * boundaryElements.phiSolution.segment(columnStartIndex, numberOfColumns)));
 
-                    partialPivotACAextra(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, boundaryElements));
+                    block.partialPivotACAextra(maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, boundaryElements));
+//                    partialPivotACAextra(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, boundaryElements));
                     tmp.noalias() -= block.UMat * (block.singularValues.asDiagonal() * (block.VAdjMat * boundaryElements.dPhiSolution.segment(columnStartIndex, numberOfColumns)));
                 }
                 else // use full-rank block assembly
@@ -3221,10 +2519,12 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
                     Eigen::VectorXcd tmp;
                     if(block.isAdmissible) // use ACA for low-rank block assembly
                     {
-                        partialPivotACA(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, reflectedBoundaryElements));
+                        block.partialPivotACA(maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, reflectedBoundaryElements));
+//                        partialPivotACA(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, reflectedBoundaryElements));
                         tmp.noalias() = block.UMat * (block.singularValues.asDiagonal() * (block.VAdjMat * boundaryElements.phiSolution.segment(columnStartIndex, numberOfColumns)));
 
-                        partialPivotACAextra(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, reflectedBoundaryElements));
+                        block.partialPivotACAextra(maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, reflectedBoundaryElements));
+//                        partialPivotACAextra(&block, maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, currentObsField->triangleMidPoints, reflectedBoundaryElements));
                         tmp.noalias() -= block.UMat * (block.singularValues.asDiagonal() * (block.VAdjMat * boundaryElements.dPhiSolution.segment(columnStartIndex, numberOfColumns)));
                     }
                     else // use full-rank block assembly
@@ -3269,36 +2569,6 @@ void BoundaryElementSolver::calculateFieldSolutionFast(const double relativeErro
     boundaryClusterTree->clear();
 }
 
-void BoundaryElementSolver::hBlockAssemblyField(BlockCluster* phiBlock, BlockCluster* dPhiBlock, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &boundaryElements)
-{
-    if(phiBlock -> isAdmissible /*&& 0*/) // Adaptive Cross Approximation
-    {
-        partialPivotACA(phiBlock, maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, observationPoints, boundaryElements));
-        partialPivotACAextra(dPhiBlock, maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, observationPoints, boundaryElements));
-    }
-    else // nearfield block full matrix assembly
-    {
-        long rowStartIndex = phiBlock->rowStartIndex();
-        long columnStartIndex = phiBlock->colStartIndex();
-        long blockRows = phiBlock->rows();
-        long blockColumns = phiBlock->cols();
-
-        phiBlock->fullMat = Eigen::MatrixXcd(blockRows, blockColumns);
-        dPhiBlock->fullMat = Eigen::MatrixXcd(blockRows, blockColumns);
-
-        Eigen::VectorXcd tmpColumn(blockRows);
-
-        #pragma omp parallel for private(tmpColumn)
-        for(long columnIndex = 0; columnIndex < blockColumns; columnIndex++)
-        {
-            calcHBlockColumnVector(tmpColumn, rowStartIndex, columnStartIndex + columnIndex, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, observationPoints, boundaryElements));
-            phiBlock->fullMat.col(columnIndex) = tmpColumn;
-            calcHBlockColumnVector(tmpColumn, rowStartIndex, columnStartIndex + columnIndex, std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, observationPoints, boundaryElements));
-            dPhiBlock->fullMat.col(columnIndex) = tmpColumn;
-        }
-    }
-}
-
 void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMatrix &reflMatDPhi, const long maxRank, const double relativeError, const QVector<Eigen::Vector3d> &observationPoints, const BoundaryElements &elements, std::shared_ptr<ClusterTree> obsClusterTree, std::shared_ptr<ClusterTree> elementsClusterTree, int lastPlaneIndex)
 {
     for(int planeIndex=0; planeIndex<elements.impedancePlanes.length() && planeIndex < 2; planeIndex++)
@@ -3309,11 +2579,8 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
         }
         BoundaryElements reflectedBoundaryElements = elements;
         reflectedBoundaryElements.reflectGeometry(elements.impedancePlanes.at(planeIndex));
-//        reflectedBoundaryElements.calculateTriangleMidPoints();
 
-
-//        ClusterTree reflectedClusterTree(elementsClusterTree);  //copy the original clustertree
-        std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*elementsClusterTree);
+        std::shared_ptr<ClusterTree> reflectedClusterTree = std::make_shared<ClusterTree>(*elementsClusterTree); //copy the original clustertree
         reflectedClusterTree->updateMinCuboids(&reflectedBoundaryElements);
 
         HMatrix newReflMatPhi;
@@ -3324,24 +2591,14 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
         newReflMatDPhi.setClusterTrees(obsClusterTree, reflectedClusterTree);
         newReflMatDPhi.populateBlockClusterTree();
 
-        QVector<BlockCluster*> newReflMatPhiPartition = newReflMatPhi.getMinPartition();
-        QVector<BlockCluster*> newReflMatDPhiPartition = newReflMatDPhi.getMinPartition();
-
 //        std::cout<< "Started the block assembly of the reflection Matrix" << std::endl;
         Timer timer;
         timer.start();
-//        std::cout<< "newReflMatDPhiPartition.size(): " << newReflMatDPhiPartition.size() << std::endl;
-//        std::cout<< "reflectedDPhiHMatPartition.size(): " << reflectedDPhiHMatPartition.size() << std::endl;
-
-        #pragma omp parallel for
-        for(long blockIndex = 0; blockIndex < newReflMatPhiPartition.size(); blockIndex++)
-        {
-            hBlockAssemblyField(newReflMatPhiPartition.at(blockIndex), newReflMatDPhiPartition.at(blockIndex), maxRank, relativeError, observationPoints, reflectedBoundaryElements);
-        }
-//        std::cout<< "Finished the block assembly of the reflection Matrix" << std::endl;
+        newReflMatPhi.assembleBlocks(maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, observationPoints, boundaryElements), false);
+        newReflMatDPhi.assembleBlocksExtra(maxRank, relativeError, std::bind(&BoundaryElementSolver::getNormalFilteredPivotIndicesForField, this, std::placeholders::_1, std::placeholders::_2), std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, observationPoints, boundaryElements), false);
+//        newReflMatDPhi.assembleBlocks(maxRank, relativeError, std::bind(&BoundaryElementSolver::implicitDPhiMatrixField, this, std::placeholders::_1, std::placeholders::_2, observationPoints, boundaryElements), false);
         timer.stop();
-        std::cout << "runtime of hBlockAssemblyReflectedMatrix: " << timer.secs() << std::endl;
-        timer.reset();
+        std::cout << "Finished the block assembly of the reflection Matrix in " << timer.secs() << " seconds." <<std::endl;
 
         HArithm::compressHMat(newReflMatPhi, maxRank, 0.1 * relativeError);
         HArithm::compressHMat(newReflMatDPhi, maxRank, 0.1 * relativeError);
@@ -3354,10 +2611,7 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
         {
             reflMatPhi = newReflMatPhi;
             reflMatDPhi = newReflMatDPhi;
-
-//            calcReflectionMatrices(reflMatPhi, reflMatDPhi, maxRank, relativeError, elements, reflectedBoundaryElements, clusterTree, planeIndex);
             calcReflectionMatricesField(reflMatPhi, reflMatDPhi, maxRank, relativeError, observationPoints, reflectedBoundaryElements, obsClusterTree, elementsClusterTree, planeIndex);
-//            reflectedClusterTree.clear(); // can't be deleted here -> still a memory leak
             continue;
         }
         HArithm::recursiveHMatAddition(*reflMatPhi.getRootBlock(), *newReflMatPhi.getRootBlock(), maxRank, 0.1 * relativeError);
@@ -3367,7 +2621,6 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
 
         newReflMatDPhi.clear(); // newReflMatDPhi in not needed anymore
         newReflMatPhi.clear(); // newReflMatPhi in not needed anymore
-        reflectedClusterTree->clear();
 
         double reflMatPhiNorm = reflMatPhi.norm();
         double reflMatDPhiNorm = reflMatDPhi.norm();
@@ -3382,7 +2635,6 @@ void BoundaryElementSolver::calcReflectionMatricesField(HMatrix &reflMatPhi, HMa
         }
         else
         {
-//            calcReflectionMatrices(reflMatPhi, reflMatDPhi, maxRank, relativeError, elements, reflectedBoundaryElements, clusterTree, planeIndex);
             calcReflectionMatricesField(reflMatPhi, reflMatDPhi, maxRank, relativeError, observationPoints, reflectedBoundaryElements, obsClusterTree, elementsClusterTree, planeIndex);
         }
     }

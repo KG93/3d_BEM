@@ -38,6 +38,7 @@ SOURCES += tests.cpp \
     ../LinearElements/lineartrianglenode.cpp \
     ../SolvingScript/infinitebafflesection.cpp \
     ../bemoperatorsubroutines.cpp \
+    ../bemsolvercontroller.cpp \
     ../impedanceplane.cpp \
     ../LinearElements/linearboundaryelements.cpp \
     ../linequadraturerules.cpp \
@@ -95,6 +96,7 @@ HEADERS  +=  tests.h \
     ../SolvingScript/infinitebafflesection.h \
     ../Timer.h \
     ../bemoperatorsubroutines.h \
+    ../bemsolvercontroller.h \
     ../impedanceplane.h \
     ../LinearElements/linearboundaryelements.h \
     ../linequadraturerules.h \

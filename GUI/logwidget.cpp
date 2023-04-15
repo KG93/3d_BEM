@@ -1,10 +1,10 @@
 #include "logwidget.h"
 
 /**
-@class LogWidget
-@brief Provides a read-only plain text editor for displaying log strings.
+* \class LogWidget
+* \brief Provides a read-only plain text editor for displaying log strings.
 */
-LogWidget::LogWidget(/*QWidget *parent*/)
+LogWidget::LogWidget(QWidget *parent) : QPlainTextEdit(parent)
 {
     this->setReadOnly(true);
 }

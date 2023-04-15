@@ -52,16 +52,7 @@ public:
             this->isAdmissible = true;
         }
     }
-    virtual ~intermBlCl(){
-    //        delete son11;
-    //        delete son12;
-    //        delete son21;
-    //        delete son22;
-    //        fullMat.resize(0,0);
-    //        UMat.resize(0,0);
-    //        singularValues.resize(0);
-    //        VAdjMat.resize(0,0);
-    }
+    virtual ~intermBlCl(){}
 
 //    long rows() const; /*!< Get number of rows of the block. */
 //    long cols() const; /*!< Get number of colums of the block. */

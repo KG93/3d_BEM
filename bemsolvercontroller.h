@@ -127,9 +127,11 @@ private:
 
 public slots:
     void terminateThread();  /** Forcefully terminate the bem calculation thread. Not safe yet. Might crash. */
+    void getUpdateLogSignalFromSolver(){emit updateLog();}
 signals:
     void boundarySolvedForFreqIndex(int freqIndex);
     void fieldSolvedForFreqIndex(int freqIndex);
+    void updateLog(); /*!< Update the GUI log. */
 };
 
 #endif // BEMSOLVERCONTROLLER_H

@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->setupUi(this);
     widget = new QWidget(this);
     mainLayout = new QVBoxLayout;
-    tabWidget =new QTabWidget();
+    tabWidget = new QTabWidget();
     menuBar = new QMenuBar();
     openGlWidget = new openglWidget();
     openGlTabLayout = new QHBoxLayout();
@@ -31,16 +31,16 @@ MainWindow::MainWindow(QWidget* parent) :
     registerScriptsTab = new RegisterScriptsTab(/*solvinScript,*/tabWidget);
     connect(registerScriptsTab, SIGNAL(scriptChanged()), this, SLOT(updateScripts()));
     connect(registerScriptsTab, SIGNAL(obsScriptChanged()), this, SLOT(updateScripts()));
-    solvScriptReader= new SolvingScriptReader(this);
-    obsScriptReader= new ObservationScriptReader(this);
-    generalLog= new LogWidget;
+    solvScriptReader = new SolvingScriptReader(this);
+    obsScriptReader = new ObservationScriptReader(this);
+    generalLog = new LogWidget;
     connect(solvScriptReader, SIGNAL(logMessage(QString)), generalLog, SLOT(writeOutLogString()));
     connect(obsScriptReader, SIGNAL(logMessage(QString)), generalLog, SLOT(writeOutLogString()));
-    connect(boundaryElementSolver, SIGNAL(updateLog()), generalLog, SLOT(writeOutLogString()));
+    connect(bemSolverController, SIGNAL(updateLog()), generalLog, SLOT(writeOutLogString()));
     errorLog = new LogWidget;
     connect(solvScriptReader, SIGNAL(errorMessage(QString)), errorLog, SLOT(writeOutErrorLogString()));
     connect(obsScriptReader, SIGNAL(errorMessage(QString)), errorLog, SLOT(writeOutErrorLogString()));
-    connect(boundaryElementSolver, SIGNAL(updateLog()), errorLog, SLOT(writeOutErrorLogString()));
+    connect(bemSolverController, SIGNAL(updateLog()), errorLog, SLOT(writeOutErrorLogString()));
 
     tabWidget->addTab(registerScriptsTab,"Scripts");
     tabWidget->addTab(generalLog,"Log");
@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget* parent) :
         setUpObservationScripts(projFileHandler->getObservScriptList());
         setUpMeshFiles(projFileHandler->getMeshFileList(),projFileHandler->getMeshFileAliasList());
         loadProject();
-        BoundaryElements elements = boundaryElementSolver->getBoundaryElements();
+        BoundaryElements elements = bemSolverController->getBoundaryElements();
         openGlWidget->setBoundaryElements(elements);
         std::cout<<"Setting up boundary elements in gl widget."<< std::endl;
     }
@@ -211,7 +211,7 @@ void MainWindow::setUpMenu()
         BemControllerStates controllerState = bemSolverController->getControllerState();
         if(controllerState == Working)
         {
-            QAction* stopSolverThread = new QAction(tr("&Stop Solver"), this);
+            QAction* stopSolverThread = new QAction(tr("Stop Solver"), this);
             connect(stopSolverThread, SIGNAL(triggered()), bemSolverController, SLOT(terminateThread()));
             menuBar->addAction(stopSolverThread);
         }
@@ -262,50 +262,6 @@ void MainWindow:: openProject()
       loadProject();
 }
 
-//void MainWindow::loadProject()
-//{
-//    registerScriptsTab->clean();
-//    registerScriptsTab->setSolvScript(solvinScript);
-//    registerScriptsTab->setObsScripts(observationScripts);
-//    registerScriptsTab->setMeshFiles(meshFiles,meshFileAlias);
-//    solvScriptReader->setMeshFilesAndAliases(projFileHandler->getMeshFileList(), projFileHandler->getMeshFileAliasList());
-//    solvScriptReader->readSolvingScript(solvinScript.absoluteFilePath());
-//    solvScriptReader->checkNodesIdentifiersAndSort();
-//    solvScriptReader->removeInvalidElements();
-//    solvScriptReader->setupBoundaryElements();
-//    solvScriptReader->setupPressurePoints();
-//    solvScriptReader->refineElements();
-
-//    obsScriptReader->setElementSectionsNames(solvScriptReader->getElementSectionsNames());
-//    obsScriptReader->setMeshFilesAndAliases(projFileHandler->getMeshFileList(), projFileHandler->getMeshFileAliasList());
-//    obsScriptReader->setEdgeLength(solvScriptReader->getGlobalEdgelength());
-//    obsScriptReader->setWavespeed(solvScriptReader->getWavespeed());
-//    obsScriptReader->readObservationScript(projFileHandler->getObservScriptList());
-//    obsScriptReader->checkNodesIdentifiersAndSort();
-//    obsScriptReader->removeInvalidElements();
-//    obsScriptReader->setupObservationElements();
-//    boundaryElementSolver->setBoundaryElements(solvScriptReader->getBoundaryElements());
-//    boundaryElementSolver->setPointSources(solvScriptReader->getPointSources());
-//    boundaryElementSolver->setObservationFields(obsScriptReader->getObservationFields());
-//    boundaryElementSolver->setObservationPoints(obsScriptReader->getObservationPoints());
-////    boundaryElementSolver->setFrequency(solvScriptReader->getFrequencies());
-//    boundaryElementSolver->prepareBoundaryElements();
-//    openGlWidget->setBoundaryElements(solvScriptReader->getBoundaryElements());
-//    openGlWidget->setCenterOfMass(solvScriptReader->getCenterOfMass());
-//    openGlWidget->setCameraRadius(solvScriptReader->getContainingRadius());
-//    openGlWidget->setElementSections(solvScriptReader->getElementsSections());
-//    openGlWidget->setPointSources(solvScriptReader->getPointSources());
-//    openGlWidget->setObservationFields(obsScriptReader->getObservationFields());
-//    openGlWidget->setObservationPoints(obsScriptReader->getObservationPoints());
-//    openGlWidget->setShowSolutionValue(false);
-
-//    showSolutionAndFieldMenu=true;
-//    showCalculateFieldButton=false;
-//    hasBeenSolved=false;
-//    setUpMenu();
-//    update();
-//}
-
 void MainWindow::loadProject()
 {
     registerScriptsTab->clean();
@@ -337,12 +293,12 @@ void MainWindow::loadProject()
     obsScriptReader->checkNodesIdentifiersAndSort();
     obsScriptReader->removeInvalidElements();
     obsScriptReader->setupObservationElements();
-    boundaryElementSolver->setBoundaryElements(solvScriptReader->getBoundaryElements());
-    boundaryElementSolver->setPointSources(solvScriptReader->getPointSources());
-    boundaryElementSolver->setObservationFields(obsScriptReader->getObservationFields());
-    boundaryElementSolver->setObservationPoints(obsScriptReader->getObservationPoints());
+    bemSolverController->setBoundaryElements(solvScriptReader->getBoundaryElements());
+    bemSolverController->setPointSources(solvScriptReader->getPointSources());
+    bemSolverController->setObservationFields(obsScriptReader->getObservationFields());
+//    bemSolverController->setObservationPoints(obsScriptReader->getObservationPoints());
 //    boundaryElementSolver->setFrequency(solvScriptReader->getFrequencies());
-    boundaryElementSolver->prepareBoundaryElements();
+//    boundaryElementSolver->prepareBoundaryElements();
     openGlWidget->setBoundaryElements(solvScriptReader->getBoundaryElements());
     openGlWidget->setCenterOfMass(solvScriptReader->getCenterOfMass());
     openGlWidget->setCameraRadius(solvScriptReader->getContainingRadius());
@@ -373,8 +329,8 @@ void MainWindow::loadObservationScript()
     obsScriptReader->removeInvalidElements();
     obsScriptReader->setupObservationElements();
 
-    boundaryElementSolver->setObservationFields(obsScriptReader->getObservationFields());
-    boundaryElementSolver->setObservationPoints(obsScriptReader->getObservationPoints());
+    bemSolverController->setObservationFields(obsScriptReader->getObservationFields());
+//    bemSolverController->setObservationPoints(obsScriptReader->getObservationPoints());
     openGlWidget->setObservationFields(obsScriptReader->getObservationFields());
     openGlWidget->setObservationPoints(obsScriptReader->getObservationPoints());
     openGlWidget->update();
@@ -385,7 +341,6 @@ void MainWindow::handle3dViewerLogic()
     freqWidget->show();
 
     unsigned int currentSelectedFreqIndex = freqWidget->getCurrentSelectedFreqIndex();
-    std::cerr << "currentSelectedFreqIndex " << currentSelectedFreqIndex << std::endl;
     BemSolutionStates controllerState = bemSolverController->getSolutionState();
 
     switch(controllerState)
@@ -450,8 +405,6 @@ void MainWindow::showSolutionOnBoundaryElements()
 {
     showSolutionIfAvailable = true;
     handle3dViewerLogic();
-
-//    openGlWidget->setShowSolutionValue(true);
     setUpMenu();
     openGlWidget->update();
 }
@@ -460,7 +413,6 @@ void MainWindow::hideSolutionOnBoundaryElements()
 {
     showSolutionIfAvailable = false;
     handle3dViewerLogic();
-
     setUpMenu();
     openGlWidget->update();
 }
@@ -694,23 +646,4 @@ void MainWindow::preventSliderCrossingMin()
         }
     }
      emit slidersChanged(minSlider->value(), maxSlider->value());
-}
-
-void MainWindow::setSolverParameters()
-{
-    boundaryElementSolver->setCoupling(parameterDialog->getCoupling());
-
-    boundaryElementSolver->setHSolving(parameterDialog->getUseHSolver());
-    boundaryElementSolver->setACArelativeError(parameterDialog->getACARelError());
-    boundaryElementSolver->setACAMaxRank(parameterDialog->getACAMaxRank());
-    boundaryElementSolver->setUsePreconditioner(parameterDialog->getUseHPreconditioning());
-
-    boundaryElementSolver->setPreconditionerRelativeError(parameterDialog->getPreconditionerRelError());
-    boundaryElementSolver->setPreconditionerRank(parameterDialog->getPreconditionerMaxRank());
-
-    boundaryElementSolver->setCalculateNormAndConditionNumber(parameterDialog->getCalculateNormAndConditionNumber());
-
-    boundaryElementSolver->setHFieldSolving(parameterDialog->getUseHFieldSolver());
-    boundaryElementSolver->setFieldACARelError(parameterDialog->getHFieldSolverRelError());
-    boundaryElementSolver->setFieldACAMaxRank(parameterDialog->getHFieldSolverMaxRank());
 }
