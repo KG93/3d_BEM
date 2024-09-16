@@ -212,8 +212,16 @@ void BemSolverController::terminateThread()
 {
     if(controllerState != NotWorking)
     {
-        terminate();
-        controllerState = NotWorking;
-        std::cout << "Terminating worker thread!" << std::endl;
+        try
+        {
+            terminate();
+            controllerState = NotWorking;
+            std::cout << "Terminating worker thread!" << std::endl;
+        }
+        catch(const std::exception& e)
+        {
+            std::cout << " a standard exception was caught, with message: '"
+                      << e.what() << "'\n";
+        }
     }
 }
