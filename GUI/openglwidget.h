@@ -281,7 +281,7 @@ public slots:
     void getMinCut(int value);
     void getMinAndMaxCut(int min, int max);
     void setNewBoundarySolution(BoundarySolution solution);
-    void setNewBoundarySolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure);
+//    void setNewBoundarySolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure);
     void setNewFieldSolution(FieldSolutions fieldSolutions);
     void setNewFieldSolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure, QVector<Eigen::VectorXcd> phiSolutionField, QVector<Eigen::VectorXcd> soundPressureField);
 

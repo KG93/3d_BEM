@@ -364,7 +364,7 @@ void MainWindow::handle3dViewerLogic()
             }
             if(bemSolverController->isFieldSolvedAtFreq(currentSelectedFreqIndex))
             {
-                openGlWidget->setBoundaryElements(bemSolverController->getBoundaryElements());
+//                openGlWidget->setBoundaryElements(bemSolverController->getBoundaryElements());
                 FieldSolutions solutions = bemSolverController->getFieldSolutionAtFrequencyIndex(currentSelectedFreqIndex);
                 openGlWidget->setObservationFields(bemSolverController->getObservationFields());
                 openGlWidget->setNewFieldSolution(solutions);

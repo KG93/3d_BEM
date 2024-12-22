@@ -9,7 +9,7 @@ Before you can compile 3d_BEM, you need to have the following software installed
 
  - A C++20-compliant compiler, such as GCC 8 or higher.
  - The [Qt] library, version 6.0 or higher .
- - [Eigen] 3.3.9 or higher, for linear algebra operations. Can be installed under Ubuntu with the following command:
+ - [Eigen] 3.4 or higher, for linear algebra operations. Can be installed under Ubuntu with the following command:
 ```
  sudo apt-get install libeigen3-dev
 ```

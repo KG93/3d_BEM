@@ -735,7 +735,7 @@ void HMultiply::RkMatRankReduction(Eigen::MatrixXcd &UMat, Eigen::VectorXcd &sin
         if constexpr(useEigenSvd)
         {
 //            Eigen::JacobiSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd(A);
-            Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd(A);
+            Eigen::BDCSVD<Eigen::MatrixXcd> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
             rank = HArithm::minRankforError(svd, rank, relError);
             Eigen::MatrixXcd tmpForU(UMat.rows(), rank);
             tmpForU << svd.matrixU().leftCols(rank), Eigen::MatrixXcd::Zero(UMat.rows() - localARank, rank);

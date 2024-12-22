@@ -98,7 +98,7 @@ void BemSolverController::run()
 
             fieldsSolvedAtFrequency[i] = true;
             solutionState = AtLeastOneSolved;
-            emit fieldSolvedForFreqIndex(i);
+//            emit fieldSolvedForFreqIndex(i);
         }
 //        std::pair<double, double> minMaxSoundPressure = getMinAndMaxSoundPressureOnBoundary();
 //        globalMinSoundPressureOnField = minMaxSoundPressure.first;

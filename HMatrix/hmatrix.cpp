@@ -1032,7 +1032,7 @@ void HMatrix::setUpRandomMatrices(long maxRank)
 
                 Eigen::MatrixXcd QA = qrA.householderQ() * Eigen::MatrixXcd::Identity(blockRows, localARank);//.leftCols(localARank);
                 Eigen::MatrixXcd QB = qrB_T.householderQ() * Eigen::MatrixXcd::Identity(blockColumns, localBRank);//.leftCols(localBRank);
-                Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd( R_A * R_B_Transpose );
+                Eigen::BDCSVD<Eigen::MatrixXcd> svd(R_A * R_B_Transpose, Eigen::ComputeThinU | Eigen::ComputeThinV);
 
                 Eigen::MatrixXcd U = QA * svd.matrixU().leftCols(rank);
                 Eigen::MatrixXcd V = svd.matrixV().adjoint().topRows(rank) * QB.transpose();

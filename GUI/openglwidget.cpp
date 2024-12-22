@@ -246,15 +246,15 @@ void openglWidget::setNewBoundarySolution(BoundarySolution solution)
     update();
 }
 
-void openglWidget::setNewBoundarySolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure)
-{
-    boundaryElements.phiSolution = phiSolution;
-    boundaryElements.dPhiSolution = dPhiSolution;
-    boundaryElements.soundPressure = soundPressure;
-    setBoundaryElements(boundaryElements);
-    updateSelectedTriangleSoundPressure();
-    update();
-}
+//void openglWidget::setNewBoundarySolution(Eigen::VectorXcd phiSolution, Eigen::VectorXcd dPhiSolution, Eigen::VectorXcd soundPressure)
+//{
+//    boundaryElements.phiSolution = phiSolution;
+//    boundaryElements.dPhiSolution = dPhiSolution;
+//    boundaryElements.soundPressure = soundPressure;
+//    setBoundaryElements(boundaryElements);
+//    updateSelectedTriangleSoundPressure();
+//    update();
+//}
 
 void openglWidget::setNewFieldSolution(FieldSolutions fieldSolutions)
 {

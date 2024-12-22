@@ -75,7 +75,7 @@ void HArithm::compressHMat(HMatrix &hmatrix, const long maxRank, const double er
     }
 }
 
-long HArithm::minRankforError(const Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> &svd, const long maxRank, const double relError)
+long HArithm::minRankforError(const Eigen::BDCSVD<Eigen::MatrixXcd> &svd, const long maxRank, const double relError)
 {
     const long nonzeroSingularValues = svd.nonzeroSingularValues();
     if(relError <= 0)
@@ -132,7 +132,7 @@ void HArithm::svdOnBlock(BlockCluster &block)
     if constexpr(useEigenSvd)
     {
 //        Eigen::JacobiSVD<Eigen::MatrixXcd> svd( (R_A * matrixBlock.singularValues.head(R_A.cols()).asDiagonal()) * R_B_Transpose.triangularView<Eigen::Lower>());
-        Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd( (R_A * block.singularValues.head(R_A.cols()).asDiagonal()) * R_B_Transpose.triangularView<Eigen::Lower>());
+        Eigen::BDCSVD<Eigen::MatrixXcd> svd( (R_A * block.singularValues.head(R_A.cols()).asDiagonal()) * R_B_Transpose.triangularView<Eigen::Lower>(), Eigen::ComputeThinU | Eigen::ComputeThinV);
 
         block.frobeniusNorm = svd.singularValues().norm();
         block.UMat.noalias() = QA * svd.matrixU();
@@ -177,7 +177,7 @@ void HArithm::RkMatRankReduction(BlockCluster &block, long rank, const double re
         if constexpr(useEigenSvd)
         {
 //            Eigen::JacobiSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd( (R_A * matrixBlock.singularValues.head(R_A.cols()).asDiagonal()) * R_B_Transpose.triangularView<Eigen::Lower>());
-            Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd( (R_A * block.singularValues.head(R_A.cols()).asDiagonal()) * R_B_Transpose.triangularView<Eigen::Lower>());
+            Eigen::BDCSVD<Eigen::MatrixXcd> svd( (R_A * block.singularValues.head(R_A.cols()).asDiagonal()) * R_B_Transpose.triangularView<Eigen::Lower>(), Eigen::ComputeThinU | Eigen::ComputeThinV);
             rank = minRankforError(svd, rank, relError);
             block.frobeniusNorm = svd.singularValues().head(rank).norm();
             Eigen::MatrixXcd tmpForU(block.rows(), rank);
@@ -240,7 +240,7 @@ void HArithm::fullMatRankReduction(BlockCluster &block, const long rank, const d
         if constexpr(useEigenSvd)
         {
 //            Eigen::JacobiSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd( matrixBlock.fullMat);
-            Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> svd( block.fullMat);
+            Eigen::BDCSVD<Eigen::MatrixXcd> svd( block.fullMat, Eigen::ComputeThinU | Eigen::ComputeThinV);
             long localRank = minRankforError(svd, rank, relError);
 
             block.fullMat.resize(0, 0);

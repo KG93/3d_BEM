@@ -54,7 +54,7 @@ public:
     * \param relError The maximum relative error allowed.
     * \return The minimum rank that satisfies the
     */
-    static long minRankforError(const Eigen::BDCSVD<Eigen::MatrixXcd,Eigen::ComputeThinU|Eigen::ComputeThinV> &svd, const long maxRank, const double relError);
+    static long minRankforError(const Eigen::BDCSVD<Eigen::MatrixXcd> &svd, const long maxRank, const double relError);
 
     /**
     * \brief Bring low rank matrix in SVD form.
